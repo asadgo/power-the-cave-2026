@@ -1,0 +1,17 @@
+# spreadsheets are never committed — data/*.csv is the source of truth (see CLAUDE.md)
+*.xlsx
+*.xls
+*.xlsm
+
+# local reference material stays local
+*.pdf
+
+# superseded pre-repo console downloads
+cave-power-console*.html
+
+# OS noise
+.DS_Store
+
+# sync scratch
+_repo_sync.tgz
+_to_delete/
