@@ -1,0 +1,58 @@
+version,date,change
+0.1,2026-07-29,Start here tab built.
+0.2,2026-07-29,Official Lists redesigned: three separate explained lists.
+0.3,2026-07-29,Loads tab built from last year's list. ACs set to 10 Midea inverter units. E-bikes modeled as one 15 A circuit.
+0.4,2026-07-29,Loads re-sorted by bus then priority. Priority column and list added. Spare rows added; stray dropdown removed.
+0.5,2026-07-29,"Schedule tab built: 24-hour duty grid from 5am, seeded from last year; hourly load rows with red-line checks."
+0.6,2026-07-29,Schedule: uniform wider grid cells; Total W moved right of the grid with an explanatory note.
+0.7,2026-07-29,Loads spare-row divider formalized; schedule counter ignores rows without a Bus; missing-Bus guard added.
+0.8,2026-07-29,CPAP and Monitoring removed from camp loads. Schedule banners split at the freeze line.
+0.9,2026-07-29,Dashboard built. Event Calendar added to Home. Area helper column added to Schedule.
+1.0,2026-07-29,View selector and Party toggles added. Heavy-day name editable. Day language removed from Alice.
+1.1,2026-07-29,View selector fixed for Google Sheets: date options made non-parseable; resolver accepts raw dates.
+3.1,2026-07-30,"Built on the user-modified copy. No-model days plot zeros with the safe-load line, coverage phrase removed, burn delta removed."
+3.2,2026-07-30,"Setup rebuilt: thresholds and policy table, lists compacted, reference merged, log moved to the bottom."
+3.3,2026-07-30,Meter Log added with baseline and to-date tracking. Actual kWh and gal columns on the timeline; burn card quotes actuals.
+3.4,2026-07-30,Burn-card error on simulated view fixed. Measured fuel now reads the newest Meter Log dipstick; separate input removed. Variance columns retired. Version history restored where the archive allowed.
+3.5,2026-07-30,Radical simplification: Dashboard reduced to one plan-vs-reality table plus the chart. Calendar and fuel plan moved to their own tab. Clock highlight retired.
+3.6,2026-07-30,Meter Log merged into the Calendar: one row per day holds plan and readings side by side. Cumulative-range bug from the tab split repaired. Event-to-date rows added to the Dashboard.
+3.7,2026-07-30,"Calendar restacked: reality table above the plan with matching columns. Bob blue, Alice pink everywhere. Daily plan-vs-reality chart added to the Dashboard. Actual-delivered override column."
+3.8,2026-07-30,"Structural hardening: full reference audit across 851 formulas found zero stale references. Protection restored on Loads, Schedule, and Calc."
+3.9,2026-07-30,Input cells get a pale blue field. Simulated dates fixed and locked. Fuel-on-hand row labeled honestly with an event-low tag. Event-to-date rows follow the selector.
+4.0,2026-07-30,"Foolproof Calendar: inputs lead every row, computed results follow. Archive columns removed. Start row replaces the install-meters strip. Input headers styled as inputs."
+4.1,2026-07-30,"Reality and plan tables now mirror perfectly on the right: kWh used, Gal used, Delivered, On hand, Level in identical columns."
+4.2,2026-07-30,Drums and cans split into two entry cells; the sheet adds them. Day 0 row renamed with an inline hint. Output mirror unchanged.
+4.3,2026-07-30,"Built on the user-formatted copy. Missing output formulas restored, reality outputs matched to plan styling, conditional formatting rebuilt, protections restored."
+4.4,2026-07-30,Energy math made lenient: one meter reading is enough to compute; a blank Day 0 counts as zero. Previously both meters and both baselines were required.
+4.5,2026-07-30,Cans carry forward: written on Day 0 and again only when the count changes. Drums column renamed Fuel left in drums. Reality fuel accounting anchors on Day 0 stock.
+4.7,2026-07-30,Cans removed from the model entirely: backup fuel stays off the books. Plan shows its true Tuesday and Thursday gaps; those are the reserve days.
+4.8,2026-07-30,"Day 0 row removed; meters assumed to start at zero, exceptions handled in Notes."
+4.9,2026-07-30,Seam row removed; tables sit flush under their headers. Safe-load line rebuilt and named in the chart title as a fallback.
+5.0,2026-07-30,"Dashboard redesigned: headline verdict capsule, scoreboard table with units in labels, plan-light and reality-dark ink, zebra rows, quiet chrome."
+5.1,2026-07-30,"Headline is now a fuel gauge: color-banded bar, gallons at its end, GOOD LOW OUT chip, next refill date. Verdict words retired."
+5.2,2026-07-30,"Headline gauge split into a same-day pair: PLAN bar in light slate, REAL bar color-banded, gallons on each, one chip keyed to reality when present."
+5.3,2026-07-30,"Fuel gauges moved directly above the table, each aligned over its column. Reality now the left column, simulated the right. Refill date to the top right."
+5.4,2026-07-30,"Two chips, one per gauge, each directly above its own column: reality saturated, simulated muted. Spacer added so the dropdown clears the bars."
+5.5,2026-07-30,View selector moved to its own right rail at column N. One dash token for all empty states. Machine chips muted and capitalized. Fuel on hand row and Viewing caption removed. Sim gauge announces empty in red.
+5.6,2026-07-30,"Event charts split into a reality and simulated pair, stacked by bus in Bob blue and Alice pink, with a max safe kWh per day line on both. Per-bus daily series added to the engine."
+5.7,2026-07-30,Reality chart series baseline changed from blank to zero so the Google importer can no longer drop them and restyle the safe load line as data.
+5.8,2026-07-30,Event charts switched from stacked to side by side bars: each bus reads against the per generator ceiling honestly. Scale tightened to 160.
+5.9,2026-07-30,Event pair moved above the hourly chart. Hourly caption states plainly that it is a planning view with no hourly metering.
+5.93,2026-07-30,"Built on the user's cosmetic pass, everything preserved. Date labels restored on both event charts after the export dropped their categories. Protections and MAXIFS repaired."
+5.94,2026-07-30,"Event charts rebuilt clean at the user's anchors and size: ordinal day labels on the x axis, safe load line re pinned to the full scale."
+5.95,2026-07-30,"Simulated fuel is now fully steerable: Delivered is a typed gallons cell on any day, Party moves beside Day type, People sits where Notes sits in reality. Fill drums retired."
+5.96,2026-07-30,"Party distinction removed: every Burn day carries the full modeled day including the sound system. Sim inputs are now Day type, Delivered, People."
+5.97,2026-07-30,"Hourly chart rebuilt clean: both axes locked to one 0 to 8 scale and the hidden axis stripped of labels, curing the sunken safe load line and the doubled y axis."
+5.99,2026-07-30,"Setup rebuilt as a one screen control panel: orientation lines, nine dials, the machine math chain, and compact menu sources. Version history moved to this tab."
+6.0,2026-07-30,Menu lists restored verbatim from the live sheet after the rebuild fabricated three of them. All charts rebuilt fresh; foreign chart XML is never round tripped again.
+6.2,2026-07-30,"Banners rebuilt as simple movable chips, burn zone split left and right, charts range anchored so resizing sticks. Log tab restored after the export dropped it."
+6.3,2026-07-31,"Control room redesign: ink masthead with docked selector and health tag, hero fuel cards with kickers and a refill stat card, opened ledger rhythm with a partition spine, outlined chart panels."
+6.4,2026-07-31,"Two card dashboard: REALITY and SIMULATED as labeled vertical cards with larger gauges, mirrored data labels on both sides, and each burn chart filling its card. Hourly chart moved to Device Duty. Masthead removed."
+6.5,2026-07-31,"Fuel on hand named on both cards with green orange red states on chip, bar, and number. Gauge scale widened to fill the card. Dashes unified. Health tag moved to the foot. Cards equalized. Charts rebuilt at card width."
+6.6,2026-07-31,"Visual rebalance: chips grown to match the gauges, table rows tightened with calmer values, health footer made self contained so row surgery can never break it again, charts re anchored to the cards."
+6.7,2026-07-31,Gauge numbers to one decimal. Next refill shows the countdown in days beside the date.
+6.8,2026-07-31,"Gauges back to whole gallons with empty declared at one gallon or below, chips and colors aligned to the same floor. Next refill now looks strictly beyond the viewed day."
+6.9,2026-07-31,Fuel EMPTY replaces OUT everywhere fuel speaks; overload verdicts renamed OVER so the two states can never be confused. Hourly chart rebuilt fresh on Device Duty.
+7.0,2026-07-31,"Structural fix for chart breakage: the hidden second axis is gone from all three charts; the red line now rides the same axis as the bars, leaving nothing for the importer to unpin."
+7.1,2026-07-31,"Contingency tab: a live affordability board answering what the camp can spend until an assumed fuel date, with delay and can levers, mode verdicts, the single generator fit line, and a derate trial."
+7.2,2026-07-31,"POOLED ARCHITECTURE: generators paralleled into one 12.7 kW pool, the Never cut core moved to a battery, audits, chips, and charts re judged against pool and battery limits. REVERT POINT: v7.1 is the last split bus build; re import v7.1 to restore separate Bob and Alice buses."

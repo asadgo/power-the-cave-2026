@@ -1,0 +1,33 @@
+key,value,note
+event_start,2026-08-25,First day of the plan (Calendar sheet)
+event_days,14,Length of the plan in days (Calendar sheet)
+playa_derate,0.88,Fraction of nameplate watts the desert lets you keep. Lower it and every red line drops.
+load_ceiling,0.8,How hard a generator may run continuously. Sets the red lines with the derate.
+tight_threshold,0.95,Peaks above this share of the red line read TIGHT instead of GOOD.
+kwh_per_gallon,6.5,Converts energy to fuel everywhere. Calibrate from real meter and dipstick data.
+usable_gal_per_drum,44,One drum's working capacity. Two drums set the 88 gal scale on every gauge and bar.
+red_fuel_level_gal,23,"Below this many gallons, levels render red."
+low_fuel_level_gal,44,"Below this, amber, and the fuel chip reads LOW."
+camp_base_kwh,15,"Energy burned daily regardless of headcount: fridges, network, always on gear."
+simulated_day_label,Simulated Day,What the worst case view is called in the VIEW menu.
+gen_bob_watts,9000,Bob - nameplate W (Setup / THE MACHINES)
+gen_alice_watts,9000,Alice - nameplate W (Setup / THE MACHINES)
+battery_out_w,2400,Battery continuous output W (Setup)
+battery_kwh,2.4,Battery stored energy kWh (Setup)
+daytype_build_factor,0.3,Build day intensity x (Setup / Day types)
+daytype_burn_factor,1,Burn day intensity x (Setup / Day types)
+daytype_strike_factor,0.25,Strike day intensity x (Setup / Day types)
+per_person_shared_kwh,0.9,"Shared infra kWh per person per day (Source, lights, misc) [console model constant, from console v44]"
+camper_budget_kwh,1.0,"Flat personal-power allotment kWh per camper per day [console model constant, from console v44]"
+ac_unit_kwh_per_hour,0.6,"One AC unit kWh per running hour [console model constant, from console v44]"
+ac_hours_per_day,7,"Assumed AC running hours per day [console model constant, from console v44]"
+ebike_kwh_per_day,0.576,"One e-bike charge kWh per day [console model constant, from console v44]"
+second_gen_idle_gal,2,"Extra gal/day burned idling the second generator [console model constant, from console v44]"
+fuel_floor_gal,5,"Default reserve floor - never dip below (editable in console) [console model constant, from console v44]"
+fuel_warn_margin_gal,15,"Within this many gal above the floor reads LOW [console model constant, from console v44]"
+quiet_evening_cap_kw,3.7,"Evening camp cap with sound off [console model constant, from console v44]"
+infra_floor_frac,0.25,"Camp infrastructure floor as a share of full camp [console model constant, from console v44]"
+infra_full_people,40,"Headcount at which camp infrastructure runs full [console model constant, from console v44]"
+camper_w_day,15,"W per camper 7a-4p [console model constant, from console v44]"
+camper_w_evening,50,"W per camper 5p-12a [console model constant, from console v44]"
+camper_w_night,25,"W per camper 1a-6a [console model constant, from console v44]"
