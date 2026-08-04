@@ -57,3 +57,8 @@ version,date,change
 7.1,2026-07-31,"Contingency tab: a live affordability board answering what the camp can spend until an assumed fuel date, with delay and can levers, mode verdicts, the single generator fit line, and a derate trial."
 7.2,2026-07-31,"POOLED ARCHITECTURE: generators paralleled into one 12.7 kW pool, the Never cut core moved to a battery, audits, chips, and charts re judged against pool and battery limits. REVERT POINT: v7.1 is the last split bus build; re import v7.1 to restore separate Bob and Alice buses."
 7.3,2026-08-03,"Console: personal-items totals now computed at load (kitCalc after buildKit in boot and reset). Plan: every fuel delivery set to 88 gal."
+7.4,2026-08-04,"Download button removed: plan edits go through GitHub directly (pencil edit or file upload). Console is for viewing and what-ifs."
+7.5,2026-08-04,"Reset button icon changed to a clear refresh arrow. Hover labels: Reset values, Dark/light mode."
+7.6,2026-08-04,"Draw calculator: totals columns aligned across both calculators. Default rows renamed to Kitchen, Sound, The Source. ACs row added (10 x 4.2 kWh/day). E-bikes plural, count 10."
+7.7,2026-08-04,"Plan: Tuesday delivery 25 gal. One generator Tue-Fri of build week and for strike. Two generators Sat 8/29 through Sun 9/6."
+7.8,2026-08-04,"Add item buttons wired up in both calculators: they were dropped in the v44 to repo rebuild. New rows start blank and focus the name field."
