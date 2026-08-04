@@ -631,7 +631,7 @@ function resetToCSV(){
   PLAN=structuredClone(SEEDPLAN);FUEL=structuredClone(SEEDFUEL);
   QNC=structuredClone(QNSEED);KITC=structuredClone(KITSEED);
   FLOOR=S.fuel_floor_gal;$('floor').value=FLOOR;
-  buildQn();qnCalc();buildKit();refresh(true);
+  buildQn();qnCalc();buildKit();kitCalc();refresh(true);
 }
 
 /* ---------- boot ---------- */
@@ -655,7 +655,7 @@ function boot(D){
   $('qnnote').innerHTML='Simulation only &mdash; nothing here changes the calendar &middot; Each row = How many &times; kWh per day &middot; event line = that &times; '+NDAYS+' days &middot; 1 gallon &asymp; '+KPG+' kWh &middot; 1 drum = '+S.usable_gal_per_drum+' gal';
   $('src').textContent='source: data/*.csv · '+NDEV+' devices · sound rig '+f(SOUND,1)+' kWh · safe '+f(redFor(2),1)+' kW pooled · edits stay in this browser until ⇩ exported and committed';
   buildQn();qnCalc();
-  buildKit();
+  buildKit();kitCalc();
   applyTheme(load('cave_theme')||'dark');
   refresh(true);
 }
