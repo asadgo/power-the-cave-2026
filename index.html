@@ -95,7 +95,8 @@ button:hover{border-color:var(--bob)}
 .qn .twrap{overflow-x:auto}
 .qn table{border-collapse:collapse;width:100%}
 .qn th{font:600 11px var(--mono);color:var(--muted);text-align:left;padding:0 8px 4px 0;letter-spacing:.08em;text-transform:uppercase}
-.qn th.qr,.qn td.qr{text-align:right;white-space:nowrap}
+.qn th.qr,.qn td.qr{text-align:right;white-space:nowrap;width:270px;min-width:270px}
+.qn th:last-child,.qn td:last-child{width:34px;min-width:34px}
 .qn td{padding:6px 8px 6px 0;font:600 14px var(--mono);border-bottom:1px solid var(--line)}
 .qn td span{display:block;font:500 11px var(--mono);color:var(--muted)}
 .qn tr:last-child td{border-bottom:none}
@@ -129,9 +130,8 @@ button:hover{border-color:var(--bob)}
 <div class="wrap">
 <div class="hd"><h1>THE CAVE · POWER</h1>
   <div class="hbtns">
-    <button type="button" id="csvbtn" class="hbtn aux" title="Download the current plan as calendar_plan.csv">&#8681;</button>
-    <button type="button" id="resetbtn" class="hbtn aux" title="Discard local edits, reload the committed CSV plan">&#8634;</button>
-    <button type="button" id="themebtn" class="hbtn" title="Switch theme">&#9728;</button>
+    <button type="button" id="resetbtn" class="hbtn aux" title="Reset values"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
+    <button type="button" id="themebtn" class="hbtn" title="Dark/light mode">&#9728;</button>
   </div></div>
 
 <div id="loader"><h2>Loading data/*.csv &hellip;</h2><p id="loadmsg">Reading the plan.</p></div>
@@ -653,15 +653,16 @@ function boot(D){
   $('floor').value=FLOOR;
   $('floor').addEventListener('input',()=>{FLOOR=+$('floor').value||0;store('cavecsv_floor',FLOOR);refresh(false);});
   $('qnnote').innerHTML='Simulation only &mdash; nothing here changes the calendar &middot; Each row = How many &times; kWh per day &middot; event line = that &times; '+NDAYS+' days &middot; 1 gallon &asymp; '+KPG+' kWh &middot; 1 drum = '+S.usable_gal_per_drum+' gal';
-  $('src').textContent='source: data/*.csv · '+NDEV+' devices · sound rig '+f(SOUND,1)+' kWh · safe '+f(redFor(2),1)+' kW pooled · edits stay in this browser until ⇩ exported and committed';
+  $('src').textContent='source: data/*.csv · '+NDEV+' devices · sound rig '+f(SOUND,1)+' kWh · safe '+f(redFor(2),1)+' kW pooled · edits stay in this browser · the official plan lives on GitHub';
   buildQn();qnCalc();
   buildKit();kitCalc();
   applyTheme(load('cave_theme')||'dark');
   refresh(true);
 }
-$('csvbtn').addEventListener('click',()=>{if(PLAN)exportCSV();});
 $('resetbtn').addEventListener('click',()=>{if(PLAN&&confirm('Discard local edits and reload the committed CSV plan?'))resetToCSV();});
 $('themebtn').addEventListener('click',()=>applyTheme(document.body.classList.contains('light')?'dark':'light'));
+$('qnadd').addEventListener('click',()=>{if(!QNC)return;QNC.push({n:'New item',c:1,u:0});buildQn();qnCalc();const i=$('qntable').querySelectorAll('input.kitname');i[i.length-1].focus();i[i.length-1].select();});
+$('kitadd').addEventListener('click',()=>{if(!KITC)return;KITC.push({n:'New item',w:0,hs:[]});buildKit();kitCalc();const i=$('kittable').querySelectorAll('input.kitname');i[i.length-1].focus();i[i.length-1].select();});
 
 fetchAll().then(boot).catch(err=>{pickerFallback(err);});
 </script>
