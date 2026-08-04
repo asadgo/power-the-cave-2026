@@ -1,5 +1,6 @@
 item,count,kwh_per_day_each
-Kitchen - cold - lights,1,14.9
-Music night - full rig,1,55
+Kitchen,1,14.9
+Sound,1,55
 The Source,1,15.6
-E-bike,1,0.6
+ACs,10,4.2
+E-bikes,10,0.6
