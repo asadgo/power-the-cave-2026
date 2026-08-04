@@ -62,3 +62,4 @@ version,date,change
 7.6,2026-08-04,"Draw calculator: totals columns aligned across both calculators. Default rows renamed to Kitchen, Sound, The Source. ACs row added (10 x 4.2 kWh/day). E-bikes plural, count 10."
 7.7,2026-08-04,"Plan: Tuesday delivery 25 gal. One generator Tue-Fri of build week and for strike. Two generators Sat 8/29 through Sun 9/6."
 7.8,2026-08-04,"Add item buttons wired up in both calculators: they were dropped in the v44 to repo rebuild. New rows start blank and focus the name field."
+7.9,2026-08-04,"Tiny version number beside the title, read live from this log. Calculator seed fingerprints: saved rows are discarded automatically whenever the committed defaults change, so stale names can never linger again."
