@@ -22,6 +22,7 @@ html,body{margin:0;background:var(--ink);color:var(--bone);font:16px/1.4 var(--m
 .hd{display:flex;align-items:center;justify-content:space-between;margin:0 0 12px}
 .hd .hbtns{display:flex;gap:8px}
 h1{font:700 18px var(--cond);letter-spacing:.16em;color:var(--muted);margin:0}
+#ver{font:500 10px var(--mono);letter-spacing:.06em;color:var(--muted2);margin-left:10px}
 .hbtn{width:40px;height:40px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--warn)}
 .hbtn.aux{color:var(--muted);font:600 15px var(--mono)}
 label{display:block;font:600 11px var(--mono);letter-spacing:.08em;color:var(--muted);margin-bottom:4px;text-transform:uppercase}
@@ -128,7 +129,7 @@ button:hover{border-color:var(--bob)}
 </head>
 <body>
 <div class="wrap">
-<div class="hd"><h1>THE CAVE · POWER</h1>
+<div class="hd"><h1>THE CAVE · POWER<span id="ver"></span></h1>
   <div class="hbtns">
     <button type="button" id="resetbtn" class="hbtn aux" title="Reset values"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
     <button type="button" id="themebtn" class="hbtn" title="Dark/light mode">&#9728;</button>
@@ -639,9 +640,13 @@ function boot(D){
   buildModel(D);
   const lp=load('cavecsv_plan');PLAN=okPlan(lp)?lp:structuredClone(SEEDPLAN);
   const lf=load('cavecsv_fuel');FUEL=(lf&&Array.isArray(lf.del)&&lf.del.length===NDAYS)?lf:structuredClone(SEEDFUEL);
-  const lq=load('cavecsv_qn');QNC=Array.isArray(lq)&&lq.length?lq:structuredClone(QNSEED);
-  const lk=load('cavecsv_kit');KITC=Array.isArray(lk)&&lk.length?lk:structuredClone(KITSEED);
+  const qfp=JSON.stringify(QNSEED),kfp=JSON.stringify(KITSEED);
+  const lq=(load('cavecsv_qn_fp')===qfp)?load('cavecsv_qn'):null;QNC=Array.isArray(lq)&&lq.length?lq:structuredClone(QNSEED);store('cavecsv_qn_fp',qfp);
+  const lk=(load('cavecsv_kit_fp')===kfp)?load('cavecsv_kit'):null;KITC=Array.isArray(lk)&&lk.length?lk:structuredClone(KITSEED);store('cavecsv_kit_fp',kfp);
   KITC.forEach(r=>{if(!r.hs)r.hs=[];});
+  fetch('data/log.csv',{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
+    const rows=t.trim().split('\n'),v=rows[rows.length-1].split(',')[0];
+    if(v&&!isNaN(+v))$('ver').textContent='v'+v;}).catch(()=>{});
   const lF=load('cavecsv_floor');FLOOR=(lF==null)?S.fuel_floor_gal:lF;
 
   $('loader').style.display='none';
