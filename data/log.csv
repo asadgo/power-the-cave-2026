@@ -56,3 +56,4 @@ version,date,change
 7.0,2026-07-31,"Structural fix for chart breakage: the hidden second axis is gone from all three charts; the red line now rides the same axis as the bars, leaving nothing for the importer to unpin."
 7.1,2026-07-31,"Contingency tab: a live affordability board answering what the camp can spend until an assumed fuel date, with delay and can levers, mode verdicts, the single generator fit line, and a derate trial."
 7.2,2026-07-31,"POOLED ARCHITECTURE: generators paralleled into one 12.7 kW pool, the Never cut core moved to a battery, audits, chips, and charts re judged against pool and battery limits. REVERT POINT: v7.1 is the last split bus build; re import v7.1 to restore separate Bob and Alice buses."
+7.3,2026-08-03,"Console: personal-items totals now computed at load (kitCalc after buildKit in boot and reset). Plan: every fuel delivery set to 88 gal."
