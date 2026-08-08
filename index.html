@@ -12,12 +12,14 @@
 --warn:#FFA733;--warn-bg:#382A10;--danger:#F26060;--danger-bg:#391818;
 --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
 --cond:"Barlow Condensed","Arial Narrow","Helvetica Neue",Arial,sans-serif}
+html.light{background:#EFECE2}
 body.light{--ink:#EFECE2;--panel:#FBFAF6;--panel2:#E7E3D6;--deep:#E9E5D9;--line:#C6BFAD;
 --bone:#1E272E;--muted:#5A6B75;--muted2:#7A8B95;--dw:#3A4B57;--wkd:#8A6B1A;--webg:rgba(30,39,46,.05);
 --bob:#1B6FD0;--safe:#1F7A44;--safe-bg:#D9EFDF;
 --warn:#9A6206;--warn-bg:#F6E7C8;--danger:#B03434;--danger-bg:#F6D9D9}
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--ink);color:var(--bone);font:16px/1.4 var(--mono)}
+html{scrollbar-gutter:stable}
+html,body{min-height:100vh;margin:0;background:var(--ink);color:var(--bone);font:16px/1.4 var(--mono)}
 .wrap{max-width:1280px;margin:0 auto;padding:20px 16px 48px}
 .hd{display:flex;align-items:center;justify-content:space-between;margin:0 0 12px}
 .hd .hbtns{display:flex;gap:8px}
@@ -39,6 +41,9 @@ button:hover{border-color:var(--bob)}
 .src{margin:10px 0 0;font:500 11px var(--mono);color:var(--muted2)}
 
 .plan{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;overflow-x:auto;margin-bottom:14px}
+#calbox{margin-bottom:12px}
+#plantable tr.bandgap td{padding:6px 0;background:transparent;border:none}
+#calbox .plan{background:none;border:none;border-radius:0;padding:0;margin:0;overflow-x:auto}
 .plan table{border-collapse:collapse;width:100%;min-width:1060px}
 .plan th,.plan td{padding:5px 5px;text-align:center}
 .plan .rowlab{font:600 11px var(--mono);color:var(--muted);text-align:left;padding-right:10px;
@@ -72,14 +77,50 @@ button:hover{border-color:var(--bob)}
 .gap td{padding:0;height:8px}
 .kwexp{cursor:pointer;user-select:none}
 .kwexp:hover{color:var(--bone)}
-.sub td{font:500 13px var(--mono);color:var(--muted);padding:2px 3px}
-.sub td.rowlab{padding-left:16px;font-size:10px;color:var(--muted2);white-space:normal;line-height:1.3}
+.sub td{font:500 13px var(--mono);color:var(--muted);padding:6px 3px}
+.sub td.rowlab{padding-left:24px;font-size:10px;color:var(--muted2);white-space:normal;line-height:1.35}
+.sub td.rowlab .rl2{display:block;font-size:9px;font-weight:400;opacity:.7}
+#devtable td{vertical-align:middle}
+#devtable .dgrp td{font:700 13px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.12em;padding:18px 3px 6px;border-bottom:2px solid var(--muted2)}
+.devday{font:500 10px var(--mono);color:var(--muted2);margin-left:8px}
+.info summary{min-height:36px;display:flex;align-items:center;box-sizing:border-box}
+summary.flag{display:flex;align-items:center;gap:0;width:100%}
+summary.flag::before{flex:0 0 auto}
+summary.flag .flagtxt{flex:1 1 auto;min-width:0}
+summary.flagrow2 #dellab,summary.flagrow2 #genlab{margin-left:auto}
+#devtable .gtag{width:auto;min-width:36px;padding:8px 0;font:700 12px var(--mono);border-radius:8px;line-height:1}
+#pooltog{width:auto;padding:4px 26px 4px 10px;font:600 11px var(--mono);appearance:none;-webkit-appearance:none;
+  background:transparent url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='6'><path d='M0 0h8L4 6z' fill='%238A99A2'/></svg>") no-repeat right 8px center;
+  border:1px solid var(--line);border-radius:8px;color:inherit;cursor:pointer}
+summary.flagrow2 .floorlab+.floorlab{margin-left:14px}
+#deltog{width:auto;padding:4px 10px;font:600 11px var(--mono)}
+.plan tr.ph .dtb{background-image:linear-gradient(var(--muted2),var(--muted2));background-repeat:no-repeat;background-position:0 50%;background-size:1px 55%}
+#devtable .devsm{display:block;font:500 10px var(--mono);color:var(--muted2)}
+.gtag{cursor:pointer;font:700 9px var(--mono);border:1px solid var(--line);border-radius:4px;padding:1px 5px;margin-left:7px;color:var(--muted);user-select:none}
+.gtag.g1{color:#2A8FEF;border-color:#2A8FEF}
+.gtag.g2{color:#E97BB6;border-color:#E97BB6}
+.gcell{text-align:center}
+.gtag{background:transparent}
+#devtable tr.hrow.hth-hide th{visibility:hidden}
+#devtable tr.hrow th{text-align:center}
+#devtable tr.hrow th:first-child{text-align:left}
+#devtable tr.hrow th.qr{text-align:right}
+#devtable td:nth-child(3),#devtable td:nth-child(4){text-align:center}
+#devtable .hdc{width:56px;min-width:56px;max-width:56px;box-sizing:border-box;text-align:center;font-variant-numeric:tabular-nums}
+#devadd,#devcopy,#devview,#devcol,#scnsave,#scnload,#scnapply{width:auto;font-size:13px;padding:8px 14px;margin-top:8px;margin-right:8px}
+#devtable .dsub td{font:600 11px var(--mono);color:var(--muted2);border-top:1px solid var(--deep);padding:4px 3px 10px}
+#devtable .ghide{display:none}
+#devtable .dgrp td{cursor:pointer;user-select:none}
+#devtable .dname{font:500 11px var(--mono);color:var(--muted);white-space:normal;max-width:150px}
+#devsim{font:700 9px var(--mono);color:#c9822f;margin-left:8px;letter-spacing:.06em}
 
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
 .flag{font:600 16px var(--mono);margin:0 0 8px}
 .chartbox{position:relative}
 .flagrow{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
 .flagrow .flag{margin:0}
+.flagrow.chtog{justify-content:flex-start}
+.flagrow.chtog .floorlab{margin-left:auto}
 .floorlab{display:flex;align-items:center;gap:6px;font:600 11px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:0;white-space:nowrap}
 #floor{width:64px;padding:7px 6px;font-size:14px;text-align:right}
 .chartwide{margin-bottom:14px}
@@ -89,8 +130,8 @@ button:hover{border-color:var(--bob)}
 .note{margin:0;font:500 13px var(--mono);color:var(--muted);line-height:1.55}
 .info summary{cursor:pointer;list-style:none;margin-bottom:0}
 .info summary::-webkit-details-marker{display:none}
-.info summary::before{content:"\25B8  ";color:var(--muted)}
-.info[open] summary::before{content:"\25BE  "}
+.info summary::before{content:"\25B8";color:var(--muted);margin-right:9px}
+.info[open] summary::before{content:"\25BE"}
 .info[open] summary{margin-bottom:8px}
 .qn{margin-bottom:12px}
 .qn .twrap{overflow-x:auto}
@@ -98,9 +139,10 @@ button:hover{border-color:var(--bob)}
 .qn th{font:600 11px var(--mono);color:var(--muted);text-align:left;padding:0 8px 4px 0;letter-spacing:.08em;text-transform:uppercase}
 .qn th.qr,.qn td.qr{text-align:right;white-space:nowrap;width:270px;min-width:270px}
 .qn th:last-child,.qn td:last-child{width:34px;min-width:34px}
-.qn td{padding:6px 8px 6px 0;font:600 14px var(--mono);border-bottom:1px solid var(--line)}
+.qn td{padding:6px 8px 6px 2px;font:600 14px var(--mono);border-bottom:1px solid var(--line)}
 .qn td span{display:block;font:500 11px var(--mono);color:var(--muted)}
 .qn tr:last-child td{border-bottom:none}
+#notes{width:100%;box-sizing:border-box;background:var(--panel2);color:inherit;border:1px solid var(--line);border-radius:8px;padding:10px;font:500 13px var(--mono);line-height:1.5;resize:vertical;min-height:90px}
 .qn input{width:70px;padding:7px 6px;font-size:14px;text-align:right;border-radius:6px}
 .qn tr.qtot td{border-bottom:none;color:var(--bone)}
 .qn td.ktlab{padding-left:9px}
@@ -117,7 +159,7 @@ button:hover{border-color:var(--bob)}
 .qn input.kitname:hover,.qn input.kitname:focus{background:var(--panel);border-color:var(--line)}
 .kdel{width:30px;padding:6px 0;font-size:14px;background:transparent;border-color:transparent;color:var(--muted)}
 .kdel:hover{color:var(--danger);border-color:var(--danger)}
-#kitadd,#qnadd{width:auto;font-size:13px;padding:8px 14px;margin-top:8px}
+#kitadd{width:auto;font-size:13px;padding:8px 14px;margin-top:8px}
 
 #loader{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:18px;margin:14px 0}
 #loader h2{font:700 15px var(--cond);letter-spacing:.14em;color:var(--muted);margin:0 0 10px;text-transform:uppercase}
@@ -125,6 +167,20 @@ button:hover{border-color:var(--bob)}
 #loader code{color:var(--bone)}
 #loader input[type=file]{padding:8px;font-size:13px;width:auto}
 #loader .err{color:var(--danger)}
+#daypin{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:60;display:none;
+  background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:6px 16px;
+  font:700 12px var(--mono);color:inherit;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+#daypin.on{display:block}
+.uimask{position:fixed;inset:0;background:rgba(10,14,17,.55);display:none;align-items:center;justify-content:center;z-index:999}
+.uimask.on{display:flex}
+.uibox{background:var(--panel);border:1px solid var(--line);color:var(--dw);max-width:460px;width:92%;border-radius:12px;padding:18px 20px;font:500 13px var(--mono);box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.uibox h3{margin:0 0 10px;font:700 14px var(--mono);color:var(--bone);letter-spacing:.04em}
+body.light .uibox h3{color:var(--ink)}
+.uibox .uimsg{white-space:pre-wrap;line-height:1.5;color:var(--muted)}
+.uibox input{width:100%;margin-top:12px;box-sizing:border-box}
+.uibox .uierr{font-size:11px;color:var(--danger);margin-top:6px;min-height:14px}
+.uibox .uibtns{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+.uibox .uibtns button{width:auto;padding:8px 18px}
 </style>
 </head>
 <body>
@@ -138,25 +194,42 @@ button:hover{border-color:var(--bob)}
 <div id="loader"><h2>Loading data/*.csv &hellip;</h2><p id="loadmsg">Reading the plan.</p></div>
 <div id="app" style="display:none">
 <select id="asof" style="display:none"></select>
+<details class="panel info" id="calbox" open><summary class="flag">Calendar <span class="devday" id="calday"></span></summary>
 <div class="plan" id="plan">
   <table id="plantable"></table>
-</div>
+</div></details>
 
-<div class="panel chartwide"><div class="flag" id="capflag">—</div>
-  <div class="chartbox capbox"><canvas id="capchart" role="img" aria-label="Hourly camp load vs the safe and absolute limits for the selected day"></canvas></div></div>
-<div class="panel chartwide"><div class="flagrow"><div class="flag" id="runflag">—</div>
-  <label class="floorlab">Fuel floor <input type="number" id="floor" min="0"> gal</label></div>
-  <div class="chartbox runbox"><canvas id="runchart" role="img" aria-label="Fuel on hand day by day under the plan"></canvas></div></div>
+<details class="panel info qn" id="devbox"><summary class="flag">Devices <span id="devday" class="devday"></span> <span id="devsim"></span></summary>
+<button type="button" id="devview">View: by Category &#8644;</button>
+<button type="button" id="devcol">Expand all</button>
+<div class="twrap"><table id="devtable"></table></div>
+<button type="button" id="devadd">+ Add item</button>
+<button type="button" id="devcopy">Apply this day to all days</button>
+<p class="note" id="devnote"></p></details>
 
-<details class="panel info qn"><summary class="flag">Camp draw calculator</summary>
-<div class="twrap"><table id="qntable"></table></div>
-<button type="button" id="qnadd">+ Add item</button>
-<p class="note" id="qnnote">Simulation only &mdash; nothing here changes the calendar</p></details>
+<details class="panel info qn chartwide" id="capbox2"><summary class="flag flagrow2"><span class="flagtxt" id="capflag">—</span><label class="floorlab" id="genlab">Gens <select id="pooltog"><option value="pooled">POOLED</option><option value="split">SPLIT 1&middot;2</option><option value="g1">GEN 1 ONLY</option><option value="g2">GEN 2 ONLY</option></select></label></summary>
+  <div class="chartbox capbox" id="capbody"><canvas id="capchart" role="img" aria-label="Hourly camp load vs the safe and absolute limits for the selected day"></canvas></div></details>
+<details class="panel info qn chartwide" id="runbox2"><summary class="flag flagrow2"><span class="flagtxt" id="runflag">—</span><label class="floorlab" id="dellab">Delivery <button type="button" id="deltog">AM</button></label> <label class="floorlab">Fuel floor <input type="number" id="floor" min="0"> gal</label></summary>
+  <div class="chartbox runbox" id="runbody"><canvas id="runchart" role="img" aria-label="Fuel on hand day by day under the plan"></canvas></div></details>
+
+
+
 
 <details class="panel info qn" id="kitbox"><summary class="flag">Personal items calculator</summary>
 <div class="twrap"><table id="kittable"></table></div>
 <button type="button" id="kitadd">+ Add item</button>
-<p class="note">Simulation only &mdash; nothing here changes the calendar. The plan charges every camper a flat allotment instead.</p></details>
+<p class="note">Drives the calendar: each day charges the Total-per-camper below &times; that day&rsquo;s People. Travels inside simulations and is promoted by &ldquo;Make this the official plan&rdquo;; Reset returns to committed.</p></details>
+
+<details class="panel info qn" id="notebox"><summary class="flag">Notes <span id="notecue" class="devday"></span></summary>
+<textarea id="notes" rows="6" placeholder="notes, questions, ideas are saved along with your simulation"></textarea>
+<p class="note">Saved into every simulation file so others can read and address them; cleared by Reset button (top right)</p></details>
+
+<details class="panel info qn" id="scnbox"><summary class="flag">Simulations <span id="scnname" class="devday"></span></summary>
+<button type="button" id="scnsave">Save simulation</button>
+<button type="button" id="scnload">Load simulation</button>
+<button type="button" id="scnapply">Make this the official plan&hellip;</button>
+<input type="file" id="scnfile" accept=".json,application/json" style="display:none">
+<p class="note" id="scnnote"></p></details>
 
 <div class="sum" id="sum">&mdash;</div>
 <p class="src" id="src"></p>
@@ -209,7 +282,7 @@ function parseCSV(text){
 }
 
 /* ---------- data loading: fetch data/*.csv, else local file picker ---------- */
-const FILES=['settings','devices','schedule','calendar_plan','draw_items','personal_items'];
+const FILES=['settings','devices','schedule','calendar_plan','personal_items'];
 async function fetchAll(){
   const out={};
   for(const name of FILES){
@@ -240,10 +313,10 @@ function pickerFallback(err){
 
 /* ---------- model from CSVs ---------- */
 let S={},NDAYS=14,START=null,DAY=86400000;
-let BOB=[],ALICE=[],PCW=[],CATS=[],SOUND=0,BASE=0,PP=0,ACW=0,ACHRS=0,EBK=0,BUDG=0,KPG=6.5,IDLE2=0,QCAP=3.7,WARNM=15;
+let BOOTED=false,LASTDEVDAY=-1,RAWD=null,DEVFP='',NOTES='',DELTIME='am',GENMODE='pooled',PGEN='1',BOB=[],ALICE=[],PCW=[],CATS=[],DEVSEED=[],DEVC=[],DEVD=[],DER=[],SOUND=0,BASE=0,PP=0,ACW=0,ACHRS=0,EBK=0,BUDG=0,KPG=6.5,IDLE2=0,QCAP=3.7,WARNM=15;
 let aliceRef=1,fansKw=0,bobKw=9,aliceKw=9,DERATE=.88,CEIL=.8;
-let SEEDPLAN=null,SEEDFUEL=null,DTYPE=[],QNSEED=[],KITSEED=[];
-let PLAN=null,FUEL=null,FLOOR=5,QNC=null,KITC=null,EXP=false,cap,run,NDEV=0;
+let SEEDPLAN=null,SEEDFUEL=null,DTYPE=[],KITSEED=[];
+let PLAN=null,FUEL=null,FLOOR=5,KITC=null,EXP=false,cap,run,NDEV=0;
 
 function buildModel(D){
   D.settings.forEach(r=>{S[r.key]=(r.value!==''&&!isNaN(+r.value))?+r.value:r.value;});
@@ -256,22 +329,20 @@ function buildModel(D){
   bobKw=S.gen_bob_watts/1000;aliceKw=S.gen_alice_watts/1000;
   PCW=[...Array(24).keys()].map(j=>j>=12&&j<=19?S.camper_w_evening:(j>=2&&j<=11?S.camper_w_day:S.camper_w_night));
 
-  const dev=D.devices.map(r=>({n:r.device,area:r.area,cat:r.category,bus:r.bus,
-    tot:(+r.qty||0)*(+r.running_w_each||0)}));
-  NDEV=dev.length;
-  const sch={};D.schedule.forEach(r=>{sch[r.device]=HOURS.map(h=>+r['h_'+h]||0);});
-  const lower=t=>dev.find(d=>d.n.toLowerCase().includes(t));
-  const acD=lower('air condition'),fanD=lower('fan'),ebD=lower('e-bike charging');
-  const coolSet=new Set([acD,fanD,ebD].filter(Boolean).map(d=>d.n));
-  const full=Array(24).fill(0),cool=Array(24).fill(0);
-  dev.forEach(d=>{const du=sch[d.n];if(!du)return;
-    for(let j=0;j<24;j++){const kw=d.tot*du[j]/1000;full[j]+=kw;if(coolSet.has(d.n))cool[j]+=kw;}});
-  BOB=full.map((x,j)=>+(x-cool[j]).toFixed(3));
-  ALICE=cool.map(x=>+x.toFixed(3));
-  aliceRef=Math.max(...ALICE)||1;
-  fansKw=fanD?fanD.tot/1000:0;
-  SOUND=+dev.filter(d=>d.cat==='Sound').reduce((a,d)=>a+(sch[d.n]||[]).reduce((s,x)=>s+d.tot*x/1000,0),0).toFixed(3);
-  const kwhOf=names=>+dev.filter(d=>names.has(d.n)).reduce((a,d)=>a+(sch[d.n]||[]).reduce((s,x)=>s+d.tot*x/1000,0),0).toFixed(3);
+  DEVSEED=D.devices.map(r=>{const s=D.schedule.find(x=>x.device===r.device);
+    let q=+r.qty||0,w=+r.running_w_each||0;
+    if(/e-bike charging/i.test(r.device)&&q===1&&w>500){q=10;w=Math.round(w/10);}
+    return {n:r.device,area:r.area,cat:r.category,bus:r.bus,pr:r.priority,q,w,
+      gen:(r.gen==='1'||r.gen==='2')?r.gen:(r.gen==='A'?'2':(r.gen==='B'?'1':autoGen(r.device))),
+      du:HOURS.map(hh=>s?(+s['h_'+hh]||0):0)};});
+  const dfp=JSON.stringify(DEVSEED),nd_=D.calendar_plan.length;
+  DEVFP=dfp;RAWD=D.devices;
+  const ldv=(load('cavecsv_dev_fp')===dfp)?load('cavecsv_dev'):null;
+  DEVD=(Array.isArray(ldv)&&ldv.length===nd_&&ldv.every(dd=>Array.isArray(dd)&&dd.length>=DEVSEED.length))
+    ?ldv:Array.from({length:nd_},()=>structuredClone(DEVSEED));
+  DEVC=DEVD[0];
+  store('cavecsv_dev_fp',dfp);
+  wireDevices();
 
   DTYPE=D.calendar_plan.map(r=>r.day_type);
   SEEDPLAN={p:D.calendar_plan.map(r=>+r.people||0),
@@ -280,17 +351,73 @@ function buildModel(D){
             s:D.calendar_plan.map(r=>+r.sound_on||0),
             g:D.calendar_plan.map(r=>+r.generators||1)};
   SEEDFUEL={del:D.calendar_plan.map(r=>+r.delivered_gal||0)};
-  QNSEED=D.draw_items.map(r=>({n:r.item,c:+r.count||0,u:+r.kwh_per_day_each||0}));
   KITSEED=D.personal_items.map(r=>({n:r.item,w:+r.watts||0,
     hs:HOURS.map((h,j)=>+r['h_'+h]?j:-1).filter(j=>j>=0)}));
+}
+
+const SRCSET=new Set(['The Source Computer','The Source Projector','Object motor','DMX Controller']);
+function groupOf(d){
+  if(d.bus==='Battery')return 'Critical';
+  if(SRCSET.has(d.n))return 'The Source';
+  if(/air condition/i.test(d.n))return 'ACs';
+  if(/e-bike charging/i.test(d.n))return 'E-bikes';
+  if(d.cat==='Sound')return 'Sound';
+  return 'Camp lights & misc';
+}
+const autoGen=n=>/air condition|fan|e-bike charging/i.test(n)?'2':'1';
+const ensureGen=rows=>{rows.forEach(r=>{if(r.gen==='A')r.gen='2';else if(r.gen==='B')r.gen='1';else if(r.gen!=='1'&&r.gen!=='2')r.gen=autoGen(r.n);});return rows;};
+function wireDay(rows){
+  const dev=rows.map(r=>({...r,tot:r.q*r.w}));
+  const lower=t=>dev.find(d=>d.n.toLowerCase().includes(t));
+  const acD=lower('air condition'),fanD=lower('fan'),ebD=lower('e-bike charging');
+  const full=Array(24).fill(0),cool=Array(24).fill(0);
+  dev.forEach(d=>{for(let j=0;j<24;j++){const kw=d.tot*d.du[j]/1000;full[j]+=kw;if(d.gen==='2')cool[j]+=kw;}});
+  const B=full.map((x,j)=>+(x-cool[j]).toFixed(3)),A=cool.map(x=>+x.toFixed(3));
+  const dayK=d=>d.tot*d.du.reduce((a,x)=>a+x,0)/1000;
+  const SN=+dev.filter(d=>d.cat==='Sound').reduce((a,d)=>a+dayK(d),0).toFixed(3);
+  const kwhOf=names=>+dev.filter(d=>names.has(d.n)).reduce((a,d)=>a+dayK(d),0).toFixed(3);
+  const CRITK=+dev.filter(d=>d.bus==='Battery').reduce((a,d)=>a+dayK(d),0).toFixed(3);
+  const SRCK=kwhOf(SRCSET);
+  const AC1=acD?+(dayK(acD)/(acD.q||1)).toFixed(3):0;
+  const EBT=ebD?+dayK(ebD).toFixed(3):0;
+  const POOLK=+dev.filter(d=>d.bus==='Pool').reduce((a,d)=>a+dayK(d),0).toFixed(3);
+  return {BOB:B,ALICE:A,aliceRef:Math.max(...A)||1,fansKw:(fanD&&fanD.gen==='2')?fanD.tot/1000:0,acInB:!!(acD&&acD.gen==='2'),
+    ACW:acD&&acD.w?acD.w/1000:S.ac_unit_kwh_per_hour,SOUND:SN,CRITK,SRCK,AC1,EBT,
+    LMISCK:+(POOLK-SN-SRCK-(acD?dayK(acD):0)-(ebD?dayK(ebD):0)).toFixed(3)};
+}
+function syncACFromPlan(){
+  if(!PLAN||!DEVD.length)return;
+  let ch=false;
+  DEVD.forEach((rows,i)=>{
+    const a=rows.find(x=>/air condition/i.test(x.n));
+    if(a&&a.q!==PLAN.a[i]){a.q=PLAN.a[i];ch=true;}
+    const e=rows.find(x=>/e-bike charging/i.test(x.n));
+    if(e&&e.q!==PLAN.e[i]){e.q=PLAN.e[i];ch=true;}
+  });
+  if(ch){store('cavecsv_dev',DEVD);wireDevices();}
+  if(DEVC&&PLAN){
+    [['air condition','a'],['e-bike charging','e']].forEach(pk=>{
+      const idx=DEVC.findIndex(x=>new RegExp(pk[0],'i').test(x.n));
+      if(idx>=0){const qi=document.querySelector('#devtable input[data-f="q"][data-vr="'+idx+'"]');
+        if(qi)qi.value=PLAN[pk[1]][ASOF()];}
+    });
+  }
+  devPaint();
+}
+function wireDevices(){
+  DER=DEVD.map(wireDay);
+  const d0=DER[0]||wireDay(DEVSEED);
+  NDEV=(DEVD[0]||DEVSEED).length;
+  BOB=d0.BOB;ALICE=d0.ALICE;aliceRef=d0.aliceRef;fansKw=d0.fansKw;ACW=d0.ACW;SOUND=d0.SOUND;
   CATS=[
-   ['Kitchen',i=>BASE*cf(i)],
-   ['Music',i=>SOUND*PLAN.s[i]*cf(i)],
-   ['ACs',i=>ACW*ACHRS*PLAN.a[i]],
-   ['Campers · '+BUDG+' kWh budget each',i=>BUDG*PLAN.p[i]],
-   ['Shared · Source, lights, misc',i=>PP*PLAN.p[i]*cf(i)],
-   ['E-bikes',i=>EBK*PLAN.e[i]]];
-  window.__CAVE={S,BOB,ALICE,SOUND,aliceRef,fansKw,full,cool};
+   ['Critical',i=>DER[i].CRITK],
+   ['Sound',i=>DER[i].SOUND*PLAN.s[i]*cf(i)],
+   ['The Source',i=>DER[i].SRCK*cf(i)],
+   ['Camp lights &amp; misc<span class="rl2">(fans, charging, coffee)</span>',i=>DER[i].LMISCK*cf(i)],
+   ['ACs',i=>DER[i].AC1*PLAN.a[i]],
+   ['E-bikes',i=>DER[i].EBT],
+   ['Personal items<span class="rl2" id="pplab">('+f(PP,2)+' kWh/camper \u00b7 from calculator)</span>',i=>PP*PLAN.p[i]]];
+  window.__CAVE={S,DER,DEVD,SOUND,CRITK:d0.CRITK,SRCK:d0.SRCK,LMISCK:d0.LMISCK,AC1:d0.AC1,EBT:d0.EBT};
 }
 
 const redFor=g=>(+g===1?bobKw:bobKw+aliceKw)*DERATE*CEIL;
@@ -302,7 +429,7 @@ const store=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}};
 const save=()=>{store('cavecsv_plan',PLAN);store('cavecsv_fuel',FUEL);store('cavecsv_kit',KITC);};
 const okPlan=p=>p&&['p','a','e','s','g'].every(k=>Array.isArray(p[k])&&p[k].length===NDAYS);
 
-const kwhDay=i=>BASE*cf(i)+PP*PLAN.p[i]*cf(i)+ACW*ACHRS*PLAN.a[i]+SOUND*PLAN.s[i]*cf(i)+BUDG*PLAN.p[i]+EBK*PLAN.e[i];
+const kwhDay=i=>CATS.reduce((a,c)=>a+c[1](i),0);
 const burn=i=>kwhDay(i)/KPG+(PLAN.g[i]===2?IDLE2:0);
 const dLab=i=>new Date(START.getTime()+i*DAY).toLocaleDateString('en-US',{month:'numeric',day:'numeric'});
 const dName=i=>new Date(START.getTime()+i*DAY).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
@@ -311,17 +438,57 @@ const isWE=i=>{const w=wd3(i);return w==='SAT'||w==='SUN';};
 const arriveGal=i=>FUEL.del[i]||0;
 function autoMorning(i){let pool=0;for(let j=0;j<=i;j++){pool+=arriveGal(j);if(j<i)pool-=burn(j);}return pool;}
 const endFuel=i=>autoMorning(i)-burn(i);
+const startFuel=i=>(DELTIME==='pm'&&i>0)?autoMorning(i)-arriveGal(i):autoMorning(i);
 
-function curvesFor(i){
-  const p=PLAN.p[i],a=PLAN.a[i],s=PLAN.s[i],c=cf(i);
-  const scaleA=(a*ACW+(p>0?fansKw:0))/aliceRef;
-  const bobBase=s?BOB:BOB.map((x,j)=>j>=12||j<3?Math.min(x,QCAP):x);
-  const camp=bobBase.map((x,j)=>+((x*c)+ALICE[j]*scaleA+p*PCW[j]/1000).toFixed(2));
-  return[{label:'Camp load',data:camp,color:'#2A8FEF'}];
+function scaleAFor(i){
+  const D8=DER[i],p=PLAN.p[i],a=PLAN.a[i];
+  return D8.acInB?((a*D8.ACW+(p>0?D8.fansKw:0))/D8.aliceRef):1;
 }
-const dayPeak=i=>Math.max(...curvesFor(i)[0].data);
+let POOLPAT=null;
+function poolPattern(){
+  if(POOLPAT)return POOLPAT;
+  try{
+    const cv=document.createElement('canvas');cv.width=cv.height=12;
+    const cx=cv.getContext('2d');
+    if(!cx)return POOLPAT='#8985D3';
+    cx.fillStyle='#2A8FEF';cx.fillRect(0,0,12,12);
+    cx.strokeStyle='#E97BB6';cx.lineWidth=5;
+    cx.beginPath();cx.moveTo(-4,8);cx.lineTo(8,-4);cx.moveTo(0,16);cx.lineTo(16,0);cx.moveTo(8,20);cx.lineTo(20,8);cx.stroke();
+    POOLPAT=cx.createPattern(cv,'repeat')||'#8985D3';
+  }catch(e){POOLPAT='#8985D3';}
+  return POOLPAT;
+}
+function curvesFor(i){
+  const D8=DER[i],p=PLAN.p[i],s=PLAN.s[i],c=cf(i);
+  const scaleA=scaleAFor(i);
+  const bobBase=s?D8.BOB:D8.BOB.map((x,j)=>j>=12||j<3?Math.min(x,QCAP):x);
+  const camp=bobBase.map((x,j)=>+((x*c)+D8.ALICE[j]*scaleA+p*PCW[j]/1000).toFixed(2));
+  return[{label:'Camp load \u00b7 pooled 1+2',data:camp,color:poolPattern()}];
+}
+function curvesAB(i){
+  const D8=DER[i],p=PLAN.p[i],s=PLAN.s[i],c=cf(i);
+  const scaleA=scaleAFor(i);
+  const bobBase=s?D8.BOB:D8.BOB.map((x,j)=>j>=12||j<3?Math.min(x,QCAP):x);
+  const camper=j=>p*PCW[j]/1000;
+  const g1=bobBase.map((x,j)=>+((x*c)+(PGEN==='1'?camper(j):0)).toFixed(2));
+  const g2=D8.ALICE.map((x,j)=>+((x*scaleA)+(PGEN==='2'?camper(j):0)).toFixed(2));
+  return[{label:'Gen 1',data:g1,color:'#2A8FEF'},
+         {label:'Gen 2',data:g2,color:'#E97BB6'}];
+}
+const splitOn=i=>GENMODE==='split'&&PLAN.g[i]>=2;
+const soloGen=()=>GENMODE==='g1'?0:(GENMODE==='g2'?1:-1);
+function peakInfo(i){
+  const sg=soloGen();
+  if(sg>=0){const cs=curvesAB(i);
+    return{pk:Math.max(...cs[sg].data),R:redFor(1),H:hardFor(1)};}
+  if(!splitOn(i)){const pk=Math.max(...curvesFor(i)[0].data);
+    return{pk,R:redFor(PLAN.g[i]),H:hardFor(PLAN.g[i])};}
+  const cs=curvesAB(i);
+  return{pk:Math.max(...cs[0].data,...cs[1].data),R:redFor(1),H:hardFor(1)};
+}
+const dayPeak=i=>peakInfo(i).pk;
 function dayState(i){
-  const R=redFor(PLAN.g[i]),H=hardFor(PLAN.g[i]),pk=dayPeak(i);
+  const {pk,R,H}=peakInfo(i);
   const pow=pk>=H?2:pk>R?1:0;
   const fe=endFuel(i);
   const fu=fe<=FLOOR?2:fe<=FLOOR+WARNM?1:0;
@@ -341,7 +508,7 @@ function phaseRow(){
   while(i<NDAYS){
     let j=i;while(j<NDAYS&&DTYPE[j]===DTYPE[i])j++;
     const[t,cls]=lab(DTYPE[i]);
-    h+='<td colspan="'+(j-i)+'" class="'+cls+'">'+t+'</td>';i=j;
+    h+='<td colspan="'+(j-i)+'" class="'+cls+(i>0?' dtb':'')+'">'+t+'</td>';i=j;
   }
   return h+'</tr>';
 }
@@ -359,13 +526,11 @@ function buildPlan(){
   const row=(labl,key,max)=>{let r='<tr><td class="rowlab">'+labl+'</td>';
     for(let i=0;i<NDAYS;i++)r+='<td class="'+cc(i).trim()+'"><input data-k="'+key+'" data-i="'+i+'" type="number" min="0" max="'+max+'" value="'+PLAN[key][i]+'"></td>';
     return r+'</tr>';};
-  h+=row('People','p',60)+row('ACs','a',10)+row('E-bikes','e',20);
+  h+=row('People','p',60)+row('ACs','a',99)+row('E-bikes','e',20);
   h+='<tr><td class="rowlab">Sound</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'"><button type="button" class="snd '+(PLAN.s[i]?'snd-on':'snd-off')+'" data-i="'+i+'">'+(PLAN.s[i]?'ON':'OFF')+'</button></td>';
   h+='</tr><tr><td class="rowlab">Gens</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'"><button type="button" class="snd gen '+(PLAN.g[i]===2?'snd-on':'snd-off')+'" data-g="'+i+'">'+PLAN.g[i]+'</button></td>';
-  h+='</tr><tr><td class="rowlab">Delivered · gal</td>';
-  for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'"><input data-del="'+i+'" type="number" min="0" value="'+(FUEL.del[i]||0)+'"></td>';
   h+='</tr>';
   h+='<tr class="gap"><td colspan="'+(NDAYS+1)+'"></td></tr>';
   h+='<tr class="band kwrow"><td class="rowlab">Peak kW</td>';
@@ -376,6 +541,13 @@ function buildPlan(){
   if(EXP)CATS.forEach((c,ci)=>{h+='<tr class="band sub"><td class="rowlab">'+c[0]+'</td>';
     for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'" data-cat="'+ci+'-'+i+'"></td>';
     h+='</tr>';});
+  h+='<tr class="bandgap"><td colspan="'+(NDAYS+1)+'"></td></tr>';
+  h+='<tr class="band kwrow"><td class="rowlab">Delivered · gal</td>';
+  for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'"><input data-del="'+i+'" type="number" min="0" value="'+(FUEL.del[i]||0)+'"></td>';
+  h+='</tr>';
+  h+='<tr class="band kwrow"><td class="rowlab">Start of day · gal</td>';
+  for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'" data-sod="'+i+'"></td>';
+  h+='</tr>';
   h+='<tr class="band kwrow"><td class="rowlab">Fuel spent · gal</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'" data-fs="'+i+'"></td>';
   h+='</tr>';
@@ -386,17 +558,19 @@ function buildPlan(){
   $('kwexp').addEventListener('click',()=>{EXP=!EXP;refresh(true);});
   T.querySelectorAll('input[data-k]').forEach(el=>{
     el.addEventListener('focus',()=>{el.dataset.pv=PLAN[el.dataset.k][+el.dataset.i];});
-    el.addEventListener('input',()=>{PLAN[el.dataset.k][+el.dataset.i]=+el.value||0;save();refresh(false);});
+    el.addEventListener('input',()=>{PLAN[el.dataset.k][+el.dataset.i]=+el.value||0;if(el.dataset.k==='a'||el.dataset.k==='e')syncACFromPlan();if(el.dataset.k==='p')devPaint();save();refresh(false);});
     el.addEventListener('change',()=>{
       const k=el.dataset.k,i=+el.dataset.i,nv=+el.value||0,d=nv-(+el.dataset.pv||0);
       el.dataset.pv=nv;
       if(d===0)return;
-      const hi=k==='a'?10:(k==='e'?20:60);
+      const hi=k==='a'?99:(k==='e'?20:60);
       for(let j=i+1;j<NDAYS;j++){
         PLAN[k][j]=Math.max(0,Math.min(hi,PLAN[k][j]+d));
         const inp=T.querySelector('input[data-k="'+k+'"][data-i="'+j+'"]');
         if(inp)inp.value=PLAN[k][j];
       }
+      if(k==='a'||k==='e')syncACFromPlan();
+      if(k==='p')devPaint();
       save();refresh(false);
     });
   });
@@ -423,16 +597,19 @@ function updateDayCells(){
   for(let i=0;i<NDAYS;i++){
     const kEl=document.querySelector('[data-kwh="'+i+'"]');if(!kEl)return;
     kEl.textContent=f(kwhDay(i),0);
+    const sEl=document.querySelector('[data-sod="'+i+'"]');
+    if(sEl)sEl.textContent=f(startFuel(i),0);
     document.querySelector('[data-fs="'+i+'"]').textContent=f(burn(i),1);
     const st=dayState(i),pk=dayPeak(i),[txt,cls]=chipFor(st);
     const pEl=document.querySelector('[data-pk="'+i+'"]');
     pEl.textContent=f(pk,1);pEl.className='pk pk-'+(st.pow===2?'over':st.pow===1?'warn':'ok');
     const fe=endFuel(i);
     const fEl=document.querySelector('[data-fl="'+i+'"]');
-    fEl.textContent=f(fe,0);fEl.className='fl pk-'+(st.fu===2?'over':st.fu===1?'warn':'ok');
+    fEl.textContent=f(fe,1);fEl.className='fl pk-'+(st.fu===2?'over':st.fu===1?'warn':'ok');
     const vEl=document.querySelector('[data-v="'+i+'"]');
     vEl.textContent=txt;vEl.className='vc vc-'+cls;
     if(EXP)CATS.forEach((c,ci)=>{document.querySelector('[data-cat="'+ci+'-'+i+'"]').textContent=f(c[1](i),0);});
+    if(i===0){const pl=document.getElementById('pplab');if(pl)pl.textContent='('+f(PP,2)+' kWh/camper \u00b7 from calculator)';}
   }
 }
 
@@ -457,30 +634,56 @@ function refresh(rebuild){
   updateDayCells();
   updateSummary();
   const asof=+$('asof').value;
+  if(asof!==LASTDEVDAY){LASTDEVDAY=asof;buildDev();devPaint();}
+  {const dp=$('daypin');if(dp)dp.textContent=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date(START.getTime()+asof*DAY).getDay()]+' '+dLab(asof)+' selected';}
+  {const cd=$('calday');if(cd)cd.textContent='\u00b7 '+['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date(START.getTime()+asof*DAY).getDay()]+' '+dLab(asof)+' selected';}
 
-  const RED=redFor(PLAN.g[asof]),HARD=hardFor(PLAN.g[asof]);
-  const d0=curvesFor(asof),arr=d0[0].data,peak=Math.max(...arr);
+  const SPL=splitOn(asof),SG=soloGen();
+  const RED=(SPL||SG>=0)?redFor(1):redFor(PLAN.g[asof]),HARD=(SPL||SG>=0)?hardFor(1):hardFor(PLAN.g[asof]);
+  const d0=SG>=0?[{...curvesAB(asof)[SG],label:'Gen '+(SG+1)+' \u00b7 only'}]:(SPL?curvesAB(asof):curvesFor(asof));
+  const peaks=d0.map(c=>Math.max(...c.data));
+  const peak=Math.max(...peaks);
+  const wi=peaks.indexOf(peak),arr=d0[wi].data;
   const pkI=arr.reduce((m,v,ix)=>v>arr[m]?ix:m,0),pkH=HOURS[pkI];
-  const drv=(ALICE[pkI]>0&&PLAN.a[asof]>0)
-    ?'ACs are on then — turn some off'
-    :(PLAN.s[asof]
-      ?'that is the evening camp with music on — switch Sound off that night or run both generators'
-      :'that is the camp base load — run both generators');
   let capState=peak>=HARD?'danger':peak>RED?'warn':'safe';
-  const capMsg=(capState==='danger'?'Power · '+dName(asof)+' · over the absolute limit — this trips the breaker · peak '+f(peak,1)+' kW at '+pkH+' vs '+f(HARD,1)+' kW absolute · '+drv
-    :capState==='warn'?'Power · '+dName(asof)+' · over the safe line, under the absolute limit · peak '+f(peak,1)+' kW at '+pkH+' (safe '+f(RED,1)+' · absolute '+f(HARD,1)+') · no room for surges · '+drv
+  const capMsg=SG>=0
+    ?('Power · '+dName(asof)+' · Gen '+(SG+1)+' only (other engine off) · '
+      +(capState==='danger'?'over the absolute limit — trips the breaker · peak '+f(peak,1)+' kW at '+pkH+' vs '+f(HARD,1)+' kW'
+       :capState==='warn'?'over the safe line at '+pkH+' · peak '+f(peak,1)+' (safe '+f(RED,1)+' · absolute '+f(HARD,1)+')'
+       :'peak '+f(peak,1)+' of safe '+f(RED,1)+' kW · '+f(RED-peak,1)+' kW to spare'))
+    :SPL
+    ?('Power · '+dName(asof)+' · split · Gen 1 peak '+f(peaks[0],1)+' · Gen 2 peak '+f(peaks[1],1)+' of safe '+f(RED,1)+' kW each'
+      +(capState==='danger'?' · Gen '+(wi?'2':'1')+' over the absolute limit — trips its breaker'
+       :capState==='warn'?' · Gen '+(wi?'2':'1')+' over the safe line at '+pkH
+       :' · tightest Gen '+(wi?'2':'1')+' · '+f(RED-peak,1)+' kW to spare'))
+    :(capState==='danger'?'Power · '+dName(asof)+' · over the absolute limit — this trips the breaker · peak '+f(peak,1)+' kW at '+pkH+' vs '+f(HARD,1)+' kW absolute'
+    :capState==='warn'?'Power · '+dName(asof)+' · over the safe line, under the absolute limit · peak '+f(peak,1)+' kW at '+pkH+' (safe '+f(RED,1)+' · absolute '+f(HARD,1)+') · no room for surges'
     :'Power · '+dName(asof)+' · peak '+f(peak,1)+' of safe '+f(RED,1)+' kW · '+f(RED-peak,1)+' kW to spare');
   $('capflag').textContent=capMsg;
   $('capflag').style.color=`var(--${capState==='safe'?'safe':capState})`;
 
-  let pool=autoMorning(asof);
+  let pool=(DELTIME==='pm'&&asof>0)?autoMorning(asof)-arriveGal(asof):autoMorning(asof);
   let dry=null,minLvl=1e9,minDay=asof;
   const pts=[];
   for(let i=asof;i<NDAYS;i++){
-    if(i>asof)pool+=arriveGal(i);
-    pts.push({x:i,y:+pool.toFixed(1)});
-    pool-=burn(i);
-    pts.push({x:i+1,y:+pool.toFixed(1)});
+    const del=arriveGal(i);
+    if(DELTIME==='pm'&&i>0){
+      if(i>asof)/* pool already ended yesterday without today's delivery */;
+      pts.push({x:i,y:+pool.toFixed(1)});
+      pool-=burn(i)/2;
+      pts.push({x:i+0.5,y:+pool.toFixed(1)});
+      if(pool<minLvl){minLvl=pool;minDay=i;}
+      if(pool<=FLOOR&&dry===null)dry=i;
+      pool+=del;
+      if(del)pts.push({x:i+0.5,y:+pool.toFixed(1)});
+      pool-=burn(i)/2;
+      pts.push({x:i+1,y:+pool.toFixed(1)});
+    }else{
+      if(i>asof)pool+=del;
+      pts.push({x:i,y:+pool.toFixed(1)});
+      pool-=burn(i);
+      pts.push({x:i+1,y:+pool.toFixed(1)});
+    }
     if(pool<minLvl){minLvl=pool;minDay=i;}
     if(pool<=FLOOR&&dry===null)dry=i;
   }
@@ -505,14 +708,22 @@ function refresh(rebuild){
   const tick={color:t.tick,font:{family:FONT,size:11}};
   const YMAX=Math.ceil(HARD+1);
   const capData={labels:HOURS,datasets:[
-    ...d0.map(c=>({label:c.label,data:c.data,type:'bar',
-      backgroundColor:c.data.map(v=>v>=HARD?'#F26060':v>RED?'#FFA733':'#2A8FEF'),borderWidth:0})),
-    {label:'Max safe load',data:HOURS.map(_=>RED),type:'line',borderColor:'#FFA733',borderDash:[6,4],borderWidth:2,pointRadius:0},
-    {label:'Absolute limit',data:HOURS.map(_=>HARD),type:'line',borderColor:'#F26060',borderWidth:3,pointRadius:0}]};
+    ...d0.flatMap(c=>[
+      {label:c.label,type:'bar',stack:c.label,borderWidth:0,backgroundColor:c.color||'#2A8FEF',data:c.data.map(v=>+Math.min(v,RED).toFixed(2))},
+      {label:'_w '+c.label,type:'bar',stack:c.label,borderWidth:0,backgroundColor:'#FFA733',data:c.data.map(v=>+Math.max(0,Math.min(v,HARD)-RED).toFixed(2))},
+      {label:'_o '+c.label,type:'bar',stack:c.label,borderWidth:0,backgroundColor:'#F26060',data:c.data.map(v=>+Math.max(0,v-HARD).toFixed(2))}]),
+    {label:(SPL||SG>=0)?'Safe per generator':'Max safe load',data:HOURS.map(_=>RED),type:'line',stack:'_ls',borderColor:'#FFA733',borderDash:[6,4],borderWidth:2,pointRadius:0},
+    {label:(SPL||SG>=0)?'Absolute per generator':'Absolute limit',data:HOURS.map(_=>HARD),type:'line',stack:'_la',borderColor:'#F26060',borderWidth:3,pointRadius:0}]};
   if(cap){cap.options.scales.y.max=YMAX;cap.data=capData;cap.update('none');}
   else cap=new Chart($('capchart'),{data:capData,options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{labels:{color:t.leg,font:{family:FONT,size:11},boxWidth:10}}},
-    scales:{x:{ticks:tick,grid:{display:false}},y:{min:0,max:YMAX,ticks:tick,grid:{color:t.grid}}}}});
+    plugins:{legend:{labels:{color:t.leg,font:{family:FONT,size:11},boxWidth:10,filter:li=>!li.text.startsWith('_')}},
+      tooltip:{filter:it=>!(it.dataset.label||'').startsWith('_'),
+        callbacks:{label:c=>{
+          if(c.dataset.type!=='bar')return c.dataset.label+': '+c.formattedValue+' kW';
+          const st=c.dataset.stack;
+          const tot=c.chart.data.datasets.filter(d=>d.type==='bar'&&d.stack===st).reduce((a,d)=>a+(+d.data[c.dataIndex]||0),0);
+          return c.dataset.label+': '+f(tot,2)+' kW';}}}},
+    scales:{x:{stacked:true,ticks:tick,grid:{display:false}},y:{stacked:true,min:0,max:YMAX,ticks:tick,grid:{color:t.grid}}}}});
   const runData={datasets:[
     {label:'Fuel on hand',data:L,borderColor:t.fuel,backgroundColor:t.fuelFill,fill:'origin',borderWidth:2.5,pointRadius:0,cubicInterpolationMode:'monotone',
      segment:{borderColor:c=>(c.p0.parsed.y+c.p1.parsed.y)/2<FLOOR?'#F26060':t.fuel}},
@@ -528,6 +739,7 @@ const SUNI='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="
 const MOONI='<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 9 0 0 0 9.8 9.8z"/></svg>';
 function applyTheme(mode){
   document.body.classList.toggle('light',mode==='light');
+  document.documentElement.classList.toggle('light',mode==='light');
   $('themebtn').innerHTML=mode==='light'?MOONI:SUNI;
   store('cave_theme',mode);
   if(cap){cap.destroy();cap=null;}
@@ -535,37 +747,6 @@ function applyTheme(mode){
   if(PLAN)refresh(false);
 }
 
-/* ---------- camp draw calculator ---------- */
-function buildQn(){
-  const T=$('qntable');
-  let h='<tr><th>Item</th><th>How many</th><th>kWh per day each</th><th class="qr">Totals</th><th></th></tr>';
-  QNC.forEach((r,i)=>{
-    h+='<tr><td><input class="kitname" data-qr="'+i+'" data-f="n" type="text" value="'+r.n.replace(/"/g,'&quot;')+'" title="'+r.n.replace(/"/g,'&quot;')+'"></td>'
-      +'<td><input data-qr="'+i+'" data-f="c" type="number" min="0" value="'+r.c+'"></td>'
-      +'<td><input data-qr="'+i+'" data-f="u" type="number" min="0" step="0.1" value="'+r.u+'"></td>'
-      +'<td class="qr" id="qn'+i+'">—</td>'
-      +'<td><button type="button" class="kdel" data-dq="'+i+'" title="Delete item">×</button></td></tr>';
-  });
-  T.innerHTML=h;
-  T.querySelectorAll('input').forEach(el=>el.addEventListener('input',()=>{
-    const r=+el.dataset.qr,fld=el.dataset.f;
-    QNC[r][fld]=fld==='n'?el.value:(+el.value||0);
-    if(fld==='n')el.title=el.value;
-    qnCalc();
-  }));
-  T.querySelectorAll('.kdel').forEach(el=>el.addEventListener('click',()=>{
-    QNC.splice(+el.dataset.dq,1);
-    buildQn();qnCalc();
-  }));
-}
-function qnCalc(){
-  QNC.forEach((r,i)=>{
-    const k=r.c*r.u;
-    $('qn'+i).innerHTML=f(k,1)+' kWh/day · '+f(k/KPG,2)+' gal/day'
-      +'<span>'+f(k*NDAYS,0)+' kWh · '+f(k*NDAYS/KPG,1)+' gal · whole event</span>';
-  });
-  store('cavecsv_qn',QNC);
-}
 
 /* ---------- personal items calculator ---------- */
 function buildKit(){
@@ -584,6 +765,21 @@ function buildKit(){
   });
   h+='<tr class="qtot"><td class="ktlab">Total per camper</td><td></td><td></td><td></td><td class="qr" id="ktT">—</td><td></td></tr>';
   T.innerHTML=h;
+  T.querySelectorAll('.gtag.pgt').forEach(el=>el.addEventListener('click',()=>{
+    PGEN=PGEN==='2'?'1':'2';
+    store('cavecsv_pgen',PGEN);
+    el.textContent=PGEN;el.className='gtag pgt g'+PGEN;
+    refresh(false);
+  }));
+  T.querySelectorAll('.gtag[data-gt]').forEach(el=>el.addEventListener('click',()=>{
+    const i=+el.dataset.gt,nm=DEVC[i]&&DEVC[i].n;
+    if(nm==null)return;
+    const nv=(DEVC[i].gen==='2')?'1':'2';
+    DEVD.forEach(rows=>{const r=rows[i];if(r&&r.n===nm)r.gen=nv;});
+    store('cavecsv_dev',DEVD);
+    el.textContent=nv;el.className='gtag g'+nv;
+    devCalc();
+  }));
   T.querySelectorAll('input').forEach(el=>el.addEventListener('input',()=>{
     const r=+el.dataset.kr,fld=el.dataset.f;
     KITC[r][fld]=fld==='n'?el.value:(+el.value||0);
@@ -604,6 +800,7 @@ function buildKit(){
 }
 function kitCalc(){
   let tk=0;
+  PCW=[...Array(24).keys()].map(j=>KITC.reduce((a,r)=>a+(r.hs.includes(j)?(+r.w||0):0),0));
   KITC.forEach((r,i)=>{
     $('hd'+i).textContent=r.hs.length;
     const kw=r.w*r.hs.length/1000;tk+=kw;
@@ -612,7 +809,304 @@ function kitCalc(){
   });
   $('ktT').innerHTML=f(tk,2)+' kWh/day · '+f(tk/KPG,2)+' gal/day'
     +'<span>'+f(tk*NDAYS,1)+' kWh · '+f(tk*NDAYS/KPG,1)+' gal · whole event</span>';
-  save();if(PLAN)refresh(false);
+  PP=tk;
+  const pl=document.getElementById('pplab');
+  if(pl)pl.textContent='('+f(PP,2)+' kWh/camper \u00b7 from calculator)';
+  if(BOOTED)devPaint();
+  save();if(PLAN&&BOOTED)refresh(false);
+}
+
+/* ---------- devices panel: whiteboard over devices.csv + schedule.csv ---------- */
+const DGROUPS=['Critical','Sound','The Source','Camp lights & misc','ACs','E-bikes'];
+const ASOF=()=>Math.min(NDAYS-1,Math.max(0,+$('asof').value||0));
+let DEVVIEW=load('cavecsv_devview')||'category';
+let DEVGRP=[];
+function groupsFor(view){
+  if(view==='area'){
+    const order=['Kitchen','Structure','Shade City','Events','Ebikes'];
+    DEVC.forEach(r=>{const a=r.area||'Custom';if(!order.includes(a))order.push(a);});
+    return order.map(a=>({name:a,idxs:DEVC.map((r,i)=>((r.area||'Custom')===a)?i:-1).filter(i=>i>=0)})).filter(g=>g.idxs.length)
+      .concat([{name:'Camp-wide',idxs:[],syn:1}]);
+  }
+  return DGROUPS.map(g=>({name:g,idxs:DEVC.map((r,i)=>groupOf(r)===g?i:-1).filter(i=>i>=0)})).filter(g=>g.idxs.length)
+    .concat([{name:'Personal items',idxs:[],syn:1}]);
+}
+function buildDev(){
+  DEVC=DEVD[ASOF()]||DEVD[0];
+  DEVGRP=groupsFor(DEVVIEW);
+  const opSt=load('cavecsv_devopen')||{};
+  const open=new Set(opSt[DEVVIEW]||[]);
+  const T=$('devtable');
+  let h='<tr class="qtot"><td class="ktlab"></td><td></td><td></td><td></td><td></td><td></td><td class="qr" id="dkT">&mdash;</td><td></td></tr>';
+  h+='<tr class="hrow'+(DEVGRP.some(g=>open.has(g.name))?'':' hth-hide')+'"><th>Device</th><th>Gen</th><th>Qty</th><th>Watts</th><th>Hrs</th><th>When &middot; tap an hour to step duty 0 &rarr; &frac14; &rarr; &frac12; &rarr; &frac34; &rarr; full &rarr; 0</th><th class="qr"></th><th></th></tr>';
+  DEVGRP.forEach((g,gi)=>{
+    const op=open.has(g.name);
+    h+='<tr class="dgrp" data-g="'+gi+'"><td colspan="8">'+(op?'\u25be ':'\u25b8 ')+g.name+'</td></tr>';
+    g.idxs.forEach(i=>{const r=DEVC[i];
+      let strip='<div class="hstrip">';
+      for(let j=0;j<24;j++){const du=r.du[j];
+        strip+='<div class="hcol"><div class="hc'+(du>0?' on':'')+'" style="'+(du>0?'opacity:'+(0.35+0.65*du).toFixed(2):'')+'" data-vr="'+i+'" data-j="'+j+'"></div><div class="hlb'+((j===7||j===19)?' maj':'')+'">'+HOURS[j]+'</div></div>';}
+      strip+='</div>';
+      h+='<tr class="grow'+(op?'':' ghide')+'">'+(r.cu
+          ?'<td><input class="kitname" data-vr="'+i+'" data-f="n" type="text" value="'+String(r.n).replace(/"/g,'&quot;')+'"></td><td class="gcell"><button type="button" class="gtag g'+(r.gen||'1')+'" data-gt="'+i+'" title="generator assignment · applies to every day">'+(r.gen||'1')+'</button></td>'
+          :'<td class="dname" title="'+(r.pr||'')+'">'+r.n+'</td><td class="gcell"><button type="button" class="gtag g'+(r.gen||'1')+'" data-gt="'+i+'" title="generator assignment · applies to every day">'+(r.gen||'1')+'</button></td>')
+        +'<td><input data-vr="'+i+'" data-f="q" type="number" min="0" value="'+r.q+'"></td>'
+        +'<td><input data-vr="'+i+'" data-f="w" type="number" min="0" value="'+r.w+'"></td>'
+        +'<td class="hdc" id="dh'+i+'">&mdash;</td>'
+        +'<td>'+strip+'</td>'
+        +'<td class="qr" id="dk'+i+'">&mdash;</td>'
+        +(r.cu?'<td><button type="button" class="kdel" data-dd="'+i+'" title="Delete item">&times;</button></td>':'<td></td>')
+        +'</tr>';
+    });
+    if(g.syn&&op){
+      h+='<tr class="grow psyn"><td class="dname" title="fed by the Personal items calculator below">Personal items \u00b7 from calculator<span class="devsm">per-camper kWh/day \u00d7 campers \u2014 edit the count here or in the calendar \u00b7 blocks = hours with any camper draw</span></td>'
+        +'<td class="gcell"><button type="button" class="gtag pgt g'+PGEN+'" title="which generator carries camper loads in split view">'+PGEN+'</button></td>'
+        +'<td><input id="psq" type="number" min="0" max="99" value="0"></td><td id="psw">\u2014</td><td class="hdc" id="psh">\u2014</td>'
+        +'<td id="pstrip"></td><td class="qr" id="dkP">\u2014</td><td></td></tr>';
+    }
+    h+='<tr class="dsub"><td class="ktlab">'+g.name+' subtotal</td><td></td><td></td><td></td><td></td><td></td><td class="qr" id="dg'+gi+'">&mdash;</td><td></td></tr>';
+  });
+  T.innerHTML=h;
+  T.querySelectorAll('.dgrp').forEach(el=>el.addEventListener('click',()=>{
+    const nm=DEVGRP[+el.dataset.g].name;
+    const st=load('cavecsv_devopen')||{};
+    const arr=new Set(st[DEVVIEW]||[]);
+    arr.has(nm)?arr.delete(nm):arr.add(nm);
+    st[DEVVIEW]=[...arr];store('cavecsv_devopen',st);
+    buildDev();devPaint();
+  }));
+  $('devday').textContent='\u00b7 editing '+['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date(START.getTime()+ASOF()*DAY).getDay()]+' '+dLab(ASOF())+' only';
+  $('devview').textContent='View: by '+(DEVVIEW==='area'?'Area':'Category')+' \u21c4';
+  $('devcol').textContent=DEVGRP.some(g=>open.has(g.name))?'Collapse all':'Expand all';
+  T.querySelectorAll('.gtag.pgt').forEach(el=>el.addEventListener('click',()=>{
+    PGEN=PGEN==='2'?'1':'2';
+    store('cavecsv_pgen',PGEN);
+    el.textContent=PGEN;el.className='gtag pgt g'+PGEN;
+    refresh(false);
+  }));
+  T.querySelectorAll('.gtag[data-gt]').forEach(el=>el.addEventListener('click',()=>{
+    const i=+el.dataset.gt,nm=DEVC[i]&&DEVC[i].n;
+    if(nm==null)return;
+    const nv=(DEVC[i].gen==='2')?'1':'2';
+    DEVD.forEach(rows=>{const r=rows[i];if(r&&r.n===nm)r.gen=nv;});
+    store('cavecsv_dev',DEVD);
+    el.textContent=nv;el.className='gtag g'+nv;
+    devCalc();
+  }));
+  const pq=$('psq');
+  if(pq)pq.addEventListener('input',()=>{
+    if(!PLAN)return;
+    const v=+pq.value||0;
+    PLAN.p[ASOF()]=v;save();
+    const ci=document.querySelector('input[data-k="p"][data-i="'+ASOF()+'"]');
+    if(ci)ci.value=v;
+    devPaint();refresh(false);
+  });
+  T.querySelectorAll('input[data-vr]').forEach(el=>el.addEventListener('input',()=>{
+    const r=+el.dataset.vr,fld=el.dataset.f;
+    const v=fld==='n'?el.value:(+el.value||0);
+    DEVC[r][fld]=v;
+    if(fld==='q'&&PLAN){
+      const k=/air condition/i.test(DEVC[r].n)?'a':(/e-bike charging/i.test(DEVC[r].n)?'e':null);
+      if(k){PLAN[k][ASOF()]=v;save();
+        const ci=document.querySelector('input[data-k="'+k+'"][data-i="'+ASOF()+'"]');
+        if(ci)ci.value=v;}
+    }
+    devCalc();
+  }));
+  T.querySelectorAll('.hc').forEach(el=>el.addEventListener('click',()=>{
+    const r=DEVC[+el.dataset.vr],j=+el.dataset.j;
+    r.du[j]=r.du[j]>=1?0:Math.min(1,+(r.du[j]+0.25).toFixed(2));
+    if(r.du[j]>0){el.classList.add('on');el.style.opacity=(0.35+0.65*r.du[j]).toFixed(2);}
+    else{el.classList.remove('on');el.style.opacity='';}
+    devCalc();
+  }));
+  T.querySelectorAll('.kdel').forEach(el=>el.addEventListener('click',()=>{
+    DEVC.splice(+el.dataset.dd,1);
+    buildDev();devCalc();
+  }));
+}
+function devPaint(){
+  const rem=NDAYS-ASOF();
+  const dsub=k=>'<span class="devsm">whole event &middot; '+f(k*NDAYS,0)+' kWh &middot; '+f(k*NDAYS/KPG,1)+' gal</span>'
+    +'<span class="devsm">from '+dLab(ASOF())+' &middot; '+f(k*rem,0)+' kWh &middot; '+f(k*rem/KPG,1)+' gal</span>';
+  let tk=0;
+  DEVC.forEach((r,i)=>{
+    const hrs=r.du.reduce((a,x)=>a+x,0),k=r.q*r.w*hrs/1000;tk+=k;
+    const eh=$('dh'+i);if(eh)eh.textContent=hrs.toFixed(2);
+    const ek=$('dk'+i);if(ek)ek.innerHTML=f(k,2)+' kWh/day &middot; '+f(k/KPG,2)+' gal/day'+dsub(k);
+  });
+  const pNow=PLAN?PLAN.p[ASOF()]:0,kwP=PP*pNow;
+  DEVGRP.forEach((g,gi)=>{
+    const gk=g.syn?kwP:g.idxs.reduce((a,i)=>{const r=DEVC[i];return a+(r?r.q*r.w*r.du.reduce((s,x)=>s+x,0)/1000:0);},0);
+    const eg=$('dg'+gi);if(eg)eg.innerHTML=f(gk,2)+' kWh/day &middot; '+f(gk/KPG,2)+' gal/day'+dsub(gk);
+  });
+  if($('psq')){
+    const maxW=Math.max(...PCW,1);
+    if(document.activeElement!==$('psq'))$('psq').value=pNow;
+    $('psw').innerHTML=f(PP,2)+'<span class="devsm">kWh/ea</span>';
+    $('psh').textContent='\u2014';
+    let sh='<div class="hstrip" title="hours when any camper item draws">';
+    for(let j=0;j<24;j++){const du=PCW[j]/maxW;
+      sh+='<div class="hcol"><div class="hc'+(du>0?' on':'')+'"></div><div class="hlb'+((j===7||j===19)?' maj':'')+'">'+HOURS[j]+'</div></div>';}
+    $('pstrip').innerHTML=sh+'</div>';
+    const ep=$('dkP');if(ep)ep.innerHTML=f(kwP,2)+' kWh/day &middot; '+f(kwP/KPG,2)+' gal/day'+dsub(kwP);
+  }
+  tk+=kwP;
+  const tt=$('dkT');if(tt)tt.innerHTML=f(tk,1)+' kWh/day &middot; '+f(tk/KPG,2)+' gal/day'+dsub(tk);
+  const base=i=>{const t=structuredClone(DEVSEED);
+    if(PLAN){const a=t.find(x=>/air condition/i.test(x.n));if(a)a.q=PLAN.a[i];
+      const e=t.find(x=>/e-bike charging/i.test(x.n));if(e)e.q=PLAN.e[i];}
+    return JSON.stringify(t);};
+  const nsim=DEVD.filter((dd,i)=>JSON.stringify(dd)!==base(i)).length;
+  $('devsim').textContent=nsim?'SIMULATED \u00b7 '+nsim+' day'+(nsim>1?'s':'')+' \u00b7 \u27f3 resets':'';
+}
+function devCalc(){
+  devPaint();
+  store('cavecsv_dev',DEVD);
+  wireDevices();
+  if(PLAN&&BOOTED)refresh(false);
+}
+
+/* ---------- minimal zip (store) for official-plan bundles ---------- */
+const CRC_T=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
+const crc32=b=>{let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRC_T[(c^b[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0;};
+function makeZip(files){
+  const enc=new TextEncoder(),parts=[],cd=[];let off=0;
+  const u16=v=>[v&255,(v>>8)&255],u32=v=>[v&255,(v>>8)&255,(v>>16)&255,(v>>>24)&255];
+  files.forEach(f=>{
+    const nb=enc.encode(f.name),db=enc.encode(f.text),crc=crc32(db);
+    const lh=new Uint8Array([0x50,0x4b,3,4,...u16(20),...u16(0),...u16(0),...u16(0),...u16(0),...u32(crc),...u32(db.length),...u32(db.length),...u16(nb.length),...u16(0)]);
+    parts.push(lh,nb,db);cd.push({nb,crc,sz:db.length,off});
+    off+=lh.length+nb.length+db.length;
+  });
+  let cdSize=0;const cdp=[];
+  cd.forEach(e=>{
+    const hd=new Uint8Array([0x50,0x4b,1,2,...u16(20),...u16(20),...u16(0),...u16(0),...u16(0),...u16(0),...u32(e.crc),...u32(e.sz),...u32(e.sz),...u16(e.nb.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(e.off)]);
+    cdp.push(hd,e.nb);cdSize+=hd.length+e.nb.length;
+  });
+  const eocd=new Uint8Array([0x50,0x4b,5,6,...u16(0),...u16(0),...u16(cd.length),...u16(cd.length),...u32(cdSize),...u32(off),...u16(0)]);
+  return new Blob([...parts,...cdp,eocd],{type:'application/zip'});
+}
+const dlBlob=(name,blob)=>{const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=name;a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),3000);};
+
+/* ---------- in-page dialogs ---------- */
+function uiDialog(o){return new Promise(res=>{
+  const m=$('uimask'),inp=$('uiinput'),err=$('uierr');
+  $('uititle').textContent=o.title||'The Cave \u00b7 Power';
+  $('uimsg').textContent=o.msg||'';
+  err.textContent='';
+  inp.style.display=o.input!==undefined?'':'none';
+  if(o.input!==undefined){inp.value=o.input;inp.placeholder=o.placeholder||'';}
+  $('uicancel').style.display=o.cancel===false?'none':'';
+  $('uiok').textContent=o.ok||'OK';
+  m.classList.add('on');
+  if(o.input!==undefined)setTimeout(()=>{inp.focus();inp.select();},30);
+  const done=v=>{m.classList.remove('on');
+    $('uiok').onclick=$('uicancel').onclick=inp.onkeydown=document.onkeydown=null;res(v);};
+  $('uiok').onclick=()=>{
+    if(o.input!==undefined){
+      const v=inp.value.trim();
+      if(o.required&&!v){err.textContent='A name is required.';inp.focus();return;}
+      done(v);
+    }else done(true);
+  };
+  $('uicancel').onclick=()=>done(null);
+  inp.onkeydown=e=>{if(e.key==='Enter')$('uiok').onclick();};
+  document.onkeydown=e=>{if(e.key==='Escape')done(null);};
+});}
+const uiAlert=(msg,title)=>uiDialog({msg,title,cancel:false});
+const uiConfirm=(msg,title)=>uiDialog({msg,title}).then(v=>v===true);
+const uiPrompt=(msg,title,ph)=>uiDialog({msg,title,input:'',placeholder:ph||'',required:true,ok:'Save'});
+
+/* ---------- scenarios: save / load / apply (browser-only until uploaded) ---------- */
+const scnHash=s=>{let x=5381;for(let i=0;i<s.length;i++)x=((x<<5)+x+s.charCodeAt(i))>>>0;return x.toString(16);};
+const dlText=(name,text,type)=>{const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([text],{type:type||'application/json'}));
+  a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);};
+function scnSerialize(title,seq,author){
+  return {kind:'cave-scenario',v:1,title:title,author:author||null,dl_id:seq||null,created:new Date().toISOString(),
+    base_dev:scnHash(DEVFP),base_plan:scnHash(JSON.stringify(SEEDPLAN)),
+    state:{plan:PLAN,fuel:FUEL,floor:FLOOR,devd:DEVD,notes:NOTES,kit:KITC,pgen:PGEN}};
+}
+function scnBanner(){
+  const n=load('cavecsv_scn');
+  $('scnname').textContent=n?('viewing: '+n+' \u00b7 \u27f3 exits'):'';
+}
+async function scnLoadObj(o){
+  if(!o||o.kind!=='cave-scenario'||!o.state)throw new Error('not a camp simulation file');
+  const st=o.state;
+  if(!okPlan(st.plan))throw new Error('calendar in the file does not match this console');
+  const okD=Array.isArray(st.devd)&&st.devd.length===NDAYS&&st.devd.every(dd=>Array.isArray(dd)&&dd.every(r=>r&&typeof r.n==='string'&&Array.isArray(r.du)&&r.du.length===24));
+  if(!okD)throw new Error('device state in the file does not match this console');
+  if(o.base_dev!==scnHash(DEVFP)||o.base_plan!==scnHash(JSON.stringify(SEEDPLAN))){
+    if(!await uiConfirm('This simulation was saved against a different committed baseline. Load anyway?','Load simulation'))return false;
+  }
+  PLAN=st.plan;
+  if(st.fuel&&Array.isArray(st.fuel.del))FUEL=st.fuel;
+  if(typeof st.floor==='number'){FLOOR=st.floor;$('floor').value=FLOOR;store('cavecsv_floor',FLOOR);}
+  DEVD=st.devd;DEVD.forEach(ensureGen);DEVC=DEVD[ASOF()];
+  NOTES=typeof st.notes==='string'?st.notes:'';
+  $('notes').value=NOTES;store('cavecsv_notes',NOTES);if(window.__noteCue)window.__noteCue();
+  PGEN=st.pgen==='2'?'2':'1';store('cavecsv_pgen',PGEN);
+  KITC=(Array.isArray(st.kit)&&st.kit.every(r=>r&&typeof r.n==='string'&&Array.isArray(r.hs)))?st.kit:structuredClone(KITSEED);
+  store('cavecsv_kit',KITC);buildKit();kitCalc();
+  save();store('cavecsv_dev',DEVD);store('cavecsv_scn',o.title||'unnamed simulation');
+  syncACFromPlan();wireDevices();buildDev();devPaint();scnBanner();refresh(true);
+  return true;
+}
+function scnApplyBuild(day){
+  const iso=i=>{const d=new Date(START.getTime()+i*DAY);
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+  let cal='date,day_type,people,acs,ebikes,sound_on,generators,delivered_gal\n';
+  for(let i=0;i<NDAYS;i++)cal+=[iso(i),DTYPE[i]||'',PLAN.p[i],PLAN.a[i],PLAN.e[i],PLAN.s[i],PLAN.g[i],FUEL.del[i]||0].join(',')+'\n';
+  const raw={};(RAWD||[]).forEach(r=>{raw[r.device]=r;});
+  const esc=v=>{v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  let dev='device,area,category,product,qty,running_w_each,surge_w_each,volts,bus,priority,notes,gen\n';
+  let sch='device,'+HOURS.map(x=>'h_'+x).join(',')+'\n';
+  DEVD[day].forEach(r=>{
+    const o=raw[r.n]||{};
+    dev+=[esc(r.n),esc(r.area||o.area||'Custom'),esc(r.cat||o.category||'Custom'),esc(o.product),r.q,r.w,esc(o.surge_w_each),esc(o.volts),esc(r.bus||o.bus||'Pool'),esc(r.pr||o.priority||'Cut if needed'),esc(o.notes),(r.gen==='2'?'2':'1')].join(',')+'\n';
+    sch+=esc(r.n)+','+r.du.join(',')+'\n';
+  });
+  let kit='item,watts,'+HOURS.map(x=>'h_'+x).join(',')+'\n';
+  (KITC||[]).forEach(r=>{kit+=esc(r.n)+','+r.w+','+HOURS.map((_,j)=>r.hs.includes(j)?1:0).join(',')+'\n';});
+  return {'calendar_plan.csv':cal,'devices.csv':dev,'schedule.csv':sch,'personal_items.csv':kit};
+}
+async function scnApply(){
+  const day=ASOF();
+  const wd=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date(START.getTime()+day*DAY).getDay()];
+  const nm=load('cavecsv_scn');
+  let pc=0;['p','a','e','s','g'].forEach(k=>{for(let i=0;i<NDAYS;i++)if(PLAN[k][i]!==SEEDPLAN[k][i])pc++;});
+  for(let i=0;i<NDAYS;i++)if((FUEL.del[i]||0)!==(SEEDFUEL.del[i]||0))pc++;
+  const rows=DEVD[day],base=structuredClone(DEVSEED);
+  const bAC=base.find(x=>/air condition/i.test(x.n));if(bAC&&PLAN)bAC.q=PLAN.a[day];
+  const bEB=base.find(x=>/e-bike charging/i.test(x.n));if(bEB&&PLAN)bEB.q=PLAN.e[day];
+  let dc=0;
+  rows.forEach((r,i)=>{if(!base[i]||JSON.stringify(r)!==JSON.stringify(base[i]))dc++;});
+  const ok=await uiConfirm(
+    'This downloads one zip \u2014 a folder holding the repo files:\n\n'
+    +'calendar_plan.csv \u2014 all 14 days \u00b7 '+pc+' cell'+(pc===1?'':'s')+' differ'+(pc===1?'s':'')+' from committed\n'
+    +'devices.csv + schedule.csv \u2014 '+wd+' '+dLab(day)+"'s setup \u00b7 "+dc+' device row'+(dc===1?'':'s')+' differ'+(dc===1?'s':'')+'\n'
+    +'personal_items.csv \u2014 per-camper items\n'+'log.csv \u2014 new version row'+(NOTES.trim()?'\nnotes.txt \u2014 your notes':'')
+    +(nm?'\nsim: '+String(nm).slice(0,40):'')
+    +'\n\nUnzip it, upload all 4 files to the repo data/ folder, then press Reset (circular arrow, top right).',
+    'Make this the official plan');
+  if(!ok)return;
+  const files=scnApplyBuild(day);
+  fetch('data/log.csv',{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
+    const lines=t.split('\n').filter(x=>x.trim());
+    const last=parseFloat((lines[lines.length-1]||'0').split(',')[0])||0;
+    const nv=(Math.round(last*10)+1)/10;
+    const iso=new Date().toISOString();
+    const id='cavepower_apply_'+iso.slice(0,10)+'_'+iso.slice(11,19).replace(/:/g,'')+'Z';
+    const row=nv.toFixed(1)+','+iso.slice(0,10)+',"Applied '+(nm?String(nm).replace(/"/g,"'"):'current console state')+' to reality from the console: full calendar promoted; committed device setup taken from '+wd+' '+dLab(day)+'."\n';
+    files['log.csv']=(t&&!t.endsWith('\n')?t+'\n':t)+row;
+    if(NOTES.trim())files['notes.txt']=NOTES;
+    dlBlob(id+'.zip',makeZip(Object.keys(files).map(n=>({name:id+'/'+n,text:files[n]}))));
+  });
 }
 
 /* ---------- export current plan as calendar_plan.csv ---------- */
@@ -628,20 +1122,26 @@ function exportCSV(){
   setTimeout(()=>URL.revokeObjectURL(a.href),2000);
 }
 function resetToCSV(){
-  ['cavecsv_plan','cavecsv_fuel','cavecsv_qn','cavecsv_kit','cavecsv_floor'].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});
+  ['cavecsv_plan','cavecsv_fuel','cavecsv_kit','cavecsv_floor','cavecsv_dev','cavecsv_scn','cavecsv_notes'].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});
   PLAN=structuredClone(SEEDPLAN);FUEL=structuredClone(SEEDFUEL);
-  QNC=structuredClone(QNSEED);KITC=structuredClone(KITSEED);
+  KITC=structuredClone(KITSEED);
+  DEVD=Array.from({length:NDAYS},()=>structuredClone(DEVSEED));DEVD.forEach(ensureGen);DEVC=DEVD[ASOF()];wireDevices();syncACFromPlan();
   FLOOR=S.fuel_floor_gal;$('floor').value=FLOOR;
-  buildQn();qnCalc();buildKit();kitCalc();refresh(true);
+  BOOTED=false;
+  NOTES='';$('notes').value='';if(window.__noteCue)window.__noteCue();
+  PGEN='1';store('cavecsv_pgen',PGEN);
+  buildKit();kitCalc();buildDev();devCalc();scnBanner();
+  BOOTED=true;
+  refresh(true);
 }
 
 /* ---------- boot ---------- */
 function boot(D){
   buildModel(D);
   const lp=load('cavecsv_plan');PLAN=okPlan(lp)?lp:structuredClone(SEEDPLAN);
+  syncACFromPlan();
   const lf=load('cavecsv_fuel');FUEL=(lf&&Array.isArray(lf.del)&&lf.del.length===NDAYS)?lf:structuredClone(SEEDFUEL);
-  const qfp=JSON.stringify(QNSEED),kfp=JSON.stringify(KITSEED);
-  const lq=(load('cavecsv_qn_fp')===qfp)?load('cavecsv_qn'):null;QNC=Array.isArray(lq)&&lq.length?lq:structuredClone(QNSEED);store('cavecsv_qn_fp',qfp);
+  const kfp=JSON.stringify(KITSEED);
   const lk=(load('cavecsv_kit_fp')===kfp)?load('cavecsv_kit'):null;KITC=Array.isArray(lk)&&lk.length?lk:structuredClone(KITSEED);store('cavecsv_kit_fp',kfp);
   KITC.forEach(r=>{if(!r.hs)r.hs=[];});
   fetch('data/log.csv',{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
@@ -657,19 +1157,117 @@ function boot(D){
   $('asof').addEventListener('input',()=>refresh(true));
   $('floor').value=FLOOR;
   $('floor').addEventListener('input',()=>{FLOOR=+$('floor').value||0;store('cavecsv_floor',FLOOR);refresh(false);});
-  $('qnnote').innerHTML='Simulation only &mdash; nothing here changes the calendar &middot; Each row = How many &times; kWh per day &middot; event line = that &times; '+NDAYS+' days &middot; 1 gallon &asymp; '+KPG+' kWh &middot; 1 drum = '+S.usable_gal_per_drum+' gal';
   $('src').textContent='source: data/*.csv · '+NDEV+' devices · sound rig '+f(SOUND,1)+' kWh · safe '+f(redFor(2),1)+' kW pooled · edits stay in this browser · the official plan lives on GitHub';
-  buildQn();qnCalc();
   buildKit();kitCalc();
+  buildDev();devCalc();
+  $('devadd').addEventListener('click',()=>{
+    DEVC.push({n:'New device',area:'Custom',cat:'Custom',bus:'Pool',pr:'Cut if needed',q:1,w:0,du:Array(24).fill(0),cu:1});
+    buildDev();devCalc();
+    const nn=$('devtable').querySelectorAll('input.kitname');if(nn.length){nn[nn.length-1].focus();nn[nn.length-1].select();}
+  });
+  NOTES=load('cavecsv_notes')||'';
+  $('notes').value=NOTES;
+  const noteCue=()=>{$('notecue').textContent=NOTES.trim()?'\u00b7 has notes':'';};
+  noteCue();
+  $('notes').addEventListener('input',()=>{NOTES=$('notes').value;store('cavecsv_notes',NOTES);noteCue();});
+  window.__noteCue=noteCue;
+  const chOp=load('cavecsv_chartopen2')||{cal:true};
+  [['calbox','cal'],['capbox2','cap'],['runbox2','run']].forEach(([id,k])=>{
+    const el=$(id);
+    el.open=!!chOp[k];
+    el.addEventListener('toggle',()=>{
+      chOp[k]=el.open;store('cavecsv_chartopen2',chOp);
+      if(el.open){try{capChart&&capChart.resize();runChart&&runChart.resize();}catch(err){}}
+    });
+  });
+  document.querySelectorAll('#runbox2 .floorlab').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();e.preventDefault();
+    if(el.id!=='dellab')$('floor').focus();}));
+  PGEN=load('cavecsv_pgen')==='2'?'2':'1';
+  GENMODE=['split','g1','g2'].includes(load('cavecsv_genmode'))?load('cavecsv_genmode'):'pooled';
+  $('pooltog').value=GENMODE;
+  $('pooltog').addEventListener('change',e=>{
+    GENMODE=e.target.value;
+    store('cavecsv_genmode',GENMODE);
+    refresh(false);
+  });
+  document.querySelector('#capbox2 #genlab').addEventListener('click',e=>{e.stopPropagation();});
+  DELTIME=load('cavecsv_deltime')==='pm'?'pm':'am';
+  $('deltog').textContent=DELTIME.toUpperCase();
+  $('deltog').addEventListener('click',e=>{e.stopPropagation();e.preventDefault();
+    DELTIME=DELTIME==='pm'?'am':'pm';
+    store('cavecsv_deltime',DELTIME);
+    $('deltog').textContent=DELTIME.toUpperCase();
+    refresh(false);
+  });
+  $('scnsave').addEventListener('click',async()=>{
+    const prev=load('cavecsv_author')||'';
+    const t=await uiDialog({msg:'Enter your name \u2014 it leads the filename so everyone knows whose simulation this is.',
+      title:'Save simulation',input:prev,placeholder:'your name',required:true,ok:'Save'});
+    if(t==null)return;
+    const nm=t;store('cavecsv_author',nm);
+    const iso=new Date().toISOString();
+    const dPart=iso.slice(0,10);let tPart=iso.slice(11,19).replace(/:/g,'')+'Z';
+    const la=load('cavecsv_dlast')||{};
+    const key=dPart+tPart;
+    if(la.id===key){la.n=(la.n||1)+1;tPart+='-'+la.n;}else{la.id=key;la.n=1;}
+    store('cavecsv_dlast',la);
+    const title=nm+' \u00b7 '+dPart+' '+iso.slice(11,16)+'Z';
+    dlText(nm.replace(/[^\w\- ]+/g,'').trim().replace(/\s+/g,'_')+'_cavepowersim_'+dPart+'_'+tPart+'.json',
+      JSON.stringify(scnSerialize(title,dPart+'_'+tPart,nm),null,1));
+  });
+  $('scnload').addEventListener('click',()=>$('scnfile').click());
+  $('scnfile').addEventListener('change',e=>{
+    const fl=e.target.files&&e.target.files[0];
+    if(!fl)return;
+    fl.text().then(async tx=>{try{await scnLoadObj(JSON.parse(tx));}catch(err){uiAlert('Could not load simulation: '+err.message,'Load simulation');}});
+    e.target.value='';
+  });
+  $('scnapply').addEventListener('click',scnApply);
+  $('scnnote').innerHTML='A simulation is a snapshot of the entire console above \u2014 calendar, fuel, devices and their duty, plus your Notes. Save one and send it anywhere; loading it fills anyone\u2019s console for collaboration. Nothing touches GitHub until \u201cMake this the official plan\u201d downloads a timestamped, push-ready zip of the repo files, which you then upload to git. The Reset button (top right) always returns everything to the latest committed state.';
+  scnBanner();
+  const pinCheck=()=>{
+    const t=$('plantable'),dp=$('daypin');
+    if(!t||!dp)return;
+    const r=t.getBoundingClientRect();
+    dp.classList.toggle('on',r.top<-40&&PLAN!==null);
+  };
+  window.addEventListener('scroll',pinCheck,{passive:true});
+  window.addEventListener('resize',pinCheck,{passive:true});
+  $('devcol').addEventListener('click',()=>{
+    const st=load('cavecsv_devopen')||{};
+    const anyOpen=(st[DEVVIEW]||[]).length>0;
+    st[DEVVIEW]=anyOpen?[]:groupsFor(DEVVIEW).map(g=>g.name);
+    store('cavecsv_devopen',st);
+    buildDev();devPaint();
+  });
+  $('devview').addEventListener('click',()=>{
+    DEVVIEW=DEVVIEW==='category'?'area':'category';
+    store('cavecsv_devview',DEVVIEW);
+    buildDev();devPaint();
+  });
+  $('devcopy').addEventListener('click',async()=>{
+    if(!await uiConfirm('Apply '+dLab(ASOF())+"'s device setup to all "+NDAYS+' days? This overwrites device edits on every other day.','Devices'))return;
+    const src=DEVC;
+    for(let i=0;i<NDAYS;i++)if(DEVD[i]!==src)DEVD[i]=structuredClone(src);
+    DEVC=DEVD[ASOF()];
+    devCalc();
+  });
+  $('devnote').innerHTML='Whiteboard over data/devices.csv + schedule.csv &mdash; edits live in this browser, apply to the selected day only, and drive every chart and fuel number &middot; each tap steps an hour&rsquo;s duty by 25% &middot; \u27f3 resets all days to committed &middot; rows show full-run draw; the calendar applies occupancy and plan counts on top &middot; the AC row&rsquo;s Qty is the same number as the calendar&rsquo;s ACs count for the selected day &mdash; edit either';
   applyTheme(load('cave_theme')||'dark');
+  BOOTED=true;
   refresh(true);
 }
-$('resetbtn').addEventListener('click',()=>{if(PLAN&&confirm('Discard local edits and reload the committed CSV plan?'))resetToCSV();});
+$('resetbtn').addEventListener('click',async()=>{if(PLAN&&await uiConfirm('Discard local edits and reload the committed CSV plan?','Reset'))resetToCSV();});
 $('themebtn').addEventListener('click',()=>applyTheme(document.body.classList.contains('light')?'dark':'light'));
-$('qnadd').addEventListener('click',()=>{if(!QNC)return;QNC.push({n:'New item',c:1,u:0});buildQn();qnCalc();const i=$('qntable').querySelectorAll('input.kitname');i[i.length-1].focus();i[i.length-1].select();});
 $('kitadd').addEventListener('click',()=>{if(!KITC)return;KITC.push({n:'New item',w:0,hs:[]});buildKit();kitCalc();const i=$('kittable').querySelectorAll('input.kitname');i[i.length-1].focus();i[i.length-1].select();});
 
 fetchAll().then(boot).catch(err=>{pickerFallback(err);});
 </script>
+<div id="daypin"></div>
+<div class="uimask" id="uimask"><div class="uibox">
+<h3 id="uititle"></h3><div class="uimsg" id="uimsg"></div>
+<input type="text" id="uiinput" style="display:none"><div class="uierr" id="uierr"></div>
+<div class="uibtns"><button type="button" id="uicancel">Cancel</button><button type="button" id="uiok">OK</button></div>
+</div></div>
 </body>
 </html>
