@@ -87,13 +87,27 @@ button:hover{border-color:var(--bob)}
 summary.flag{display:flex;align-items:center;gap:0;width:100%}
 summary.flag::before{flex:0 0 auto}
 summary.flag .flagtxt{flex:1 1 auto;min-width:0}
-summary.flagrow2 #dellab,summary.flagrow2 #genlab{margin-left:auto}
+summary.flagrow2{display:flex;align-items:center;gap:16px;flex-wrap:nowrap}
+summary.flagrow2 .flagtxt{flex:1 1 auto;min-width:0;padding-right:8px}
+summary.flagrow2 #dellab,summary.flagrow2 #genlab{margin-left:auto;flex:0 0 auto;white-space:nowrap}
+summary.flagrow2 #genlab+*,summary.flagrow2 .floorlab{flex:0 0 auto;white-space:nowrap}
+#kadd{width:auto;font-size:12px;padding:7px 12px}
+#devtable td:first-child,#devtable th:first-child{width:192px;max-width:192px;overflow-wrap:break-word}
+#devbox,#devbox .twrap{overflow-anchor:none}
+#devbox.panel{padding-right:10px}
+#devtable input:not(.kitname){width:52px}
 #devtable .gtag{width:auto;min-width:36px;padding:8px 0;font:700 12px var(--mono);border-radius:8px;line-height:1}
-#pooltog{width:auto;padding:4px 26px 4px 10px;font:600 11px var(--mono);appearance:none;-webkit-appearance:none;
+.gsel{position:relative;display:inline-block}
+#genmenu{display:none;position:absolute;top:calc(100% + 4px);right:0;z-index:45;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.28);min-width:118px;padding:4px}
+#genmenu.on{display:block}
+#genmenu button{display:block;width:100%;text-align:left;padding:7px 10px;background:none;border:none;border-radius:6px;font:600 11px var(--mono);color:inherit;cursor:pointer}
+#genmenu button:hover{background:var(--line)}
+#genmenu button.cur{color:var(--bob)}
+#pooltog{width:auto;height:28px;box-sizing:border-box;align-self:center;padding:4px 26px 4px 10px;font:600 11px var(--mono);appearance:none;-webkit-appearance:none;
   background:transparent url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='6'><path d='M0 0h8L4 6z' fill='%238A99A2'/></svg>") no-repeat right 8px center;
   border:1px solid var(--line);border-radius:8px;color:inherit;cursor:pointer}
 summary.flagrow2 .floorlab+.floorlab{margin-left:14px}
-#deltog{width:auto;padding:4px 10px;font:600 11px var(--mono)}
+#deltog{width:auto;height:28px;box-sizing:border-box;align-self:center;padding:4px 10px;font:600 11px var(--mono)}
 .plan tr.ph .dtb{background-image:linear-gradient(var(--muted2),var(--muted2));background-repeat:no-repeat;background-position:0 50%;background-size:1px 55%}
 #devtable .devsm{display:block;font:500 10px var(--mono);color:var(--muted2)}
 .gtag{cursor:pointer;font:700 9px var(--mono);border:1px solid var(--line);border-radius:4px;padding:1px 5px;margin-left:7px;color:var(--muted);user-select:none}
@@ -159,7 +173,6 @@ summary.flagrow2 .floorlab+.floorlab{margin-left:14px}
 .qn input.kitname:hover,.qn input.kitname:focus{background:var(--panel);border-color:var(--line)}
 .kdel{width:30px;padding:6px 0;font-size:14px;background:transparent;border-color:transparent;color:var(--muted)}
 .kdel:hover{color:var(--danger);border-color:var(--danger)}
-#kitadd{width:auto;font-size:13px;padding:8px 14px;margin-top:8px}
 
 #loader{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:18px;margin:14px 0}
 #loader h2{font:700 15px var(--cond);letter-spacing:.14em;color:var(--muted);margin:0 0 10px;text-transform:uppercase}
@@ -207,7 +220,7 @@ body.light .uibox h3{color:var(--ink)}
 <button type="button" id="devcopy">Apply this day to all days</button>
 <p class="note" id="devnote"></p></details>
 
-<details class="panel info qn chartwide" id="capbox2"><summary class="flag flagrow2"><span class="flagtxt" id="capflag">—</span><label class="floorlab" id="genlab">Gens <select id="pooltog"><option value="pooled">POOLED</option><option value="split">SPLIT 1&middot;2</option><option value="g1">GEN 1 ONLY</option><option value="g2">GEN 2 ONLY</option></select></label></summary>
+<details class="panel info qn chartwide" id="capbox2"><summary class="flag flagrow2"><span class="flagtxt" id="capflag">—</span><label class="floorlab" id="genlab">Gens <span class="gsel"><button type="button" id="pooltog">POOLED</button><div id="genmenu"><button type="button" data-gm="pooled">POOLED</button><button type="button" data-gm="split">BOTH GEN</button><button type="button" data-gm="g1">GEN 1 ONLY</button><button type="button" data-gm="g2">GEN 2 ONLY</button></div></span></label></summary>
   <div class="chartbox capbox" id="capbody"><canvas id="capchart" role="img" aria-label="Hourly camp load vs the safe and absolute limits for the selected day"></canvas></div></details>
 <details class="panel info qn chartwide" id="runbox2"><summary class="flag flagrow2"><span class="flagtxt" id="runflag">—</span><label class="floorlab" id="dellab">Delivery <button type="button" id="deltog">AM</button></label> <label class="floorlab">Fuel floor <input type="number" id="floor" min="0"> gal</label></summary>
   <div class="chartbox runbox" id="runbody"><canvas id="runchart" role="img" aria-label="Fuel on hand day by day under the plan"></canvas></div></details>
@@ -215,10 +228,7 @@ body.light .uibox h3{color:var(--ink)}
 
 
 
-<details class="panel info qn" id="kitbox"><summary class="flag">Personal items calculator</summary>
-<div class="twrap"><table id="kittable"></table></div>
-<button type="button" id="kitadd">+ Add item</button>
-<p class="note">Drives the calendar: each day charges the Total-per-camper below &times; that day&rsquo;s People. Travels inside simulations and is promoted by &ldquo;Make this the official plan&rdquo;; Reset returns to committed.</p></details>
+
 
 <details class="panel info qn" id="notebox"><summary class="flag">Notes <span id="notecue" class="devday"></span></summary>
 <textarea id="notes" rows="6" placeholder="notes, questions, ideas are saved along with your simulation"></textarea>
@@ -652,7 +662,7 @@ function refresh(rebuild){
        :capState==='warn'?'over the safe line at '+pkH+' · peak '+f(peak,1)+' (safe '+f(RED,1)+' · absolute '+f(HARD,1)+')'
        :'peak '+f(peak,1)+' of safe '+f(RED,1)+' kW · '+f(RED-peak,1)+' kW to spare'))
     :SPL
-    ?('Power · '+dName(asof)+' · split · Gen 1 peak '+f(peaks[0],1)+' · Gen 2 peak '+f(peaks[1],1)+' of safe '+f(RED,1)+' kW each'
+    ?('Power · '+dName(asof)+' · both gen · Gen 1 peak '+f(peaks[0],1)+' · Gen 2 peak '+f(peaks[1],1)+' of safe '+f(RED,1)+' kW each'
       +(capState==='danger'?' · Gen '+(wi?'2':'1')+' over the absolute limit — trips its breaker'
        :capState==='warn'?' · Gen '+(wi?'2':'1')+' over the safe line at '+pkH
        :' · tightest Gen '+(wi?'2':'1')+' · '+f(RED-peak,1)+' kW to spare'))
@@ -749,71 +759,14 @@ function applyTheme(mode){
 
 
 /* ---------- personal items calculator ---------- */
-function buildKit(){
-  const T=$('kittable');
-  let h='<tr><th>Item</th><th>Watts</th><th>Hrs/day</th><th>When · tap hours, 5a → 4a</th><th class="qr">Per device</th><th></th></tr>';
-  KITC.forEach((r,i)=>{
-    let strip='<div class="hstrip">';
-    for(let j=0;j<24;j++)strip+='<div class="hcol"><div class="hc'+(r.hs.includes(j)?' on':'')+'" data-kr="'+i+'" data-j="'+j+'"></div><div class="hlb'+((j===7||j===19)?' maj':'')+'">'+HOURS[j]+'</div></div>';
-    strip+='</div>';
-    h+='<tr><td><input class="kitname" data-kr="'+i+'" data-f="n" type="text" value="'+r.n.replace(/"/g,'&quot;')+'" title="'+r.n.replace(/"/g,'&quot;')+'"></td>'
-      +'<td><input data-kr="'+i+'" data-f="w" type="number" min="0" value="'+r.w+'"></td>'
-      +'<td class="hdc" id="hd'+i+'">—</td>'
-      +'<td>'+strip+'</td>'
-      +'<td class="qr" id="kr'+i+'">—</td>'
-      +'<td><button type="button" class="kdel" data-dr="'+i+'" title="Delete item">×</button></td></tr>';
-  });
-  h+='<tr class="qtot"><td class="ktlab">Total per camper</td><td></td><td></td><td></td><td class="qr" id="ktT">—</td><td></td></tr>';
-  T.innerHTML=h;
-  T.querySelectorAll('.gtag.pgt').forEach(el=>el.addEventListener('click',()=>{
-    PGEN=PGEN==='2'?'1':'2';
-    store('cavecsv_pgen',PGEN);
-    el.textContent=PGEN;el.className='gtag pgt g'+PGEN;
-    refresh(false);
-  }));
-  T.querySelectorAll('.gtag[data-gt]').forEach(el=>el.addEventListener('click',()=>{
-    const i=+el.dataset.gt,nm=DEVC[i]&&DEVC[i].n;
-    if(nm==null)return;
-    const nv=(DEVC[i].gen==='2')?'1':'2';
-    DEVD.forEach(rows=>{const r=rows[i];if(r&&r.n===nm)r.gen=nv;});
-    store('cavecsv_dev',DEVD);
-    el.textContent=nv;el.className='gtag g'+nv;
-    devCalc();
-  }));
-  T.querySelectorAll('input').forEach(el=>el.addEventListener('input',()=>{
-    const r=+el.dataset.kr,fld=el.dataset.f;
-    KITC[r][fld]=fld==='n'?el.value:(+el.value||0);
-    if(fld==='n')el.title=el.value;
-    kitCalc();
-  }));
-  T.querySelectorAll('.hc').forEach(el=>el.addEventListener('click',()=>{
-    const r=KITC[+el.dataset.kr],j=+el.dataset.j;
-    const ix=r.hs.indexOf(j);
-    if(ix>=0)r.hs.splice(ix,1);else r.hs.push(j);
-    el.classList.toggle('on');
-    kitCalc();
-  }));
-  T.querySelectorAll('.kdel').forEach(el=>el.addEventListener('click',()=>{
-    KITC.splice(+el.dataset.dr,1);
-    buildKit();kitCalc();
-  }));
-}
 function kitCalc(){
-  let tk=0;
   PCW=[...Array(24).keys()].map(j=>KITC.reduce((a,r)=>a+(r.hs.includes(j)?(+r.w||0):0),0));
-  KITC.forEach((r,i)=>{
-    $('hd'+i).textContent=r.hs.length;
-    const kw=r.w*r.hs.length/1000;tk+=kw;
-    $('kr'+i).innerHTML=f(kw,2)+' kWh/day · '+f(kw/KPG,2)+' gal/day'
-      +'<span>'+f(kw*NDAYS,1)+' kWh · '+f(kw*NDAYS/KPG,1)+' gal · whole event</span>';
-  });
-  $('ktT').innerHTML=f(tk,2)+' kWh/day · '+f(tk/KPG,2)+' gal/day'
-    +'<span>'+f(tk*NDAYS,1)+' kWh · '+f(tk*NDAYS/KPG,1)+' gal · whole event</span>';
-  PP=tk;
+  let tk=0;KITC.forEach(r=>{tk+=(+r.w||0)*r.hs.length/1000;});
+  PP=+tk.toFixed(3);
   const pl=document.getElementById('pplab');
   if(pl)pl.textContent='('+f(PP,2)+' kWh/camper \u00b7 from calculator)';
-  if(BOOTED)devPaint();
-  save();if(PLAN&&BOOTED)refresh(false);
+  save();
+  if(BOOTED){devPaint();if(PLAN){try{refresh(false);}catch(e){}}}
 }
 
 /* ---------- devices panel: whiteboard over devices.csv + schedule.csv ---------- */
@@ -859,12 +812,26 @@ function buildDev(){
         +'</tr>';
     });
     if(g.syn&&op){
-      h+='<tr class="grow psyn"><td class="dname" title="fed by the Personal items calculator below">Personal items \u00b7 from calculator<span class="devsm">per-camper kWh/day \u00d7 campers \u2014 edit the count here or in the calendar \u00b7 blocks = hours with any camper draw</span></td>'
+      h+='<tr class="grow psyn"><td class="dname" title="camper personal loads">Personal items<span class="devsm">items below apply every day \u00b7 campers count follows the selected day \u00b7 blocks = hours with any camper draw</span></td>'
         +'<td class="gcell"><button type="button" class="gtag pgt g'+PGEN+'" title="which generator carries camper loads in split view">'+PGEN+'</button></td>'
         +'<td><input id="psq" type="number" min="0" max="99" value="0"></td><td id="psw">\u2014</td><td class="hdc" id="psh">\u2014</td>'
         +'<td id="pstrip"></td><td class="qr" id="dkP">\u2014</td><td></td></tr>';
+      KITC.forEach((r,ki)=>{
+        let ks='<div class="hstrip">';
+        for(let j=0;j<24;j++)ks+='<div class="hcol"><div class="hc'+(r.hs.includes(j)?' on':'')+'" data-khr="'+ki+'" data-j="'+j+'"></div><div class="hlb'+((j===7||j===19)?' maj':'')+'">'+HOURS[j]+'</div></div>';
+        ks+='</div>';
+        h+='<tr class="grow"><td><input class="kitname" data-khr="'+ki+'" data-kf="n" type="text" value="'+String(r.n).replace(/"/g,'&quot;')+'" title="'+String(r.n).replace(/"/g,'&quot;')+'"></td>'
+          +'<td></td>'
+          +'<td></td>'
+          +'<td><input data-khr="'+ki+'" data-kf="w" type="number" min="0" value="'+r.w+'"></td>'
+          +'<td class="hdc" id="khd'+ki+'">\u2014</td>'
+          +'<td>'+ks+'</td>'
+          +'<td class="qr" id="kdr'+ki+'">\u2014</td>'
+          +'<td><button type="button" class="kdel" data-khr="'+ki+'" title="Delete item">\u00d7</button></td></tr>';
+      });
+      h+='<tr class="grow"><td colspan="8"><button type="button" id="kadd">+ Add personal item</button></td></tr>';
     }
-    h+='<tr class="dsub"><td class="ktlab">'+g.name+' subtotal</td><td></td><td></td><td></td><td></td><td></td><td class="qr" id="dg'+gi+'">&mdash;</td><td></td></tr>';
+    h+='<tr class="dsub"><td class="ktlab">'+(({'Camp lights & misc':'Lights & misc'})[g.name]||g.name)+' subtotal</td><td></td><td></td><td></td><td></td><td></td><td class="qr" id="dg'+gi+'">&mdash;</td><td></td></tr>';
   });
   T.innerHTML=h;
   T.querySelectorAll('.dgrp').forEach(el=>el.addEventListener('click',()=>{
@@ -902,6 +869,32 @@ function buildDev(){
     if(ci)ci.value=v;
     devPaint();refresh(false);
   });
+  T.querySelectorAll('input[data-khr]').forEach(el=>el.addEventListener('input',()=>{
+    const r=KITC[+el.dataset.khr],fld=el.dataset.kf;
+    if(!r)return;
+    r[fld]=fld==='n'?el.value:(+el.value||0);
+    if(fld==='n')el.title=el.value;
+    kitCalc();
+  }));
+  T.querySelectorAll('.hc[data-khr]').forEach(el=>el.addEventListener('click',()=>{
+    const r=KITC[+el.dataset.khr],j=+el.dataset.j;
+    if(!r)return;
+    const ix=r.hs.indexOf(j);
+    if(ix>=0)r.hs.splice(ix,1);else r.hs.push(j);
+    el.classList.toggle('on');
+    kitCalc();
+  }));
+  T.querySelectorAll('.kdel[data-khr]').forEach(el=>el.addEventListener('click',()=>{
+    KITC.splice(+el.dataset.khr,1);
+    buildDev();devPaint();kitCalc();
+  }));
+  {const ka=$('kadd');if(ka)ka.addEventListener('click',()=>{
+    KITC.push({n:'New item',w:0,hs:[]});
+    buildDev();devPaint();
+    const nn=$('devtable').querySelectorAll('input[data-khr][data-kf="n"]');
+    if(nn.length){nn[nn.length-1].focus();nn[nn.length-1].select();}
+    kitCalc();
+  });}
   T.querySelectorAll('input[data-vr]').forEach(el=>el.addEventListener('input',()=>{
     const r=+el.dataset.vr,fld=el.dataset.f;
     const v=fld==='n'?el.value:(+el.value||0);
@@ -951,6 +944,14 @@ function devPaint(){
       sh+='<div class="hcol"><div class="hc'+(du>0?' on':'')+'"></div><div class="hlb'+((j===7||j===19)?' maj':'')+'">'+HOURS[j]+'</div></div>';}
     $('pstrip').innerHTML=sh+'</div>';
     const ep=$('dkP');if(ep)ep.innerHTML=f(kwP,2)+' kWh/day &middot; '+f(kwP/KPG,2)+' gal/day'+dsub(kwP);
+    KITC.forEach((r,ki)=>{
+      const eh=$('khd'+ki);if(!eh)return;
+      eh.textContent=r.hs.length;
+      const kw=(+r.w||0)*r.hs.length/1000;
+      $('kdr'+ki).innerHTML=f(kw*pNow,2)+' kWh/day &middot; '+f(kw*pNow/KPG,2)+' gal/day'
+        +'<span class="devsm">per camper '+f(kw,2)+' kWh \u00b7 '+f(kw/KPG,2)+' gal</span>'
+        +dsub(kw*pNow);
+    });
   }
   tk+=kwP;
   const tt=$('dkT');if(tt)tt.innerHTML=f(tk,1)+' kWh/day &middot; '+f(tk/KPG,2)+' gal/day'+dsub(tk);
@@ -1052,7 +1053,7 @@ async function scnLoadObj(o){
   $('notes').value=NOTES;store('cavecsv_notes',NOTES);if(window.__noteCue)window.__noteCue();
   PGEN=st.pgen==='2'?'2':'1';store('cavecsv_pgen',PGEN);
   KITC=(Array.isArray(st.kit)&&st.kit.every(r=>r&&typeof r.n==='string'&&Array.isArray(r.hs)))?st.kit:structuredClone(KITSEED);
-  store('cavecsv_kit',KITC);buildKit();kitCalc();
+  store('cavecsv_kit',KITC);kitCalc();
   save();store('cavecsv_dev',DEVD);store('cavecsv_scn',o.title||'unnamed simulation');
   syncACFromPlan();wireDevices();buildDev();devPaint();scnBanner();refresh(true);
   return true;
@@ -1130,7 +1131,7 @@ function resetToCSV(){
   BOOTED=false;
   NOTES='';$('notes').value='';if(window.__noteCue)window.__noteCue();
   PGEN='1';store('cavecsv_pgen',PGEN);
-  buildKit();kitCalc();buildDev();devCalc();scnBanner();
+  kitCalc();buildDev();devCalc();scnBanner();
   BOOTED=true;
   refresh(true);
 }
@@ -1158,7 +1159,7 @@ function boot(D){
   $('floor').value=FLOOR;
   $('floor').addEventListener('input',()=>{FLOOR=+$('floor').value||0;store('cavecsv_floor',FLOOR);refresh(false);});
   $('src').textContent='source: data/*.csv · '+NDEV+' devices · sound rig '+f(SOUND,1)+' kWh · safe '+f(redFor(2),1)+' kW pooled · edits stay in this browser · the official plan lives on GitHub';
-  buildKit();kitCalc();
+  kitCalc();
   buildDev();devCalc();
   $('devadd').addEventListener('click',()=>{
     DEVC.push({n:'New device',area:'Custom',cat:'Custom',bus:'Pool',pr:'Cut if needed',q:1,w:0,du:Array(24).fill(0),cu:1});
@@ -1184,12 +1185,27 @@ function boot(D){
     if(el.id!=='dellab')$('floor').focus();}));
   PGEN=load('cavecsv_pgen')==='2'?'2':'1';
   GENMODE=['split','g1','g2'].includes(load('cavecsv_genmode'))?load('cavecsv_genmode'):'pooled';
-  $('pooltog').value=GENMODE;
-  $('pooltog').addEventListener('change',e=>{
-    GENMODE=e.target.value;
-    store('cavecsv_genmode',GENMODE);
-    refresh(false);
+  const GLBL={pooled:'POOLED',split:'BOTH GEN',g1:'GEN 1 ONLY',g2:'GEN 2 ONLY'};
+  const gmSync=()=>{
+    $('pooltog').textContent=GLBL[GENMODE];
+    document.querySelectorAll('#genmenu button').forEach(b=>b.classList.toggle('cur',b.dataset.gm===GENMODE));
+  };
+  gmSync();
+  $('pooltog').addEventListener('click',e=>{e.stopPropagation();e.preventDefault();
+    $('genmenu').classList.toggle('on');
   });
+  document.querySelectorAll('#genmenu button').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation();
+    GENMODE=b.dataset.gm;
+    store('cavecsv_genmode',GENMODE);
+    gmSync();
+    $('genmenu').classList.remove('on');
+    refresh(false);
+  }));
+  document.addEventListener('click',e=>{
+    if(!e.target.closest||!e.target.closest('.gsel'))$('genmenu').classList.remove('on');
+  });
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')$('genmenu').classList.remove('on');});
   document.querySelector('#capbox2 #genlab').addEventListener('click',e=>{e.stopPropagation();});
   DELTIME=load('cavecsv_deltime')==='pm'?'pm':'am';
   $('deltog').textContent=DELTIME.toUpperCase();
@@ -1259,7 +1275,6 @@ function boot(D){
 }
 $('resetbtn').addEventListener('click',async()=>{if(PLAN&&await uiConfirm('Discard local edits and reload the committed CSV plan?','Reset'))resetToCSV();});
 $('themebtn').addEventListener('click',()=>applyTheme(document.body.classList.contains('light')?'dark':'light'));
-$('kitadd').addEventListener('click',()=>{if(!KITC)return;KITC.push({n:'New item',w:0,hs:[]});buildKit();kitCalc();const i=$('kittable').querySelectorAll('input.kitname');i[i.length-1].focus();i[i.length-1].select();});
 
 fetchAll().then(boot).catch(err=>{pickerFallback(err);});
 </script>
