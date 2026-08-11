@@ -95,7 +95,11 @@ summary.flagrow2 #genlab+*,summary.flagrow2 .floorlab{flex:0 0 auto;white-space:
 #devtable td:first-child,#devtable th:first-child{width:192px;max-width:192px;overflow-wrap:break-word}
 #devbox,#devbox .twrap{overflow-anchor:none}
 #devbox.panel{padding-right:10px}
-#devtable input:not(.kitname){width:52px}
+#devtable input:not(.kitname){width:52px;font-size:12px;padding:6px 5px}
+#devtable input[data-f="q"],#devtable #psq{width:40px}
+#devtable input[data-f="w"],#devtable input[data-kf="w"]{width:58px}
+#devtable input::-webkit-outer-spin-button,#devtable input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+#devtable input[type=number]{-moz-appearance:textfield;appearance:textfield}
 #devtable .gtag{width:auto;min-width:36px;padding:8px 0;font:700 12px var(--mono);border-radius:8px;line-height:1}
 .gsel{position:relative;display:inline-block}
 #genmenu{display:none;position:absolute;top:calc(100% + 4px);right:0;z-index:45;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.28);min-width:118px;padding:4px}
@@ -103,11 +107,13 @@ summary.flagrow2 #genlab+*,summary.flagrow2 .floorlab{flex:0 0 auto;white-space:
 #genmenu button{display:block;width:100%;text-align:left;padding:7px 10px;background:none;border:none;border-radius:6px;font:600 11px var(--mono);color:inherit;cursor:pointer}
 #genmenu button:hover{background:var(--line)}
 #genmenu button.cur{color:var(--bob)}
+#genmenu button.gmoff{opacity:.4;cursor:default}
+#genmenu button.gmoff::after{content:' · needs 2 gens';font-weight:500;font-size:9px;color:var(--muted)}
 #pooltog{width:auto;height:28px;box-sizing:border-box;align-self:center;padding:4px 26px 4px 10px;font:600 11px var(--mono);appearance:none;-webkit-appearance:none;
   background:transparent url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='6'><path d='M0 0h8L4 6z' fill='%238A99A2'/></svg>") no-repeat right 8px center;
   border:1px solid var(--line);border-radius:8px;color:inherit;cursor:pointer}
 summary.flagrow2 .floorlab+.floorlab{margin-left:14px}
-#deltog{width:auto;height:28px;box-sizing:border-box;align-self:center;padding:4px 10px;font:600 11px var(--mono)}
+#fstog,#egtog,#deltog{width:auto;height:28px;box-sizing:border-box;align-self:center;padding:4px 10px;font:600 11px var(--mono)}
 .plan tr.ph .dtb{background-image:linear-gradient(var(--muted2),var(--muted2));background-repeat:no-repeat;background-position:0 50%;background-size:1px 55%}
 #devtable .devsm{display:block;font:500 10px var(--mono);color:var(--muted2)}
 .gtag{cursor:pointer;font:700 9px var(--mono);border:1px solid var(--line);border-radius:4px;padding:1px 5px;margin-left:7px;color:var(--muted);user-select:none}
@@ -115,6 +121,7 @@ summary.flagrow2 .floorlab+.floorlab{margin-left:14px}
 .gtag.g2{color:#E97BB6;border-color:#E97BB6}
 .gcell{text-align:center}
 .gtag{background:transparent}
+.gtag.gdim{opacity:.45;filter:grayscale(.6);cursor:default}
 #devtable tr.hrow.hth-hide th{visibility:hidden}
 #devtable tr.hrow th{text-align:center}
 #devtable tr.hrow th:first-child{text-align:left}
@@ -222,7 +229,7 @@ body.light .uibox h3{color:var(--ink)}
 
 <details class="panel info qn chartwide" id="capbox2"><summary class="flag flagrow2"><span class="flagtxt" id="capflag">—</span><label class="floorlab" id="genlab">Gens <span class="gsel"><button type="button" id="pooltog">POOLED</button><div id="genmenu"><button type="button" data-gm="pooled">POOLED</button><button type="button" data-gm="split">BOTH GEN</button><button type="button" data-gm="g1">GEN 1 ONLY</button><button type="button" data-gm="g2">GEN 2 ONLY</button></div></span></label></summary>
   <div class="chartbox capbox" id="capbody"><canvas id="capchart" role="img" aria-label="Hourly camp load vs the safe and absolute limits for the selected day"></canvas></div></details>
-<details class="panel info qn chartwide" id="runbox2"><summary class="flag flagrow2"><span class="flagtxt" id="runflag">—</span><label class="floorlab" id="dellab">Delivery <button type="button" id="deltog">AM</button></label> <label class="floorlab">Fuel floor <input type="number" id="floor" min="0"> gal</label></summary>
+<details class="panel info qn chartwide" id="runbox2"><summary class="flag flagrow2"><span class="flagtxt" id="runflag">—</span><label class="floorlab" id="eglab">By Gen <button type="button" id="egtog">ON</button></label> <label class="floorlab" id="fslab">Split <button type="button" id="fstog">WIRED</button></label> <label class="floorlab" id="dellab">Delivery <button type="button" id="deltog">AM</button></label> <label class="floorlab">Fuel floor <input type="number" id="floor" min="0"> gal</label></summary>
   <div class="chartbox runbox" id="runbody"><canvas id="runchart" role="img" aria-label="Fuel on hand day by day under the plan"></canvas></div></details>
 
 
@@ -323,7 +330,7 @@ function pickerFallback(err){
 
 /* ---------- model from CSVs ---------- */
 let S={},NDAYS=14,START=null,DAY=86400000;
-let BOOTED=false,LASTDEVDAY=-1,RAWD=null,DEVFP='',NOTES='',DELTIME='am',GENMODE='pooled',PGEN='1',BOB=[],ALICE=[],PCW=[],CATS=[],DEVSEED=[],DEVC=[],DEVD=[],DER=[],SOUND=0,BASE=0,PP=0,ACW=0,ACHRS=0,EBK=0,BUDG=0,KPG=6.5,IDLE2=0,QCAP=3.7,WARNM=15;
+let BOOTED=false,LASTDEVDAY=-1,RAWD=null,DEVFP='',NOTES='',DELTIME='am',GENMODE='pooled',PGEN='2',FUELGENS=true,FUELSPLIT='wired',BOB=[],ALICE=[],PCW=[],CATS=[],DEVSEED=[],DEVC=[],DEVD=[],DER=[],SOUND=0,BASE=0,PP=0,ACW=0,ACHRS=0,EBK=0,BUDG=0,KPG=6.5,IDLE2=0,QCAP=3.7,WARNM=15;
 let aliceRef=1,fansKw=0,bobKw=9,aliceKw=9,DERATE=.88,CEIL=.8;
 let SEEDPLAN=null,SEEDFUEL=null,DTYPE=[],KITSEED=[];
 let PLAN=null,FUEL=null,FLOOR=5,KITC=null,EXP=false,cap,run,NDEV=0;
@@ -426,7 +433,7 @@ function wireDevices(){
    ['Camp lights &amp; misc<span class="rl2">(fans, charging, coffee)</span>',i=>DER[i].LMISCK*cf(i)],
    ['ACs',i=>DER[i].AC1*PLAN.a[i]],
    ['E-bikes',i=>DER[i].EBT],
-   ['Personal items<span class="rl2" id="pplab">('+f(PP,2)+' kWh/camper \u00b7 from calculator)</span>',i=>PP*PLAN.p[i]]];
+   ['Personal items<span class="rl2" id="pplab">('+f(PP,2)+' kWh/camper \u00b7 from Devices table)</span>',i=>PP*PLAN.p[i]]];
   window.__CAVE={S,DER,DEVD,SOUND,CRITK:d0.CRITK,SRCK:d0.SRCK,LMISCK:d0.LMISCK,AC1:d0.AC1,EBT:d0.EBT};
 }
 
@@ -448,6 +455,14 @@ const isWE=i=>{const w=wd3(i);return w==='SAT'||w==='SUN';};
 const arriveGal=i=>FUEL.del[i]||0;
 function autoMorning(i){let pool=0;for(let j=0;j<=i;j++){pool+=arriveGal(j);if(j<i)pool-=burn(j);}return pool;}
 const endFuel=i=>autoMorning(i)-burn(i);
+function genGal(i){
+  const g=PLAN.g[i]||1,b=burn(i);
+  if(g<2)return[b];
+  if(FUELSPLIT==='shared')return[b/2,b/2];
+  const cs=curvesAB(i);
+  const s1=cs[0].data.reduce((a,x)=>a+x,0),s2=cs[1].data.reduce((a,x)=>a+x,0),t=(s1+s2)||1;
+  return[b*s1/t,b*s2/t];
+}
 const startFuel=i=>(DELTIME==='pm'&&i>0)?autoMorning(i)-arriveGal(i):autoMorning(i);
 
 function scaleAFor(i){
@@ -473,7 +488,8 @@ function curvesFor(i){
   const scaleA=scaleAFor(i);
   const bobBase=s?D8.BOB:D8.BOB.map((x,j)=>j>=12||j<3?Math.min(x,QCAP):x);
   const camp=bobBase.map((x,j)=>+((x*c)+D8.ALICE[j]*scaleA+p*PCW[j]/1000).toFixed(2));
-  return[{label:'Camp load \u00b7 pooled 1+2',data:camp,color:poolPattern()}];
+  const pooled=PLAN.g[i]>=2;
+  return[{label:pooled?'Camp load \u00b7 pooled 1+2':'Camp load \u00b7 1 generator',data:camp,color:pooled?poolPattern():'#2A8FEF'}];
 }
 function curvesAB(i){
   const D8=DER[i],p=PLAN.p[i],s=PLAN.s[i],c=cf(i);
@@ -489,7 +505,10 @@ const splitOn=i=>GENMODE==='split'&&PLAN.g[i]>=2;
 const soloGen=()=>GENMODE==='g1'?0:(GENMODE==='g2'?1:-1);
 function peakInfo(i){
   const sg=soloGen();
-  if(sg>=0){const cs=curvesAB(i);
+  if(sg>=0){
+    if(PLAN.g[i]<2){const pk=Math.max(...curvesFor(i)[0].data);
+      return{pk,R:redFor(1),H:hardFor(1)};}
+    const cs=curvesAB(i);
     return{pk:Math.max(...cs[sg].data),R:redFor(1),H:hardFor(1)};}
   if(!splitOn(i)){const pk=Math.max(...curvesFor(i)[0].data);
     return{pk,R:redFor(PLAN.g[i]),H:hardFor(PLAN.g[i])};}
@@ -508,8 +527,8 @@ function chipFor(st){
   if(st.pow===2&&st.fu===2)return['BOTH','over'];
   if(st.pow===2)return['POWER','over'];
   if(st.fu===2)return['FUEL','over'];
-  if(st.pow===1)return['HOT','warn'];
-  if(st.fu===1)return['LOW','warn'];
+  if(st.pow===1)return['POWER','warn'];
+  if(st.fu===1)return['FUEL','warn'];
   return['OK','ok'];
 }
 function phaseRow(){
@@ -555,13 +574,19 @@ function buildPlan(){
   h+='<tr class="band kwrow"><td class="rowlab">Delivered · gal</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'"><input data-del="'+i+'" type="number" min="0" value="'+(FUEL.del[i]||0)+'"></td>';
   h+='</tr>';
-  h+='<tr class="band kwrow"><td class="rowlab">Start of day · gal</td>';
+  h+='<tr class="band kwrow"><td class="rowlab" title="tank at the 5a dawn — after the truck in AM mode, before it in PM mode">Start of day · gal</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'" data-sod="'+i+'"></td>';
+  h+='</tr>';
+  h+='<tr class="band kwrow"><td class="rowlab">Gen 1 · gal</td>';
+  for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'" data-fg1="'+i+'"></td>';
+  h+='</tr>';
+  h+='<tr class="band kwrow"><td class="rowlab">Gen 2 · gal</td>';
+  for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'" data-fg2="'+i+'"></td>';
   h+='</tr>';
   h+='<tr class="band kwrow"><td class="rowlab">Fuel spent · gal</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'" data-fs="'+i+'"></td>';
   h+='</tr>';
-  h+='<tr class="band kwrow"><td class="rowlab">Fuel left · gal</td>';
+  h+='<tr class="band kwrow"><td class="rowlab" title="tank when the day ends — the model day runs 5a to 4a, so this is the level at the next 5a dawn">Fuel left · gal</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'"><span class="fl" data-fl="'+i+'"></span></td>';
   h+='</tr>';
   T.innerHTML=cg+h;
@@ -595,7 +620,7 @@ function buildPlan(){
   T.querySelectorAll('.gen').forEach(el=>el.addEventListener('click',ev=>{
     const i=+el.dataset.g;const v=PLAN.g[i]===2?1:2;
     if(ev.shiftKey){for(let j=i;j<NDAYS;j++)PLAN.g[j]=v;}else PLAN.g[i]=v;
-    save();refresh(true);
+    save();buildDev();devPaint();refresh(true);
   }));
   T.querySelectorAll('.dh').forEach(el=>el.addEventListener('click',ev=>{
     if(ev.target.tagName==='INPUT')return;
@@ -610,6 +635,13 @@ function updateDayCells(){
     const sEl=document.querySelector('[data-sod="'+i+'"]');
     if(sEl)sEl.textContent=f(startFuel(i),0);
     document.querySelector('[data-fs="'+i+'"]').textContent=f(burn(i),1);
+    const g1El=document.querySelector('[data-fg1="'+i+'"]'),g2El=document.querySelector('[data-fg2="'+i+'"]');
+    if(g1El&&g2El){const gg=genGal(i);
+      const ti=gg.length===1?'single-generator day \u00b7 the running generator'
+        :FUELSPLIT==='shared'?'SHARED \u00b7 paralleled generators burn evenly regardless of outlet'
+        :'WIRED \u00b7 each generator burns its own assigned devices';
+      g1El.textContent=f(gg[0],1);g1El.title=ti;
+      g2El.textContent=gg.length>1?f(gg[1],1):'\u2014';g2El.title=gg.length>1?ti:'not running';}
     const st=dayState(i),pk=dayPeak(i),[txt,cls]=chipFor(st);
     const pEl=document.querySelector('[data-pk="'+i+'"]');
     pEl.textContent=f(pk,1);pEl.className='pk pk-'+(st.pow===2?'over':st.pow===1?'warn':'ok');
@@ -619,7 +651,7 @@ function updateDayCells(){
     const vEl=document.querySelector('[data-v="'+i+'"]');
     vEl.textContent=txt;vEl.className='vc vc-'+cls;
     if(EXP)CATS.forEach((c,ci)=>{document.querySelector('[data-cat="'+ci+'-'+i+'"]').textContent=f(c[1](i),0);});
-    if(i===0){const pl=document.getElementById('pplab');if(pl)pl.textContent='('+f(PP,2)+' kWh/camper \u00b7 from calculator)';}
+    if(i===0){const pl=document.getElementById('pplab');if(pl)pl.textContent='('+f(PP,2)+' kWh/camper \u00b7 from Devices table)';}
   }
 }
 
@@ -650,14 +682,18 @@ function refresh(rebuild){
 
   const SPL=splitOn(asof),SG=soloGen();
   const RED=(SPL||SG>=0)?redFor(1):redFor(PLAN.g[asof]),HARD=(SPL||SG>=0)?hardFor(1):hardFor(PLAN.g[asof]);
-  const d0=SG>=0?[{...curvesAB(asof)[SG],label:'Gen '+(SG+1)+' \u00b7 only'}]:(SPL?curvesAB(asof):curvesFor(asof));
+  const d0=SG>=0
+    ?(PLAN.g[asof]<2
+      ?[{label:'Everything on Gen '+(SG+1),data:curvesFor(asof)[0].data,color:SG?'#E97BB6':'#2A8FEF'}]
+      :[{...curvesAB(asof)[SG],label:'Gen '+(SG+1)+' \u00b7 only'}])
+    :(SPL?curvesAB(asof):curvesFor(asof));
   const peaks=d0.map(c=>Math.max(...c.data));
   const peak=Math.max(...peaks);
   const wi=peaks.indexOf(peak),arr=d0[wi].data;
   const pkI=arr.reduce((m,v,ix)=>v>arr[m]?ix:m,0),pkH=HOURS[pkI];
   let capState=peak>=HARD?'danger':peak>RED?'warn':'safe';
   const capMsg=SG>=0
-    ?('Power · '+dName(asof)+' · Gen '+(SG+1)+' only (other engine off) · '
+    ?('Power · '+dName(asof)+' · Gen '+(SG+1)+((PLAN.g[asof]<2)?' · every load on the one generator · ':' only (other generator off) · ')
       +(capState==='danger'?'over the absolute limit — trips the breaker · peak '+f(peak,1)+' kW at '+pkH+' vs '+f(HARD,1)+' kW'
        :capState==='warn'?'over the safe line at '+pkH+' · peak '+f(peak,1)+' (safe '+f(RED,1)+' · absolute '+f(HARD,1)+')'
        :'peak '+f(peak,1)+' of safe '+f(RED,1)+' kW · '+f(RED-peak,1)+' kW to spare'))
@@ -668,7 +704,8 @@ function refresh(rebuild){
        :' · tightest Gen '+(wi?'2':'1')+' · '+f(RED-peak,1)+' kW to spare'))
     :(capState==='danger'?'Power · '+dName(asof)+' · over the absolute limit — this trips the breaker · peak '+f(peak,1)+' kW at '+pkH+' vs '+f(HARD,1)+' kW absolute'
     :capState==='warn'?'Power · '+dName(asof)+' · over the safe line, under the absolute limit · peak '+f(peak,1)+' kW at '+pkH+' (safe '+f(RED,1)+' · absolute '+f(HARD,1)+') · no room for surges'
-    :'Power · '+dName(asof)+' · peak '+f(peak,1)+' of safe '+f(RED,1)+' kW · '+f(RED-peak,1)+' kW to spare');
+    :'Power · '+dName(asof)+' · peak '+f(peak,1)+' of safe '+f(RED,1)+' kW · '+f(RED-peak,1)+' kW to spare'
+      +((GENMODE==='split'&&PLAN.g[asof]<2)?' · single generator today':''));
   $('capflag').textContent=capMsg;
   $('capflag').style.color=`var(--${capState==='safe'?'safe':capState})`;
 
@@ -734,14 +771,21 @@ function refresh(rebuild){
           const tot=c.chart.data.datasets.filter(d=>d.type==='bar'&&d.stack===st).reduce((a,d)=>a+(+d.data[c.dataIndex]||0),0);
           return c.dataset.label+': '+f(tot,2)+' kW';}}}},
     scales:{x:{stacked:true,ticks:tick,grid:{display:false}},y:{stacked:true,min:0,max:YMAX,ticks:tick,grid:{color:t.grid}}}}});
+  const gb1=[],gb2=[];
+  for(let i=asof;i<NDAYS;i++){const gg=genGal(i);
+    gb1.push({x:i+0.5,y:+gg[0].toFixed(1)});
+    gb2.push({x:i+0.5,y:+((gg[1]||0)).toFixed(1)});}
   const runData={datasets:[
-    {label:'Fuel on hand',data:L,borderColor:t.fuel,backgroundColor:t.fuelFill,fill:'origin',borderWidth:2.5,pointRadius:0,cubicInterpolationMode:'monotone',
+    ...(FUELGENS?[
+      {label:'Gen 1 burn',type:'bar',data:gb1,backgroundColor:'rgba(42,143,239,.75)',stack:'gburn',barThickness:16,borderWidth:0,order:3},
+      {label:'Gen 2 burn',type:'bar',data:gb2,backgroundColor:'rgba(233,123,182,.8)',stack:'gburn',barThickness:16,borderWidth:0,order:3}]:[]),
+    {label:'Fuel on hand',stack:'_hand',data:L,borderColor:t.fuel,backgroundColor:t.fuelFill,fill:'origin',borderWidth:2.5,pointRadius:0,cubicInterpolationMode:'monotone',
      segment:{borderColor:c=>(c.p0.parsed.y+c.p1.parsed.y)/2<FLOOR?'#F26060':t.fuel}},
-    {label:'Fuel floor',data:[{x:asof,y:FLOOR},{x:NDAYS,y:FLOOR}],borderColor:'#FFA733',borderDash:[6,4],borderWidth:1.5,pointRadius:0}]};
+    {label:'Fuel floor',stack:'_floor',data:[{x:asof,y:FLOOR},{x:NDAYS,y:FLOOR}],borderColor:'#FFA733',borderDash:[6,4],borderWidth:1.5,pointRadius:0}]};
   if(run){run.options.scales.x.min=asof;run.data=runData;run.update('none');}
   else run=new Chart($('runchart'),{type:'line',data:runData,options:{responsive:true,maintainAspectRatio:false,
     plugins:{legend:{labels:{color:t.leg,font:{family:FONT,size:11},boxWidth:10}}},
-    scales:{x:{type:'linear',min:asof,max:NDAYS,ticks:{...tick,stepSize:1,autoSkip:false,maxRotation:0,callback:v=>Number.isInteger(v)&&v<NDAYS?dLab(v):''},grid:{display:false}},y:{ticks:tick,grid:{color:t.grid}}}}});
+    scales:{x:{type:'linear',min:asof,max:NDAYS,stacked:true,ticks:{...tick,stepSize:1,autoSkip:false,maxRotation:0,callback:v=>Number.isInteger(v)&&v<NDAYS?dLab(v):''},grid:{display:false}},y:{stacked:true,ticks:tick,grid:{color:t.grid}}}}});
 }
 
 /* ---------- theme ---------- */
@@ -764,7 +808,7 @@ function kitCalc(){
   let tk=0;KITC.forEach(r=>{tk+=(+r.w||0)*r.hs.length/1000;});
   PP=+tk.toFixed(3);
   const pl=document.getElementById('pplab');
-  if(pl)pl.textContent='('+f(PP,2)+' kWh/camper \u00b7 from calculator)';
+  if(pl)pl.textContent='('+f(PP,2)+' kWh/camper \u00b7 from Devices table)';
   save();
   if(BOOTED){devPaint();if(PLAN){try{refresh(false);}catch(e){}}}
 }
@@ -778,8 +822,10 @@ function groupsFor(view){
   if(view==='area'){
     const order=['Kitchen','Structure','Shade City','Events','Ebikes'];
     DEVC.forEach(r=>{const a=r.area||'Custom';if(!order.includes(a))order.push(a);});
-    return order.map(a=>({name:a,idxs:DEVC.map((r,i)=>((r.area||'Custom')===a)?i:-1).filter(i=>i>=0)})).filter(g=>g.idxs.length)
-      .concat([{name:'Camp-wide',idxs:[],syn:1}]);
+    const gs=order.map(a=>({name:a,idxs:DEVC.map((r,i)=>((r.area||'Custom')===a)?i:-1).filter(i=>i>=0)})).filter(g=>g.idxs.length);
+    const k=gs.findIndex(g=>/shade city/i.test(g.name));
+    gs.splice(k>=0?k+1:gs.length,0,{name:'Personal items',idxs:[],syn:1});
+    return gs;
   }
   return DGROUPS.map(g=>({name:g,idxs:DEVC.map((r,i)=>groupOf(r)===g?i:-1).filter(i=>i>=0)})).filter(g=>g.idxs.length)
     .concat([{name:'Personal items',idxs:[],syn:1}]);
@@ -801,8 +847,8 @@ function buildDev(){
         strip+='<div class="hcol"><div class="hc'+(du>0?' on':'')+'" style="'+(du>0?'opacity:'+(0.35+0.65*du).toFixed(2):'')+'" data-vr="'+i+'" data-j="'+j+'"></div><div class="hlb'+((j===7||j===19)?' maj':'')+'">'+HOURS[j]+'</div></div>';}
       strip+='</div>';
       h+='<tr class="grow'+(op?'':' ghide')+'">'+(r.cu
-          ?'<td><input class="kitname" data-vr="'+i+'" data-f="n" type="text" value="'+String(r.n).replace(/"/g,'&quot;')+'"></td><td class="gcell"><button type="button" class="gtag g'+(r.gen||'1')+'" data-gt="'+i+'" title="generator assignment · applies to every day">'+(r.gen||'1')+'</button></td>'
-          :'<td class="dname" title="'+(r.pr||'')+'">'+r.n+'</td><td class="gcell"><button type="button" class="gtag g'+(r.gen||'1')+'" data-gt="'+i+'" title="generator assignment · applies to every day">'+(r.gen||'1')+'</button></td>')
+          ?'<td><input class="kitname" data-vr="'+i+'" data-f="n" type="text" value="'+String(r.n).replace(/"/g,'&quot;')+'"></td><td class="gcell"><button type="button" class="gtag '+((PLAN&&PLAN.g[ASOF()]<2)?'g1 gdim':'g'+(r.gen||'1'))+'" data-gt="'+i+'" title="'+((PLAN&&PLAN.g[ASOF()]<2)?'single-generator day · all loads run on the one generator · tag still sets wiring for 2-gen days':'generator assignment · click: every day · shift-click: from this day on')+'">'+((PLAN&&PLAN.g[ASOF()]<2)?'1':(r.gen||'1'))+'</button></td>'
+          :'<td class="dname" title="'+(r.pr||'')+'">'+r.n+(/e-bike charging/i.test(r.n)?'<span class="devsm">watts per bike \u00b7 Qty = the calendar\u2019s E-bikes</span>':'')+'</td><td class="gcell"><button type="button" class="gtag '+((PLAN&&PLAN.g[ASOF()]<2)?'g1 gdim':'g'+(r.gen||'1'))+'" data-gt="'+i+'" title="'+((PLAN&&PLAN.g[ASOF()]<2)?'single-generator day · all loads run on the one generator · tag still sets wiring for 2-gen days':'generator assignment · click: every day · shift-click: from this day on')+'">'+((PLAN&&PLAN.g[ASOF()]<2)?'1':(r.gen||'1'))+'</button></td>')
         +'<td><input data-vr="'+i+'" data-f="q" type="number" min="0" value="'+r.q+'"></td>'
         +'<td><input data-vr="'+i+'" data-f="w" type="number" min="0" value="'+r.w+'"></td>'
         +'<td class="hdc" id="dh'+i+'">&mdash;</td>'
@@ -812,8 +858,8 @@ function buildDev(){
         +'</tr>';
     });
     if(g.syn&&op){
-      h+='<tr class="grow psyn"><td class="dname" title="camper personal loads">Personal items<span class="devsm">items below apply every day \u00b7 campers count follows the selected day \u00b7 blocks = hours with any camper draw</span></td>'
-        +'<td class="gcell"><button type="button" class="gtag pgt g'+PGEN+'" title="which generator carries camper loads in split view">'+PGEN+'</button></td>'
+      h+='<tr class="grow psyn"><td class="dname" title="camper personal loads">Personal items</td>'
+        +'<td class="gcell"><button type="button" class="gtag pgt '+((PLAN&&PLAN.g[ASOF()]<2)?'g1 gdim':'g'+PGEN)+'" title="'+((PLAN&&PLAN.g[ASOF()]<2)?'single-generator day · all loads run on the one generator':'which generator carries camper loads in split view')+'">'+((PLAN&&PLAN.g[ASOF()]<2)?'1':PGEN)+'</button></td>'
         +'<td><input id="psq" type="number" min="0" max="99" value="0"></td><td id="psw">\u2014</td><td class="hdc" id="psh">\u2014</td>'
         +'<td id="pstrip"></td><td class="qr" id="dkP">\u2014</td><td></td></tr>';
       KITC.forEach((r,ki)=>{
@@ -846,16 +892,19 @@ function buildDev(){
   $('devview').textContent='View: by '+(DEVVIEW==='area'?'Area':'Category')+' \u21c4';
   $('devcol').textContent=DEVGRP.some(g=>open.has(g.name))?'Collapse all':'Expand all';
   T.querySelectorAll('.gtag.pgt').forEach(el=>el.addEventListener('click',()=>{
+    if(PLAN&&PLAN.g[ASOF()]<2)return;
     PGEN=PGEN==='2'?'1':'2';
     store('cavecsv_pgen',PGEN);
     el.textContent=PGEN;el.className='gtag pgt g'+PGEN;
     refresh(false);
   }));
-  T.querySelectorAll('.gtag[data-gt]').forEach(el=>el.addEventListener('click',()=>{
+  T.querySelectorAll('.gtag[data-gt]').forEach(el=>el.addEventListener('click',ev=>{
+    if(PLAN&&PLAN.g[ASOF()]<2)return;
     const i=+el.dataset.gt,nm=DEVC[i]&&DEVC[i].n;
     if(nm==null)return;
     const nv=(DEVC[i].gen==='2')?'1':'2';
-    DEVD.forEach(rows=>{const r=rows[i];if(r&&r.n===nm)r.gen=nv;});
+    const from=ev.shiftKey?ASOF():0;
+    DEVD.forEach((rows,d)=>{if(d<from)return;const r=rows[i];if(r&&r.n===nm)r.gen=nv;});
     store('cavecsv_dev',DEVD);
     el.textContent=nv;el.className='gtag g'+nv;
     devCalc();
@@ -921,18 +970,26 @@ function buildDev(){
 }
 function devPaint(){
   const rem=NDAYS-ASOF();
-  const dsub=k=>'<span class="devsm">whole event &middot; '+f(k*NDAYS,0)+' kWh &middot; '+f(k*NDAYS/KPG,1)+' gal</span>'
-    +'<span class="devsm">from '+dLab(ASOF())+' &middot; '+f(k*rem,0)+' kWh &middot; '+f(k*rem/KPG,1)+' gal</span>';
+  const efSub=(ev,fr)=>'<span class="devsm">whole event &middot; '+f(ev,0)+' kWh &middot; '+f(ev/KPG,1)+' gal total</span>'
+    +'<span class="devsm">from '+dLab(ASOF())+' &middot; '+f(fr,0)+' kWh &middot; '+f(fr/KPG,1)+' gal total</span>';
+  const dsub=k=>efSub(k*NDAYS,k*rem);
+  const duS=r=>r.du.reduce((a,x)=>a+x,0);
+  const rowKw=(d,idx)=>{const r=DEVD[d]&&DEVD[d][idx];return r?r.q*r.w*duS(r)/1000:0;};
+  const rowEF=idx=>{let ev=0,fr=0;for(let d=0;d<NDAYS;d++){const k=rowKw(d,idx);ev+=k;if(d>=ASOF())fr+=k;}return[ev,fr];};
+  const pEF=per=>{let ev=0,fr=0;for(let d=0;d<NDAYS;d++){const k=per*(PLAN?PLAN.p[d]:0);ev+=k;if(d>=ASOF())fr+=k;}return[ev,fr];};
   let tk=0;
   DEVC.forEach((r,i)=>{
     const hrs=r.du.reduce((a,x)=>a+x,0),k=r.q*r.w*hrs/1000;tk+=k;
     const eh=$('dh'+i);if(eh)eh.textContent=hrs.toFixed(2);
-    const ek=$('dk'+i);if(ek)ek.innerHTML=f(k,2)+' kWh/day &middot; '+f(k/KPG,2)+' gal/day'+dsub(k);
+    const ek=$('dk'+i);if(ek){const[ev,fr]=rowEF(i);ek.innerHTML=f(k,2)+' kWh/day &middot; '+f(k/KPG,2)+' gal/day'+efSub(ev,fr);}
   });
   const pNow=PLAN?PLAN.p[ASOF()]:0,kwP=PP*pNow;
   DEVGRP.forEach((g,gi)=>{
     const gk=g.syn?kwP:g.idxs.reduce((a,i)=>{const r=DEVC[i];return a+(r?r.q*r.w*r.du.reduce((s,x)=>s+x,0)/1000:0);},0);
-    const eg=$('dg'+gi);if(eg)eg.innerHTML=f(gk,2)+' kWh/day &middot; '+f(gk/KPG,2)+' gal/day'+dsub(gk);
+    let gev=0,gfr=0;
+    if(g.syn){[gev,gfr]=pEF(PP);}
+    else g.idxs.forEach(i=>{const[e2,f2]=rowEF(i);gev+=e2;gfr+=f2;});
+    const eg=$('dg'+gi);if(eg)eg.innerHTML=f(gk,2)+' kWh/day &middot; '+f(gk/KPG,2)+' gal/day'+efSub(gev,gfr);
   });
   if($('psq')){
     const maxW=Math.max(...PCW,1);
@@ -943,18 +1000,21 @@ function devPaint(){
     for(let j=0;j<24;j++){const du=PCW[j]/maxW;
       sh+='<div class="hcol"><div class="hc'+(du>0?' on':'')+'"></div><div class="hlb'+((j===7||j===19)?' maj':'')+'">'+HOURS[j]+'</div></div>';}
     $('pstrip').innerHTML=sh+'</div>';
-    const ep=$('dkP');if(ep)ep.innerHTML=f(kwP,2)+' kWh/day &middot; '+f(kwP/KPG,2)+' gal/day'+dsub(kwP);
+    const ep=$('dkP');if(ep){const[ev,fr]=pEF(PP);ep.innerHTML=f(kwP,2)+' kWh/day &middot; '+f(kwP/KPG,2)+' gal/day'+efSub(ev,fr);}
     KITC.forEach((r,ki)=>{
       const eh=$('khd'+ki);if(!eh)return;
       eh.textContent=r.hs.length;
       const kw=(+r.w||0)*r.hs.length/1000;
       $('kdr'+ki).innerHTML=f(kw*pNow,2)+' kWh/day &middot; '+f(kw*pNow/KPG,2)+' gal/day'
         +'<span class="devsm">per camper '+f(kw,2)+' kWh \u00b7 '+f(kw/KPG,2)+' gal</span>'
-        +dsub(kw*pNow);
+        +(x=>efSub(x[0],x[1]))(pEF(kw));
     });
   }
   tk+=kwP;
-  const tt=$('dkT');if(tt)tt.innerHTML=f(tk,1)+' kWh/day &middot; '+f(tk/KPG,2)+' gal/day'+dsub(tk);
+  let tev=0,tfr=0;
+  DEVC.forEach((r,i)=>{const[e2,f2]=rowEF(i);tev+=e2;tfr+=f2;});
+  {const[e2,f2]=pEF(PP);tev+=e2;tfr+=f2;}
+  const tt=$('dkT');if(tt)tt.innerHTML=f(tk,1)+' kWh/day &middot; '+f(tk/KPG,2)+' gal/day'+efSub(tev,tfr);
   const base=i=>{const t=structuredClone(DEVSEED);
     if(PLAN){const a=t.find(x=>/air condition/i.test(x.n));if(a)a.q=PLAN.a[i];
       const e=t.find(x=>/e-bike charging/i.test(x.n));if(e)e.q=PLAN.e[i];}
@@ -1051,7 +1111,7 @@ async function scnLoadObj(o){
   DEVD=st.devd;DEVD.forEach(ensureGen);DEVC=DEVD[ASOF()];
   NOTES=typeof st.notes==='string'?st.notes:'';
   $('notes').value=NOTES;store('cavecsv_notes',NOTES);if(window.__noteCue)window.__noteCue();
-  PGEN=st.pgen==='2'?'2':'1';store('cavecsv_pgen',PGEN);
+  PGEN=st.pgen==='1'?'1':'2';store('cavecsv_pgen',PGEN);
   KITC=(Array.isArray(st.kit)&&st.kit.every(r=>r&&typeof r.n==='string'&&Array.isArray(r.hs)))?st.kit:structuredClone(KITSEED);
   store('cavecsv_kit',KITC);kitCalc();
   save();store('cavecsv_dev',DEVD);store('cavecsv_scn',o.title||'unnamed simulation');
@@ -1130,7 +1190,7 @@ function resetToCSV(){
   FLOOR=S.fuel_floor_gal;$('floor').value=FLOOR;
   BOOTED=false;
   NOTES='';$('notes').value='';if(window.__noteCue)window.__noteCue();
-  PGEN='1';store('cavecsv_pgen',PGEN);
+  PGEN='2';store('cavecsv_pgen',PGEN);
   kitCalc();buildDev();devCalc();scnBanner();
   BOOTED=true;
   refresh(true);
@@ -1183,7 +1243,7 @@ function boot(D){
   });
   document.querySelectorAll('#runbox2 .floorlab').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();e.preventDefault();
     if(el.id!=='dellab')$('floor').focus();}));
-  PGEN=load('cavecsv_pgen')==='2'?'2':'1';
+  PGEN=load('cavecsv_pgen')==='1'?'1':'2';
   GENMODE=['split','g1','g2'].includes(load('cavecsv_genmode'))?load('cavecsv_genmode'):'pooled';
   const GLBL={pooled:'POOLED',split:'BOTH GEN',g1:'GEN 1 ONLY',g2:'GEN 2 ONLY'};
   const gmSync=()=>{
@@ -1192,10 +1252,13 @@ function boot(D){
   };
   gmSync();
   $('pooltog').addEventListener('click',e=>{e.stopPropagation();e.preventDefault();
+    const sb=document.querySelector('#genmenu button[data-gm="split"]');
+    if(sb)sb.classList.toggle('gmoff',PLAN&&PLAN.g[ASOF()]<2);
     $('genmenu').classList.toggle('on');
   });
   document.querySelectorAll('#genmenu button').forEach(b=>b.addEventListener('click',e=>{
     e.stopPropagation();
+    if(b.classList.contains('gmoff'))return;
     GENMODE=b.dataset.gm;
     store('cavecsv_genmode',GENMODE);
     gmSync();
@@ -1207,6 +1270,23 @@ function boot(D){
   });
   document.addEventListener('keydown',e=>{if(e.key==='Escape')$('genmenu').classList.remove('on');});
   document.querySelector('#capbox2 #genlab').addEventListener('click',e=>{e.stopPropagation();});
+  FUELSPLIT=load('cavecsv_fuelsplit')==='shared'?'shared':'wired';
+  $('fstog').textContent=FUELSPLIT.toUpperCase();
+  $('fstog').addEventListener('click',e=>{e.stopPropagation();e.preventDefault();
+    FUELSPLIT=FUELSPLIT==='wired'?'shared':'wired';
+    store('cavecsv_fuelsplit',FUELSPLIT);
+    $('fstog').textContent=FUELSPLIT.toUpperCase();
+    refresh(false);
+  });
+  document.querySelector('#runbox2 #fslab').addEventListener('click',e=>{e.stopPropagation();});
+  FUELGENS=load('cavecsv_fuelgens')!==false;
+  $('egtog').textContent=FUELGENS?'ON':'OFF';
+  $('egtog').addEventListener('click',e=>{e.stopPropagation();e.preventDefault();
+    FUELGENS=!FUELGENS;store('cavecsv_fuelgens',FUELGENS);
+    $('egtog').textContent=FUELGENS?'ON':'OFF';
+    refresh(false);
+  });
+  document.querySelector('#runbox2 #eglab').addEventListener('click',e=>{e.stopPropagation();});
   DELTIME=load('cavecsv_deltime')==='pm'?'pm':'am';
   $('deltog').textContent=DELTIME.toUpperCase();
   $('deltog').addEventListener('click',e=>{e.stopPropagation();e.preventDefault();
@@ -1268,7 +1348,7 @@ function boot(D){
     DEVC=DEVD[ASOF()];
     devCalc();
   });
-  $('devnote').innerHTML='Whiteboard over data/devices.csv + schedule.csv &mdash; edits live in this browser, apply to the selected day only, and drive every chart and fuel number &middot; each tap steps an hour&rsquo;s duty by 25% &middot; \u27f3 resets all days to committed &middot; rows show full-run draw; the calendar applies occupancy and plan counts on top &middot; the AC row&rsquo;s Qty is the same number as the calendar&rsquo;s ACs count for the selected day &mdash; edit either';
+  $('devnote').innerHTML='Each tap steps an hour&rsquo;s duty by 25% &middot; The reset button in the top right resets all days back to the latest commit';
   applyTheme(load('cave_theme')||'dark');
   BOOTED=true;
   refresh(true);
