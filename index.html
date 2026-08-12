@@ -355,13 +355,14 @@ function buildModel(D){
   const dfp=JSON.stringify(DEVSEED),nd_=D.calendar_plan.length;
   DEVFP=dfp;RAWD=D.devices;
   const ldv=(load('cavecsv_dev_fp')===dfp)?load('cavecsv_dev'):null;
-  DEVD=(Array.isArray(ldv)&&ldv.length===nd_&&ldv.every(dd=>Array.isArray(dd)&&dd.length>=DEVSEED.length))
-    ?ldv:Array.from({length:nd_},()=>structuredClone(DEVSEED));
+  const __fromSaved=(Array.isArray(ldv)&&ldv.length===nd_&&ldv.every(dd=>Array.isArray(dd)&&dd.length>=DEVSEED.length));
+  DEVD=__fromSaved?ldv:Array.from({length:nd_},()=>structuredClone(DEVSEED));
   DEVC=DEVD[0];
   store('cavecsv_dev_fp',dfp);
   wireDevices();
 
   DTYPE=D.calendar_plan.map(r=>r.day_type);
+  if(!__fromSaved)zeroOffDays();
   SEEDPLAN={p:D.calendar_plan.map(r=>+r.people||0),
             a:D.calendar_plan.map(r=>+r.acs||0),
             e:D.calendar_plan.map(r=>+r.ebikes||0),
@@ -830,6 +831,7 @@ function groupsFor(view){
   return DGROUPS.map(g=>({name:g,idxs:DEVC.map((r,i)=>groupOf(r)===g?i:-1).filter(i=>i>=0)})).filter(g=>g.idxs.length)
     .concat([{name:'Personal items',idxs:[],syn:1}]);
 }
+function zeroOffDays(){if(!Array.isArray(DTYPE))return;DEVD.forEach((dd,i)=>{if(/^off$/i.test(String(DTYPE[i]||'')))dd.forEach(r=>{r.q=0;});});}
 function buildDev(){
   DEVC=DEVD[ASOF()]||DEVD[0];
   DEVGRP=groupsFor(DEVVIEW);
@@ -1186,7 +1188,7 @@ function resetToCSV(){
   ['cavecsv_plan','cavecsv_fuel','cavecsv_kit','cavecsv_floor','cavecsv_dev','cavecsv_scn','cavecsv_notes'].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});
   PLAN=structuredClone(SEEDPLAN);FUEL=structuredClone(SEEDFUEL);
   KITC=structuredClone(KITSEED);
-  DEVD=Array.from({length:NDAYS},()=>structuredClone(DEVSEED));DEVD.forEach(ensureGen);DEVC=DEVD[ASOF()];wireDevices();syncACFromPlan();
+  DEVD=Array.from({length:NDAYS},()=>structuredClone(DEVSEED));DEVD.forEach(ensureGen);zeroOffDays();DEVC=DEVD[ASOF()];wireDevices();syncACFromPlan();
   FLOOR=S.fuel_floor_gal;$('floor').value=FLOOR;
   BOOTED=false;
   NOTES='';$('notes').value='';if(window.__noteCue)window.__noteCue();
