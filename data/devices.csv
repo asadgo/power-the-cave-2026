@@ -1,7 +1,7 @@
 device,area,category,product,qty,running_w_each,surge_w_each,volts,bus,priority,notes
 Chest freezer,Kitchen,Appliance,,2,200,900,120,Battery,Never cut,Start kick estimated. Verify sticker.
 Fridge coolers - DC,Kitchen,Appliance,Dometic CFX,1,80,200,24,Battery,Never cut,24 V. Needs a brick. Start kick estimated.
-Pumps,Kitchen,Appliance,Shurflo Aqua King II (est.),2,36,110,12,Battery,Never cut,12 V. Needs a brick. Start kick estimated.
+Pumps,Kitchen,Appliance,Shurflo Aqua King II (est.),2,90,180,12,Battery,Never cut,"12 V. AKII Premium 4.0 datasheet: 15 A fuse each, size AC-DC brick per pump. Verify sticker."
 Perimeter Lights,Structure,Lights,,1,30,30,12,Battery,Never cut,Safety lighting. 12 V. Needs a brick.
 Bistro Lights - Dining,Kitchen,Lights,,1,30,30,120,Pool,Cut if needed,
 Bistro Lights - Hallway,Kitchen,Lights,,1,30,30,120,Pool,Cut if needed,
