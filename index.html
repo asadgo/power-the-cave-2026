@@ -128,7 +128,7 @@ summary.flagrow2 .floorlab+.floorlab{margin-left:14px}
 #devtable tr.hrow th.qr{text-align:right}
 #devtable td:nth-child(3),#devtable td:nth-child(4){text-align:center}
 #devtable .hdc{width:56px;min-width:56px;max-width:56px;box-sizing:border-box;text-align:center;font-variant-numeric:tabular-nums}
-#devadd,#devcopy,#devview,#devcol,#scnsave,#scnload,#scnapply{width:auto;font-size:13px;padding:8px 14px;margin-top:8px;margin-right:8px}
+#devadd,#devcopy,#devfwd,#devview,#devcol,#scnsave,#scnload,#scnapply{width:auto;font-size:13px;padding:8px 14px;margin-top:8px;margin-right:8px}
 #devtable .dsub td{font:600 11px var(--mono);color:var(--muted2);border-top:1px solid var(--deep);padding:4px 3px 10px}
 #devtable .ghide{display:none}
 #devtable .dgrp td{cursor:pointer;user-select:none}
@@ -223,8 +223,9 @@ body.light .uibox h3{color:var(--ink)}
 <button type="button" id="devview">View: by Category &#8644;</button>
 <button type="button" id="devcol">Expand all</button>
 <div class="twrap"><table id="devtable"></table></div>
-<button type="button" id="devadd">+ Add item</button>
-<button type="button" id="devcopy">Apply this day to all days</button>
+<button type="button" id="devadd">+ Add custom item</button>
+<button type="button" id="devcopy">Apply to all days</button>
+<button type="button" id="devfwd">Apply to rest of event</button>
 <p class="note" id="devnote"></p></details>
 
 <details class="panel info qn chartwide" id="capbox2"><summary class="flag flagrow2"><span class="flagtxt" id="capflag">—</span><label class="floorlab" id="genlab">Gens <span class="gsel"><button type="button" id="pooltog">POOLED</button><div id="genmenu"><button type="button" data-gm="pooled">POOLED</button><button type="button" data-gm="split">BOTH GEN</button><button type="button" data-gm="g1">GEN 1 ONLY</button><button type="button" data-gm="g2">GEN 2 ONLY</button></div></span></label></summary>
@@ -1348,6 +1349,14 @@ function boot(D){
     const src=DEVC;
     for(let i=0;i<NDAYS;i++)if(DEVD[i]!==src)DEVD[i]=structuredClone(src);
     DEVC=DEVD[ASOF()];
+    devCalc();
+  });
+  $('devfwd').addEventListener('click',async()=>{
+    const a=ASOF(),n=NDAYS-1-a;
+    if(n<1){await uiDialog({msg:dLab(a)+' is the last day of the event - there are no later days to apply to.',title:'Devices'});return;}
+    if(!await uiConfirm('Apply '+dLab(a)+"'s device setup to this and all "+n+' later day'+(n===1?'':'s')+'? This overwrites device edits from '+dLab(a+1)+' onward. Earlier days are untouched.','Devices'))return;
+    const src=DEVD[a];
+    for(let i=a+1;i<NDAYS;i++)DEVD[i]=structuredClone(src);
     devCalc();
   });
   $('devnote').innerHTML='Each tap steps an hour&rsquo;s duty by 25% &middot; The reset button in the top right resets all days back to the latest commit';
