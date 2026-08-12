@@ -10,8 +10,8 @@ red_fuel_level_gal,23,"Below this many gallons, levels render red."
 low_fuel_level_gal,44,"Below this, amber, and the fuel chip reads LOW."
 camp_base_kwh,15,"Energy burned daily regardless of headcount: fridges, network, always on gear."
 simulated_day_label,Simulated Day,What the worst case view is called in the VIEW menu.
-gen_bob_watts,9000,Bob - nameplate W (Setup / THE MACHINES)
-gen_alice_watts,9000,Alice - nameplate W (Setup / THE MACHINES)
+gen_bob_watts,9000,Bob - nameplate W (Westinghouse iGen12000DFc dual-fuel inverter; Setup / THE MACHINES)
+gen_alice_watts,9000,Alice - nameplate W (Westinghouse iGen12000DFc dual-fuel inverter; Setup / THE MACHINES)
 battery_out_w,2400,Battery continuous output W (Setup)
 battery_kwh,2.4,Battery stored energy kWh (Setup)
 daytype_build_factor,0.3,Build day intensity x (Setup / Day types)
