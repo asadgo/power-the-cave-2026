@@ -821,7 +821,7 @@ let DEVVIEW=load('cavecsv_devview')||'category';
 let DEVGRP=[];
 function groupsFor(view){
   if(view==='area'){
-    const order=['Kitchen','Structure','Shade City','Events','Ebikes'];
+    const order=['Kitchen','Structure','Events','Shade City','Ebikes'];
     DEVC.forEach(r=>{const a=r.area||'Custom';if(!order.includes(a))order.push(a);});
     const gs=order.map(a=>({name:a,idxs:DEVC.map((r,i)=>((r.area||'Custom')===a)?i:-1).filter(i=>i>=0)})).filter(g=>g.idxs.length);
     const k=gs.findIndex(g=>/shade city/i.test(g.name));
