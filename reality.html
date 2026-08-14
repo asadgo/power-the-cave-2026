@@ -302,7 +302,7 @@ body.light{--gen1:#2f6fad;--gen2:#c2568f;--rline:#0d9488;--planl:#b5aea2}
 <button type="button" id="fsub">Commit to the journal</button>
 <p id="fmsg"></p>
 <div id="prevbox"><div style="font-size:10.5px;color:var(--warn);letter-spacing:.5px;margin-bottom:4px">CSV ROW (tap to select)</div><div id="prevrow"></div></div>
-<p class="note">A refuel = name + gallons into that gen + its hour meter. The drum check = name + both drum levels (0 for an empty drum). Blank fields are fine. Fill tanks to full each pour — then the pour size is exactly the fuel burned since the last fill. Every entry is a git commit — typo fixes happen via the GitHub pencil.</p></details>
+<p class="note">A refuel = name + gallons into that gen + its hour meter. The drum check = name + both drum levels (0 for an empty drum). Blank fields are fine. Fill tanks to full each pour — then the pour size is exactly the fuel burned since the last fill. Meter = the run-hours odometer on the gen screen; copy it as-is. Every entry is a git commit — typo fixes happen via the GitHub pencil.</p></details>
 
 <details class="panel info chartwide" open><summary class="flag">Fuel on hand — plan vs reality</summary>
   <div class="chbox"><canvas id="chartA"></canvas></div>
@@ -621,10 +621,10 @@ function renderLedger(){
     if(e.g1!=null)prev.g1=e.g1;if(e.g2!=null)prev.g2=e.g2;
     return {e,d1,d2};
   }).reverse();
-  $('ledger').innerHTML='<tr><th>when</th><th>who</th><th>gen 1 h</th><th>gen 2 h</th><th>\u2192 gen 1</th><th>\u2192 gen 2</th><th>delivery</th><th>drum 1</th><th>drum 2</th><th>notes</th></tr>'+
+  $('ledger').innerHTML='<tr><th>when</th><th>who</th><th>gen 1 hours</th><th>gen 2 hours</th><th>fuel \u2192 gen 1</th><th>fuel \u2192 gen 2</th><th>delivery</th><th>drum 1</th><th>drum 2</th><th>notes</th></tr>'+
    (rows.length?rows.map(({e,d1,d2})=>'<tr'+(e.local?' class="loc"':'')+'><td>'+e.ts.toLocaleDateString('en-US',{month:'numeric',day:'numeric'})+' '+e.ts.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</td><td>'+esc(e.name)+(e.local?' <span class="badge">just logged</span>':'')+'</td>'+
-    '<td>'+(e.g1!=null?f(e.g1,1)+(d1!=null?' <span class="dlt">+'+f(d1,1)+'</span>':''):'')+'</td>'+
-    '<td>'+(e.g2!=null?f(e.g2,1)+(d2!=null?' <span class="dlt">+'+f(d2,1)+'</span>':''):'')+'</td>'+
+    '<td>'+(e.g1!=null?f(e.g1,1)+(d1!=null?' <span class="dlt"'+(d1<0?' style="color:var(--danger)"':'')+'>'+(d1>=0?'+':'')+f(d1,1)+'</span>':''):'')+'</td>'+
+    '<td>'+(e.g2!=null?f(e.g2,1)+(d2!=null?' <span class="dlt"'+(d2<0?' style="color:var(--danger)"':'')+'>'+(d2>=0?'+':'')+f(d2,1)+'</span>':''):'')+'</td>'+
     '<td>'+(e.a1!=null?f(e.a1,1):'')+'</td><td>'+(e.a2!=null?f(e.a2,1):'')+'</td><td>'+(e.del!=null?f(e.del,0):'')+'</td><td>'+(e.d1!=null?f(e.d1,0):'')+'</td><td>'+(e.d2!=null?f(e.d2,0):'')+'</td><td class="nt">'+esc(e.notes)+'</td></tr>').join('')
    :'<tr><td colspan="10" class="nt">Journal is empty — first entry lands here.</td></tr>');
 }
@@ -646,6 +646,10 @@ function validate(r){
     if(r[k]!==''&&+r[k]>caps[k])return (k.startsWith('gal_gen')?'The gen tank holds 7.9 gal \u2014 ':'')+k.replace(/_/g,' ')+' looks too high (max '+caps[k]+').';}
   if(!nums.some(k=>r[k]!==''))return 'Log at least one number (fuel, meter, delivery, or drum level).';
   if((r.drum1_gal!=='')!==(r.drum2_gal!==''))return 'Log both drums \u2014 enter 0 for an empty drum.';
+  const lg=k=>{const v=EV.map(e=>e[k]).filter(x=>x!=null);return v.length?v[v.length-1]:null;};
+  const l1=lg('g1'),l2=lg('g2');
+  if(r.gen1_hours!==''&&l1!=null&&+r.gen1_hours<l1-0.05)return 'Gen 1 meter reads '+r.gen1_hours+' but the last entry was '+f(l1,1)+' \u2014 meters only count up. (Gen actually swapped? Log that row via the GitHub pencil.)';
+  if(r.gen2_hours!==''&&l2!=null&&+r.gen2_hours<l2-0.05)return 'Gen 2 meter reads '+r.gen2_hours+' but the last entry was '+f(l2,1)+' \u2014 meters only count up. (Gen actually swapped? Log that row via the GitHub pencil.)';
   return null;
 }
 async function submit(){
@@ -689,6 +693,10 @@ async function boot(){
     const n=new Date();
     $('f_date').value=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');
     $('f_time').value=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+    const lgp=k=>{const v=EV.map(e=>e[k]).filter(x=>x!=null);return v.length?v[v.length-1]:null;};
+    const p1=lgp('g1'),p2=lgp('g2');
+    $('f_g1').placeholder=p1!=null?('last '+f(p1,1)):'run-hours odometer';
+    $('f_g2').placeholder=p2!=null?('last '+f(p2,1)):'run-hours odometer';
     $('fsub').onclick=submit;
     $('reloadbtn').onclick=async()=>{const b=$('reloadbtn');b.classList.add('spin');
       try{await loadPlan();await loadReality();renderAll();toast('Synced \u2713 plan + journal \u00b7 '+EV.length+' entr'+(EV.length===1?'y':'ies'));}
