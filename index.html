@@ -161,6 +161,7 @@ summary.flagrow2{display:flex;flex-wrap:wrap;row-gap:6px;align-items:center}
 .band.kwrow td:not(.rowlab){font-size:15px}
 .dline{display:block}
 #devtable .dbig,.dbig{font-weight:700 !important;font-size:15px;color:var(--fg)}
+#devtable .dhead,.dhead{font:600 12.5px var(--mono) !important;color:var(--muted2);letter-spacing:.03em}
 .qn table{border-collapse:collapse;width:100%}
 .qn th{font:600 11px var(--mono);color:var(--muted);text-align:left;padding:0 8px 4px 0;letter-spacing:.08em;text-transform:uppercase}
 .qn th.qr,.qn td.qr{text-align:right;white-space:nowrap;width:270px;min-width:270px}
@@ -1012,7 +1013,7 @@ function devPaint(){
   DEVC.forEach((r,i)=>{
     const hrs=r.du.reduce((a,x)=>a+x,0),k=gRow(r,ASOF());tk+=k;
     const eh=$('dh'+i);if(eh)eh.textContent=hrs.toFixed(2);
-    const ek=$('dk'+i);if(ek){const[ev,fr]=rowEF(i);ek.innerHTML=f(k,2)+' kWh/day &middot; '+f(k/KPG,2)+' gal/day'+efSub(ev,fr);}
+    const ek=$('dk'+i);if(ek){const[ev,fr]=rowEF(i);const cfd=(r.sc==='people'&&PLAN)?cf(ASOF()):1;const tag=cfd<0.995?'<span class="devsm">\u00d7 '+cfd.toFixed(2)+' \u00b7 scales with headcount ('+pCount(ASOF())+' of '+(S.infra_full_people||40)+')</span>':'';ek.innerHTML=f(k,2)+' kWh/day &middot; '+f(k/KPG,2)+' gal/day'+tag+efSub(ev,fr);}
   });
   const pNow=pCount(ASOF()),kwP=PP*pNow;
   DEVGRP.forEach((g,gi)=>{
@@ -1047,7 +1048,7 @@ function devPaint(){
   {const[e2,f2]=pEF(PP);tev+=e2;tfr+=f2;}
   const tt=$('dkT');if(tt){const ng=(PLAN&&PLAN.g[ASOF()])||1,goh=IDLE2*ng;
     const dn=new Date(START.getTime()+ASOF()*DAY).toLocaleDateString('en-US',{weekday:'short'});
-    tt.innerHTML='<span class="dline devsm">On this day: '+dn+' '+dLab(ASOF())+'</span>'
+    tt.innerHTML='<span class="dline dhead">On this day: '+dn+' '+dLab(ASOF())+'</span>'
       +'<span class="dline dbig">Devices &middot; '+f(tk,1)+' kWh &middot; \u2212'+f(tk/KPG,2)+' gal</span>'
       +'<span class="dline devsm">gen overhead ('+ng+' gen'+(ng>1?'s':'')+' running) &middot; \u2212'+f(goh,1)+' gal</span>'
       +'<span class="dline dbig">Fuel spent &middot; \u2212'+f(tk/KPG+goh,1)+' gal</span>'
