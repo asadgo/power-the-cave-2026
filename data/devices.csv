@@ -1,23 +1,23 @@
-device,area,category,product,qty,running_w_each,surge_w_each,volts,bus,priority,notes
-Chest freezer,Kitchen,Appliance,,2,200,900,120,Battery,Never cut,Start kick estimated. Verify sticker.
-Fridge cooler,Kitchen,Appliance,Dometic CFX,1,80,200,120,Battery,Never cut,"Dual-input: use included 120 V AC cord on generator power. CFX3 100, SKU 9600024623. Verify sticker."
-Pumps,Kitchen,Appliance,Shurflo Aqua King II (est.),2,90,180,12,Battery,Never cut,"12 V. AKII Premium 4.0 datasheet: 15 A fuse each, size AC-DC brick per pump. Verify sticker."
-Bistro Lights - Dining,Kitchen,Lights,,1,30,30,120,Pool,Cut if needed,
-Bistro Lights - Hallway,Kitchen,Lights,,1,30,30,120,Pool,Cut if needed,
-Flood Lights (Kitchen),Kitchen,Lights,,6,30,30,24,Pool,Cut if needed,24 V. Needs a brick.
-Bistro / other lights,Shade City,Lights,,3,30,30,120,Pool,Cut if needed,
-Flood Lights,Structure,Lights,,19,30,30,24,Pool,Cut if needed,24 V. Needs a brick.
-DMX Controller,Structure,Lights,CHAUVET Obey40 D-Fi,1,3,3,120,Pool,Cut if needed,
-Top Speakers,Structure,Sound,QSC E115,4,0,0,120,Pool,Cut if needed,"Passive - fed by amps via speakON (power+signal). 500 W = handling rating, not draw. Confirmed w/ music lead 8/13; verify no power inlet at load-in."
-QSC Amp 5kW,Structure,Sound,PLD4.5 Class D Amp,2,900,1800,120,Pool,Cut if needed,"The rig sole power plug (with DJ+mixer). QSC wall-draw spec: idle ~80 W, 1/8-power ~900 W, 1/3-power ~1800 W. Was billed at idle 70 W."
-Subwoofers,Structure,Sound,QSC E118sw,2,0,0,120,Pool,Cut if needed,"Passive - amp-fed via speakON. 800 W = handling rating. Lead pretty sure; confirm w/ Drew Moxon or at load-in. Sheet T22 usage intent: 2 for performances (side by side) at 50 pct, 1 always on assume 30 pct volume."
-The Source Computer,Structure,Art Installation,Mac Mini,2,140,140,120,Pool,Cut if needed,"Qty corrected 3 to 2 per camp count 8/13 (sheet also says 2; the 3 was unlogged). 140 W = Intel-era max PSU rating; if Apple-chip (M1/M2/M4) real draw is 10-40 W - chip ID pending, then true with kill-a-watt."
-The Source Projector,Structure,Art Installation,Panasonic PT-VMZ50,2,400,400,120,Pool,Cut if needed,"Product corrected from XGIMI Horizon Pro per nameplate photo 8/13 (S/N GA1353689): Panasonic PT-VMZ50 laser LCD, 100-240 V 3.9-1.7 A, approx 380-400 W max - the sheet 400 W was right. Laser = instant on, power-cycle friendly. Kill-a-watt at integration test for real draw at show brightness."
-Object motor,Structure,Art Installation,,1,30,60,12,Pool,Cut if needed,12 V. Needs a brick. Start kick estimated.
-Coffee maker,Kitchen,Appliance,Avantco CU65ETL 65 Cup,1,1500,1500,120,Pool,Cut first,"Heats water, no motor. Morning use only."
-Pioneer DJ Controller,Events,Sound,Pioneer XDJ-RX,1,200,200,120,Pool,Cut first,Event nights only (about 2).
-Monitor Speakers,Events,Sound,QSC E110,2,0,0,120,Pool,Cut first,Event nights only (about 2). Passive E110 - amp-fed; 300 W = handling rating.
-Mackie Mixer,Events,Sound,Mackie DL32S,1,60,60,120,Pool,Cut first,Event nights only (about 2).
-Air Conditioning Units,Shade City,Appliance,"Midea 8,000 BTU inverter",10,600,600,120,Pool,Cut first,"Inverter type: soft ramp, no start kick. Verify wattage on sticker."
-Fans,Shade City,Appliance,Shark FlexBreeze (est.),8,40,80,120,Pool,Cut first,Start kick estimated.
-E-bike charging station,Ebikes,Appliance,One dedicated 15 A circuit,1,1440,1440,120,Pool,Cut first,Covers all ~10 bikes (~250 W chargers). The breaker allows ~5 at once; extra bikes wait their turn automatically.
+device,area,category,product,qty,running_w_each,surge_w_each,volts,bus,priority,notes,scaling
+Chest freezer,Kitchen,Appliance,,2,200,900,120,Battery,Never cut,Start kick estimated. Verify sticker.,
+Fridge cooler,Kitchen,Appliance,Dometic CFX,1,80,200,120,Battery,Never cut,"Dual-input: use included 120 V AC cord on generator power. CFX3 100, SKU 9600024623. Verify sticker.",
+Pumps,Kitchen,Appliance,Shurflo Aqua King II (est.),2,90,180,12,Battery,Never cut,"12 V. AKII Premium 4.0 datasheet: 15 A fuse each, size AC-DC brick per pump. Verify sticker.",
+Bistro Lights - Dining,Kitchen,Lights,,1,30,30,120,Pool,Cut if needed,,
+Bistro Lights - Hallway,Kitchen,Lights,,1,30,30,120,Pool,Cut if needed,,
+Flood Lights (Kitchen),Kitchen,Lights,,6,30,30,24,Pool,Cut if needed,24 V. Needs a brick.,
+Bistro / other lights,Shade City,Lights,,3,30,30,120,Pool,Cut if needed,,
+Flood Lights,Structure,Lights,,19,30,30,24,Pool,Cut if needed,24 V. Needs a brick.,
+DMX Controller,Structure,Lights,CHAUVET Obey40 D-Fi,1,3,3,120,Pool,Cut if needed,,
+Top Speakers,Structure,Sound,QSC E115,4,0,0,120,Pool,Cut if needed,"Passive - fed by amps via speakON (power+signal). 500 W = handling rating, not draw. Confirmed w/ music lead 8/13; verify no power inlet at load-in.",
+QSC Amp 5kW,Structure,Sound,PLD4.5 Class D Amp,2,900,1800,120,Pool,Cut if needed,"The rig sole power plug (with DJ+mixer). QSC wall-draw spec: idle ~80 W, 1/8-power ~900 W, 1/3-power ~1800 W. Was billed at idle 70 W.",
+Subwoofers,Structure,Sound,QSC E118sw,2,0,0,120,Pool,Cut if needed,"Passive - amp-fed via speakON. 800 W = handling rating. Lead pretty sure; confirm w/ Drew Moxon or at load-in. Sheet T22 usage intent: 2 for performances (side by side) at 50 pct, 1 always on assume 30 pct volume.",
+The Source Computer,Structure,Art Installation,Mac Mini,2,140,140,120,Pool,Cut if needed,"Qty corrected 3 to 2 per camp count 8/13 (sheet also says 2; the 3 was unlogged). 140 W = Intel-era max PSU rating; if Apple-chip (M1/M2/M4) real draw is 10-40 W - chip ID pending, then true with kill-a-watt.",
+The Source Projector,Structure,Art Installation,Panasonic PT-VMZ50,2,400,400,120,Pool,Cut if needed,"Product corrected from XGIMI Horizon Pro per nameplate photo 8/13 (S/N GA1353689): Panasonic PT-VMZ50 laser LCD, 100-240 V 3.9-1.7 A, approx 380-400 W max - the sheet 400 W was right. Laser = instant on, power-cycle friendly. Kill-a-watt at integration test for real draw at show brightness.",
+Object motor,Structure,Art Installation,,1,30,60,12,Pool,Cut if needed,12 V. Needs a brick. Start kick estimated.,
+Coffee maker,Kitchen,Appliance,Avantco CU65ETL 65 Cup,1,1500,1500,120,Pool,Cut first,"Heats water, no motor. Morning use only.",people
+Pioneer DJ Controller,Events,Sound,Pioneer XDJ-RX,1,200,200,120,Pool,Cut first,Event nights only (about 2).,
+Monitor Speakers,Events,Sound,QSC E110,2,0,0,120,Pool,Cut first,Event nights only (about 2). Passive E110 - amp-fed; 300 W = handling rating.,
+Mackie Mixer,Events,Sound,Mackie DL32S,1,60,60,120,Pool,Cut first,Event nights only (about 2).,
+Air Conditioning Units,Shade City,Appliance,"Midea 8,000 BTU inverter",10,600,600,120,Pool,Cut first,"Inverter type: soft ramp, no start kick. Verify wattage on sticker.",
+Fans,Shade City,Appliance,Shark FlexBreeze (est.),8,40,80,120,Pool,Cut first,Start kick estimated.,people
+E-bike charging station,Ebikes,Appliance,One dedicated 15 A circuit,1,1440,1440,120,Pool,Cut first,Covers all ~10 bikes (~250 W chargers). The breaker allows ~5 at once; extra bikes wait their turn automatically.,
