@@ -669,7 +669,7 @@ async function boot(){
     applyTheme(loadLS('cave_theme')==='light'?'light':'dark');
     $('loader').style.display='none';$('app').style.display='block';
     renderAll();
-  }catch(e){$('loadmsg').textContent='Could not load: '+e.message;}
+  }catch(e){$('loadmsg').innerHTML='Could not load: '+esc(e.message)+(location.protocol==='file:'?'<br><br>This is the bare repo file \u2014 it holds no data. For a local look, open <b>preview-reality.html</b> instead; the real page lives at the GitHub Pages URL once uploaded.':'');}
 }
 boot();
 
