@@ -209,16 +209,20 @@ body.light .uibox h3{color:var(--ink)}
 .uibox .uierr{font-size:11px;color:var(--danger);margin-top:6px;min-height:14px}
 .uibox .uibtns{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
 .uibox .uibtns button{width:auto;padding:8px 18px}
+.ptabs{display:flex;gap:6px;margin:2px 0 10px}
+.ptabs a{flex:1;text-align:center;padding:9px 0;border:1px solid var(--line);border-radius:9px;color:var(--muted);text-decoration:none;font-size:11.5px;letter-spacing:1.2px;font-weight:600}
+.ptabs a.on{background:var(--panel2);color:var(--bone);border-color:var(--muted2)}
 </style>
 </head>
 <body>
 <div class="wrap">
 <div class="hd"><h1>THE CAVE · POWER<span id="ver"></span></h1>
   <div class="hbtns">
-    <a href="reality.html" class="hbtn aux" title="Reality — the on-playa field journal" style="text-decoration:none;font-size:11px;letter-spacing:.8px;display:inline-flex;align-items:center;padding:0 12px;font-weight:600">REALITY</a>
     <button type="button" id="resetbtn" class="hbtn aux" title="Reset values"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
     <button type="button" id="themebtn" class="hbtn" title="Dark/light mode">&#9728;</button>
   </div></div>
+
+<div class="ptabs"><a class="on" href="index.html">CONSOLE</a><a href="reality.html">REALITY</a></div>
 
 <div id="loader"><h2>Loading data/*.csv &hellip;</h2><p id="loadmsg">Reading the plan.</p></div>
 <div id="app" style="display:none">
@@ -810,8 +814,8 @@ function refresh(rebuild){
 }
 
 /* ---------- theme ---------- */
-const SUNI='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5" fill="currentColor" stroke="none"/><line x1="12" y1="1.5" x2="12" y2="4.2"/><line x1="12" y1="19.8" x2="12" y2="22.5"/><line x1="1.5" y1="12" x2="4.2" y2="12"/><line x1="19.8" y1="12" x2="22.5" y2="12"/><line x1="4.7" y1="4.7" x2="6.6" y2="6.6"/><line x1="17.4" y1="17.4" x2="19.3" y2="19.3"/><line x1="4.7" y1="19.3" x2="6.6" y2="17.4"/><line x1="17.4" y1="6.6" x2="19.3" y2="4.7"/></svg>';
-const MOONI='<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 9 0 0 0 9.8 9.8z"/></svg>';
+const SUNI='\u2600';
+const MOONI='\u263E';
 function applyTheme(mode){
   document.body.classList.toggle('light',mode==='light');
   document.documentElement.classList.toggle('light',mode==='light');
