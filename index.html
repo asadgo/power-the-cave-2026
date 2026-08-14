@@ -823,7 +823,7 @@ function kitCalc(){
 const DGROUPS=['Critical','Sound','The Source','Camp lights & misc','ACs','E-bikes'];
 const ASOF=()=>Math.min(NDAYS-1,Math.max(0,+$('asof').value||0));
 let DEVVIEW=load('cavecsv_devview')||'category';
-let PERSOPEN=!!load('cavecsv_persopen');
+let PERSOPEN=false;
 let DEVGRP=[];
 function groupsFor(view){
   if(view==='area'){
@@ -1213,6 +1213,7 @@ function resetToCSV(){
 
 /* ---------- boot ---------- */
 function boot(D){
+  store('cavecsv_devopen',{});store('cavecsv_persopen',false);store('cavecsv_chartopen2',{});
   buildModel(D);
   const lp=load('cavecsv_plan');PLAN=okPlan(lp)?lp:structuredClone(SEEDPLAN);
   syncACFromPlan();
@@ -1247,7 +1248,7 @@ function boot(D){
   noteCue();
   $('notes').addEventListener('input',()=>{NOTES=$('notes').value;store('cavecsv_notes',NOTES);noteCue();});
   window.__noteCue=noteCue;
-  const chOp=load('cavecsv_chartopen2')||{};
+  const chOp={};
   [['calbox','cal'],['capbox2','cap'],['runbox2','run']].forEach(([id,k])=>{
     const el=$(id);
     el.open=!!chOp[k];
