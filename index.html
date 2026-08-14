@@ -985,18 +985,20 @@ function devPaint(){
     +'<span class="devsm">from '+dLab(ASOF())+' &middot; '+f(fr,0)+' kWh &middot; '+f(fr/KPG,1)+' gal total</span>';
   const dsub=k=>efSub(k*NDAYS,k*rem);
   const duS=r=>r.du.reduce((a,x)=>a+x,0);
-  const rowKw=(d,idx)=>{const r=DEVD[d]&&DEVD[d][idx];return r?r.q*r.w*duS(r)/1000:0;};
+  const sOff=d=>!!(PLAN&&PLAN.s&&!PLAN.s[d]);
+  const gRow=(r,d)=>(r&&!(r.cat==='Sound'&&sOff(d)))?r.q*r.w*duS(r)/1000:0;
+  const rowKw=(d,idx)=>gRow(DEVD[d]&&DEVD[d][idx],d);
   const rowEF=idx=>{let ev=0,fr=0;for(let d=0;d<NDAYS;d++){const k=rowKw(d,idx);ev+=k;if(d>=ASOF())fr+=k;}return[ev,fr];};
   const pEF=per=>{let ev=0,fr=0;for(let d=0;d<NDAYS;d++){const k=per*(PLAN?PLAN.p[d]:0);ev+=k;if(d>=ASOF())fr+=k;}return[ev,fr];};
   let tk=0;
   DEVC.forEach((r,i)=>{
-    const hrs=r.du.reduce((a,x)=>a+x,0),k=r.q*r.w*hrs/1000;tk+=k;
+    const hrs=r.du.reduce((a,x)=>a+x,0),k=gRow(r,ASOF());tk+=k;
     const eh=$('dh'+i);if(eh)eh.textContent=hrs.toFixed(2);
     const ek=$('dk'+i);if(ek){const[ev,fr]=rowEF(i);ek.innerHTML=f(k,2)+' kWh/day &middot; '+f(k/KPG,2)+' gal/day'+efSub(ev,fr);}
   });
   const pNow=PLAN?PLAN.p[ASOF()]:0,kwP=PP*pNow;
   DEVGRP.forEach((g,gi)=>{
-    const gk=(g.syn?kwP:0)+g.idxs.reduce((a,i)=>{const r=DEVC[i];return a+(r?r.q*r.w*r.du.reduce((s,x)=>s+x,0)/1000:0);},0);
+    const gk=(g.syn?kwP:0)+g.idxs.reduce((a,i)=>{const r=DEVC[i];return a+gRow(r,ASOF());},0);
     let gev=0,gfr=0;
     g.idxs.forEach(i=>{const[e2,f2]=rowEF(i);gev+=e2;gfr+=f2;});
     if(g.syn){const[pe,pf]=pEF(PP);gev+=pe;gfr+=pf;}
