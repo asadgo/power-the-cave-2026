@@ -178,6 +178,7 @@ summary.flagrow2 .floorlab+.floorlab{margin-left:14px}
 .hlb.maj{color:var(--bone);font-weight:600}
 .qn input.kitname{width:100%;min-width:0;box-sizing:border-box;text-align:left;font-size:13px;padding:7px 8px;background:transparent;border-color:transparent}
 #devtable button.kdel{padding:1px 5px;font-size:12px;line-height:1.2;min-width:0}
+#devtable td:last-child{width:34px;min-width:34px;max-width:34px;box-sizing:border-box;overflow:hidden}
 .qn input.kitname:hover,.qn input.kitname:focus{background:var(--panel);border-color:var(--line)}
 .kdel{width:30px;padding:6px 0;font-size:14px;background:transparent;border-color:transparent;color:var(--muted)}
 .kdel:hover{color:var(--danger);border-color:var(--danger)}
@@ -332,7 +333,7 @@ function pickerFallback(err){
 
 /* ---------- model from CSVs ---------- */
 let S={},NDAYS=14,START=null,DAY=86400000;
-let BOOTED=false,LASTDEVDAY=-1,RAWD=null,DEVFP='',NOTES='',DELTIME='am',GENMODE='pooled',PGEN='2',FUELGENS=true,FUELSPLIT='wired',BOB=[],ALICE=[],PCW=[],CATS=[],DEVSEED=[],DEVC=[],DEVD=[],DER=[],SOUND=0,BASE=0,PP=0,ACW=0,ACHRS=0,EBK=0,BUDG=0,KPG=6.5,IDLE2=0,QCAP=3.7,WARNM=15;
+let BOOTED=false,LASTDEVDAY=-1,RAWD=null,DEVFP='',NOTES='',DELTIME='am',GENMODE='g1',PGEN='2',FUELGENS=true,FUELSPLIT='wired',BOB=[],ALICE=[],PCW=[],CATS=[],DEVSEED=[],DEVC=[],DEVD=[],DER=[],SOUND=0,BASE=0,PP=0,ACW=0,ACHRS=0,EBK=0,BUDG=0,KPG=6.5,IDLE2=0,QCAP=3.7,WARNM=15;
 let aliceRef=1,fansKw=0,bobKw=9,aliceKw=9,DERATE=.88,CEIL=.8;
 let SEEDPLAN=null,SEEDFUEL=null,DTYPE=[],KITSEED=[];
 let PLAN=null,FUEL=null,FLOOR=5,KITC=null,EXP=false,cap,run,NDEV=0;
@@ -1213,7 +1214,7 @@ function resetToCSV(){
 
 /* ---------- boot ---------- */
 function boot(D){
-  store('cavecsv_devopen',{});store('cavecsv_persopen',false);store('cavecsv_chartopen2',{});
+  store('cavecsv_devopen',{});store('cavecsv_persopen',false);store('cavecsv_chartopen2',{});store('cavecsv_genmode','g1');
   buildModel(D);
   const lp=load('cavecsv_plan');PLAN=okPlan(lp)?lp:structuredClone(SEEDPLAN);
   syncACFromPlan();
@@ -1248,7 +1249,7 @@ function boot(D){
   noteCue();
   $('notes').addEventListener('input',()=>{NOTES=$('notes').value;store('cavecsv_notes',NOTES);noteCue();});
   window.__noteCue=noteCue;
-  const chOp={};
+  const chOp={cal:true};
   [['calbox','cal'],['capbox2','cap'],['runbox2','run']].forEach(([id,k])=>{
     const el=$(id);
     el.open=!!chOp[k];
@@ -1260,7 +1261,7 @@ function boot(D){
   document.querySelectorAll('#runbox2 .floorlab').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();e.preventDefault();
     if(el.id!=='dellab')$('floor').focus();}));
   PGEN=load('cavecsv_pgen')==='1'?'1':'2';
-  GENMODE=['split','g1','g2'].includes(load('cavecsv_genmode'))?load('cavecsv_genmode'):'pooled';
+  GENMODE='g1';
   const GLBL={pooled:'POOLED',split:'BOTH GEN',g1:'GEN 1 ONLY',g2:'GEN 2 ONLY'};
   const gmSync=()=>{
     $('pooltog').textContent=GLBL[GENMODE];
