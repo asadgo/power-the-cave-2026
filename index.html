@@ -826,7 +826,7 @@ function groupsFor(view){
     DEVC.forEach(r=>{const a=r.area||'Custom';if(!order.includes(a))order.push(a);});
     const gs=order.map(a=>({name:a,idxs:DEVC.map((r,i)=>((r.area||'Custom')===a)?i:-1).filter(i=>i>=0)})).filter(g=>g.idxs.length);
     const k=gs.findIndex(g=>/shade city/i.test(g.name));
-    gs.splice(k>=0?k+1:gs.length,0,{name:'Personal items',idxs:[],syn:1});
+    if(k>=0)gs[k].syn=1;else gs.push({name:'Personal items',idxs:[],syn:1});
     return gs;
   }
   return DGROUPS.map(g=>({name:g,idxs:DEVC.map((r,i)=>groupOf(r)===g?i:-1).filter(i=>i>=0)})).filter(g=>g.idxs.length)
@@ -988,10 +988,10 @@ function devPaint(){
   });
   const pNow=PLAN?PLAN.p[ASOF()]:0,kwP=PP*pNow;
   DEVGRP.forEach((g,gi)=>{
-    const gk=g.syn?kwP:g.idxs.reduce((a,i)=>{const r=DEVC[i];return a+(r?r.q*r.w*r.du.reduce((s,x)=>s+x,0)/1000:0);},0);
+    const gk=(g.syn?kwP:0)+g.idxs.reduce((a,i)=>{const r=DEVC[i];return a+(r?r.q*r.w*r.du.reduce((s,x)=>s+x,0)/1000:0);},0);
     let gev=0,gfr=0;
-    if(g.syn){[gev,gfr]=pEF(PP);}
-    else g.idxs.forEach(i=>{const[e2,f2]=rowEF(i);gev+=e2;gfr+=f2;});
+    g.idxs.forEach(i=>{const[e2,f2]=rowEF(i);gev+=e2;gfr+=f2;});
+    if(g.syn){const[pe,pf]=pEF(PP);gev+=pe;gfr+=pf;}
     const eg=$('dg'+gi);if(eg)eg.innerHTML=f(gk,2)+' kWh/day &middot; '+f(gk/KPG,2)+' gal/day'+efSub(gev,gfr);
   });
   if($('psq')){
