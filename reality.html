@@ -454,6 +454,7 @@ const f=(n,d)=>(+n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFract
 const cssv=n=>getComputedStyle(document.body).getPropertyValue(n).trim();
 const FONT="'IBM Plex Mono','SF Mono',Menlo,Consolas,monospace";
 let EV=[],chA=null,chB=null,NOW=new Date();
+const RNOW=()=>(EV.length&&EV[EV.length-1].ts>NOW)?EV[EV.length-1].ts:NOW;
 
 /* ---------- load ---------- */
 async function loadPlan(){
@@ -497,11 +498,11 @@ function onHandNow(){
 function trailingRate(){ /* gal/day from gal_added, last 72 h (or since first event) */
   const adds=EV.filter(e=>e.add!=null);
   if(!adds.length)return {rate:null,label:'no refuels logged yet'};
-  const cut=new Date(NOW-72*3600e3);
+  const cut=new Date(RNOW()-72*3600e3);
   const w=adds.filter(e=>e.ts>=cut);
   const use=w.length?w:adds;
   const t0=Math.min(use[0].ts,cut>adds[0].ts?cut:adds[0].ts);
-  const span=Math.max(0.5,(NOW-t0)/DAY);
+  const span=Math.max(0.5,(RNOW()-t0)/DAY);
   const g=use.reduce((a,e)=>a+e.add,0);
   return {rate:g/span,label:f(g/span,1)+' gal/day (trailing '+f(span,1)+' d)'};
 }
@@ -514,7 +515,7 @@ function measuredGalPerHr(){
 function forecastPts(){
   const {v}=onHandNow();const tr=trailingRate();
   if(tr.rate==null)return {pts:[],end:null};
-  let pool=v,x=nowDay();const pts=[{x,y:+pool.toFixed(1)}];
+  let pool=v,x=Math.min(NDAYS,Math.max(0,(RNOW()-START)/DAY));const pts=[{x,y:+pool.toFixed(1)}];
   const endX=NDAYS;
   let d=Math.floor(x);
   /* rest of today */
@@ -541,16 +542,16 @@ function renderStatus(){
   $('st_oh').textContent=EV.length?f(oh.v,0)+' gal':'—';
   $('st_oh_sub').textContent=oh.asof?('drums checked '+oh.asof.toLocaleDateString('en-US',{month:'numeric',day:'numeric'})+' '+oh.asof.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})):'drums not checked yet';
   $('st_rate').textContent=tr.rate!=null?f(tr.rate,1)+' gal/day':'—';
-  $('st_rate_sub').textContent=tr.rate!=null?('model today: '+f(burn(Math.max(0,Math.min(NDAYS-1,Math.floor(nowDay())))),1)+' gal/day'):tr.label;
+  $('st_rate_sub').textContent=tr.rate!=null?('model today: '+f(burn(Math.max(0,Math.min(NDAYS-1,Math.floor((RNOW()-START)/DAY)))),1)+' gal/day'):tr.label;
   const me=fc.end,mo=endFuel(NDAYS-1);
   $('st_end').textContent=me!=null?f(me,0)+' gal':'—';
   $('st_end').style.color=me!=null?(me<=FLOOR?'var(--danger)':'var(--safe)'):'';
   $('st_end_sub').textContent='plan says '+f(mo,0)+' gal on '+dLab(NDAYS-1);
   const last=EV.length?EV[EV.length-1].ts:null;
   const hrs=last?(NOW-last)/3600e3:null;
-  $('st_last').textContent=last?(hrs<1?f(hrs*60,0)+' min ago':f(hrs,0)+' h ago'):'—';
+  $('st_last').textContent=last?(hrs<0?'future-dated':(hrs<1?f(hrs*60,0)+' min ago':f(hrs,0)+' h ago')):'—';
   $('st_last').style.color=hrs!=null&&hrs>26?'var(--warn)':'';
-  $('st_last_sub').textContent=last?('by '+EV[EV.length-1].name):'journal is empty';
+  $('st_last_sub').textContent=last?((hrs<0?'sample/preview data · ':'')+'by '+EV[EV.length-1].name):'journal is empty';
   $('st_gph').textContent=m?('measured '+f(m.v,2)+' gal/gen-hr over '+f(m.hrs,1)+' gen-hrs'):'gal/gen-hr: needs two meter readings + a refuel';
 }
 
