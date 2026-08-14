@@ -55,7 +55,7 @@ button:hover{border-color:var(--bob)}
 .cc{background:rgba(42,143,239,.14)}
 .dh{cursor:pointer;border-radius:8px;padding:6px 5px 7px;min-width:68px}
 .dh .dw{font:700 15px var(--cond);letter-spacing:.1em;color:var(--dw);display:block}
-.dh .dw.wkd{color:var(--wkd)}
+.dh .dw.wkd{color:var(--dw)}
 .dh .dd{font:600 11px var(--mono);color:var(--muted);display:block;margin:1px 0 5px}
 .dh.dh-on{background:rgba(42,143,239,.20);box-shadow:inset 0 3px 0 var(--bob)}
 .dh.dh-on .dw,.dh.dh-on .dd{color:var(--bob)}
@@ -113,7 +113,9 @@ summary.flagrow2 #genlab+*,summary.flagrow2 .floorlab{flex:0 0 auto;white-space:
   background:transparent url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='6'><path d='M0 0h8L4 6z' fill='%238A99A2'/></svg>") no-repeat right 8px center;
   border:1px solid var(--line);border-radius:8px;color:inherit;cursor:pointer}
 summary.flagrow2 .floorlab+.floorlab{margin-left:14px}
-#fstog,#egtog,#deltog{width:auto;height:28px;box-sizing:border-box;align-self:center;padding:4px 10px;font:600 11px var(--mono)}
+summary.flagrow2{display:flex;flex-wrap:wrap;row-gap:6px;align-items:center}
+@media (max-width:640px){summary.flagrow2 .floorlab+.floorlab{margin-left:8px}}
+#egtog,#deltog{width:auto;height:28px;box-sizing:border-box;align-self:center;padding:4px 10px;font:600 11px var(--mono)}
 .plan tr.ph .dtb{background-image:linear-gradient(var(--muted2),var(--muted2));background-repeat:no-repeat;background-position:0 50%;background-size:1px 55%}
 #devtable .devsm{display:block;font:500 10px var(--mono);color:var(--muted2)}
 .gtag{cursor:pointer;font:700 9px var(--mono);border:1px solid var(--line);border-radius:4px;padding:1px 5px;margin-left:7px;color:var(--muted);user-select:none}
@@ -156,6 +158,7 @@ summary.flagrow2 .floorlab+.floorlab{margin-left:14px}
 .info[open] summary{margin-bottom:8px}
 .qn{margin-bottom:12px}
 .qn .twrap{overflow-x:auto}
+.band.kwrow td:not(.rowlab){font-size:15px}
 .qn table{border-collapse:collapse;width:100%}
 .qn th{font:600 11px var(--mono);color:var(--muted);text-align:left;padding:0 8px 4px 0;letter-spacing:.08em;text-transform:uppercase}
 .qn th.qr,.qn td.qr{text-align:right;white-space:nowrap;width:270px;min-width:270px}
@@ -333,7 +336,7 @@ function pickerFallback(err){
 
 /* ---------- model from CSVs ---------- */
 let S={},NDAYS=14,START=null,DAY=86400000;
-let BOOTED=false,LASTDEVDAY=-1,RAWD=null,DEVFP='',NOTES='',DELTIME='am',GENMODE='g1',PGEN='2',FUELGENS=true,FUELSPLIT='wired',BOB=[],ALICE=[],PCW=[],CATS=[],DEVSEED=[],DEVC=[],DEVD=[],DER=[],SOUND=0,BASE=0,PP=0,ACW=0,ACHRS=0,EBK=0,BUDG=0,KPG=6.5,IDLE2=0,QCAP=3.7,WARNM=15;
+let BOOTED=false,LASTDEVDAY=-1,RAWD=null,DEVFP='',NOTES='',DELTIME='am',GENMODE='g1',PGEN='2',FUELGENS=true,BOB=[],ALICE=[],PCW=[],CATS=[],DEVSEED=[],DEVC=[],DEVD=[],DER=[],SOUND=0,BASE=0,PP=0,ACW=0,ACHRS=0,EBK=0,BUDG=0,KPG=6.5,IDLE2=0,QCAP=3.7,WARNM=15;
 let aliceRef=1,fansKw=0,bobKw=9,aliceKw=9,DERATE=.88,CEIL=.8;
 let SEEDPLAN=null,SEEDFUEL=null,DTYPE=[],KITSEED=[];
 let PLAN=null,FUEL=null,FLOOR=5,KITC=null,EXP=false,cap,run,NDEV=0;
@@ -437,7 +440,7 @@ function wireDevices(){
    ['Camp lights &amp; misc<span class="rl2">(fans, charging, coffee)</span>',i=>DER[i].LMISCK*cf(i)],
    ['ACs',i=>DER[i].AC1*PLAN.a[i]],
    ['E-bikes',i=>DER[i].EBT],
-   ['Personal items<span class="rl2" id="pplab">('+f(PP,2)+' kWh/camper \u00b7 from Devices table)</span>',i=>PP*PLAN.p[i]]];
+   ['Personal items<span class="rl2" id="pplab">('+f(PP,2)+' kWh/camper \u00b7 from Devices table)</span>',i=>PP*pCount(i)]];
   window.__CAVE={S,DER,DEVD,SOUND,CRITK:d0.CRITK,SRCK:d0.SRCK,LMISCK:d0.LMISCK,AC1:d0.AC1,EBT:d0.EBT};
 }
 
@@ -449,6 +452,8 @@ const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'null');}catch(e){
 const store=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}};
 const save=()=>{store('cavecsv_plan',PLAN);store('cavecsv_fuel',FUEL);store('cavecsv_kit',KITC);};
 const okPlan=p=>p&&['p','a','e','s','g'].every(k=>Array.isArray(p[k])&&p[k].length===NDAYS);
+const normPlan=pl=>{if(pl&&(!Array.isArray(pl.pi)||pl.pi.length!==NDAYS))pl.pi=Array(NDAYS).fill(null);return pl;};
+const pCount=d=>{const v=(PLAN&&PLAN.pi)?PLAN.pi[d]:null;return v==null?(PLAN?PLAN.p[d]:0):v;};
 
 const kwhDay=i=>CATS.reduce((a,c)=>a+c[1](i),0);
 const burn=i=>kwhDay(i)/KPG+IDLE2*(PLAN.g[i]||1);
@@ -499,7 +504,7 @@ function curvesAB(i){
   const D8=DER[i],p=PLAN.p[i],s=PLAN.s[i],c=cf(i);
   const scaleA=scaleAFor(i);
   const bobBase=s?D8.BOB:D8.BOB.map((x,j)=>j>=12||j<3?Math.min(x,QCAP):x);
-  const camper=j=>p*PCW[j]/1000;
+  const camper=j=>pCount(i)*PCW[j]/1000;
   const g1=bobBase.map((x,j)=>+((x*c)+(PGEN==='1'?camper(j):0)).toFixed(2));
   const g2=D8.ALICE.map((x,j)=>+((x*scaleA)+(PGEN==='2'?camper(j):0)).toFixed(2));
   return[{label:'Gen 1',data:g1,color:'#2A8FEF'},
@@ -872,7 +877,7 @@ function buildDev(){
     if(g.syn&&op){
       h+='<tr class="grow psyn"><td class="dname pgrp" style="cursor:pointer" title="click to show or hide personal item lines">'+(PERSOPEN?'\u25be ':'\u25b8 ')+'Personal items</td>'
         +'<td class="gcell"><button type="button" class="gtag pgt '+((PLAN&&PLAN.g[ASOF()]<2)?'g1 gdim':'g'+PGEN)+'" title="'+((PLAN&&PLAN.g[ASOF()]<2)?'single-generator day · all loads run on the one generator':'which generator carries camper loads in split view')+'">'+((PLAN&&PLAN.g[ASOF()]<2)?'1':PGEN)+'</button></td>'
-        +'<td><input id="psq" type="number" min="0" max="99" value="0"></td><td id="psw">\u2014</td><td class="hdc" id="psh">\u2014</td>'
+        +'<td><input id="psq" type="number" min="0" max="99" value="0" title="Defaults to the day&#39;s People count; edit to override just the personal-items count. Reset restores the default."></td><td id="psw">\u2014</td><td class="hdc" id="psh">\u2014</td>'
         +'<td id="pstrip"></td><td class="qr" id="dkP">\u2014</td><td></td></tr>';
       if(PERSOPEN)KITC.forEach((r,ki)=>{
         let ks='<div class="hstrip">';
@@ -929,9 +934,7 @@ function buildDev(){
   if(pq)pq.addEventListener('input',()=>{
     if(!PLAN)return;
     const v=+pq.value||0;
-    PLAN.p[ASOF()]=v;save();
-    const ci=document.querySelector('input[data-k="p"][data-i="'+ASOF()+'"]');
-    if(ci)ci.value=v;
+    PLAN.pi[ASOF()]=v;save();
     devPaint();refresh(false);
   });
   T.querySelectorAll('input[data-khr]').forEach(el=>el.addEventListener('input',()=>{
@@ -994,14 +997,14 @@ function devPaint(){
   const gRow=(r,d)=>(r&&!(r.cat==='Sound'&&sOff(d)))?r.q*r.w*duS(r)/1000:0;
   const rowKw=(d,idx)=>gRow(DEVD[d]&&DEVD[d][idx],d);
   const rowEF=idx=>{let ev=0,fr=0;for(let d=0;d<NDAYS;d++){const k=rowKw(d,idx);ev+=k;if(d>=ASOF())fr+=k;}return[ev,fr];};
-  const pEF=per=>{let ev=0,fr=0;for(let d=0;d<NDAYS;d++){const k=per*(PLAN?PLAN.p[d]:0);ev+=k;if(d>=ASOF())fr+=k;}return[ev,fr];};
+  const pEF=per=>{let ev=0,fr=0;for(let d=0;d<NDAYS;d++){const k=per*pCount(d);ev+=k;if(d>=ASOF())fr+=k;}return[ev,fr];};
   let tk=0;
   DEVC.forEach((r,i)=>{
     const hrs=r.du.reduce((a,x)=>a+x,0),k=gRow(r,ASOF());tk+=k;
     const eh=$('dh'+i);if(eh)eh.textContent=hrs.toFixed(2);
     const ek=$('dk'+i);if(ek){const[ev,fr]=rowEF(i);ek.innerHTML=f(k,2)+' kWh/day &middot; '+f(k/KPG,2)+' gal/day'+efSub(ev,fr);}
   });
-  const pNow=PLAN?PLAN.p[ASOF()]:0,kwP=PP*pNow;
+  const pNow=pCount(ASOF()),kwP=PP*pNow;
   DEVGRP.forEach((g,gi)=>{
     const gk=(g.syn?kwP:0)+g.idxs.reduce((a,i)=>{const r=DEVC[i];return a+gRow(r,ASOF());},0);
     let gev=0,gfr=0;
@@ -1124,7 +1127,7 @@ async function scnLoadObj(o){
   if(o.base_dev!==scnHash(DEVFP)||o.base_plan!==scnHash(JSON.stringify(SEEDPLAN))){
     if(!await uiConfirm('This simulation was saved against a different committed baseline. Load anyway?','Load simulation'))return false;
   }
-  PLAN=st.plan;
+  PLAN=normPlan(st.plan);
   if(st.fuel&&Array.isArray(st.fuel.del))FUEL=st.fuel;
   if(typeof st.floor==='number'){FLOOR=st.floor;$('floor').value=FLOOR;store('cavecsv_floor',FLOOR);}
   DEVD=st.devd;DEVD.forEach(ensureGen);DEVC=DEVD[ASOF()];
@@ -1219,7 +1222,7 @@ function resetToCSV(){
 function boot(D){
   store('cavecsv_devopen',{});store('cavecsv_persopen',false);store('cavecsv_chartopen2',{});store('cavecsv_genmode','g1');
   buildModel(D);
-  const lp=load('cavecsv_plan');PLAN=okPlan(lp)?lp:structuredClone(SEEDPLAN);
+  const lp=load('cavecsv_plan');PLAN=normPlan(okPlan(lp)?lp:structuredClone(SEEDPLAN));
   syncACFromPlan();
   const lf=load('cavecsv_fuel');FUEL=(lf&&Array.isArray(lf.del)&&lf.del.length===NDAYS)?lf:structuredClone(SEEDFUEL);
   const kfp=JSON.stringify(KITSEED);
