@@ -2,12 +2,10 @@ device,area,category,product,qty,running_w_each,surge_w_each,volts,bus,priority,
 Chest freezer,Kitchen,Appliance,,2,200,900,120,Battery,Never cut,Start kick estimated. Verify sticker.
 Fridge cooler,Kitchen,Appliance,Dometic CFX,1,80,200,120,Battery,Never cut,"Dual-input: use included 120 V AC cord on generator power. CFX3 100, SKU 9600024623. Verify sticker."
 Pumps,Kitchen,Appliance,Shurflo Aqua King II (est.),2,90,180,12,Battery,Never cut,"12 V. AKII Premium 4.0 datasheet: 15 A fuse each, size AC-DC brick per pump. Verify sticker."
-Perimeter Lights,Structure,Lights,,1,30,30,12,Battery,Never cut,Safety lighting. 12 V. Needs a brick.
 Bistro Lights - Dining,Kitchen,Lights,,1,30,30,120,Pool,Cut if needed,
 Bistro Lights - Hallway,Kitchen,Lights,,1,30,30,120,Pool,Cut if needed,
 Flood Lights (Kitchen),Kitchen,Lights,,6,30,30,24,Pool,Cut if needed,24 V. Needs a brick.
 Bistro / other lights,Shade City,Lights,,3,30,30,120,Pool,Cut if needed,
-Orb Lights,Structure,Lights,,8,30,30,24,Pool,Cut if needed,24 V. Needs a brick.
 Flood Lights,Structure,Lights,,19,30,30,24,Pool,Cut if needed,24 V. Needs a brick.
 DMX Controller,Structure,Lights,CHAUVET Obey40 D-Fi,1,3,3,120,Pool,Cut if needed,
 Top Speakers,Structure,Sound,QSC E115,4,0,0,120,Pool,Cut if needed,"Passive - fed by amps via speakON (power+signal). 500 W = handling rating, not draw. Confirmed w/ music lead 8/13; verify no power inlet at load-in."
