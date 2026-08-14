@@ -581,13 +581,13 @@ function buildPlan(){
   h+='<tr class="band kwrow"><td class="rowlab" title="tank at the 5a dawn — after the truck in AM mode, before it in PM mode">Start of day · gal</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'" data-sod="'+i+'"></td>';
   h+='</tr>';
-  h+='<tr class="band kwrow"><td class="rowlab">Gen 1 · gal</td>';
+  h+='<tr class="band kwrow"><td class="rowlab" title="Fuel for the devices assigned to generator 1. Add its 2.0 gal overhead below for the tank total.">Gen 1 devices · gal</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'" data-fg1="'+i+'"></td>';
   h+='</tr>';
-  h+='<tr class="band kwrow"><td class="rowlab">Gen 2 · gal</td>';
+  h+='<tr class="band kwrow"><td class="rowlab" title="Fuel for the devices assigned to generator 2. Add its 2.0 gal overhead below for the tank total.">Gen 2 devices · gal</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'" data-fg2="'+i+'"></td>';
   h+='</tr>';
-  h+='<tr class="band kwrow"><td class="rowlab" title="Baseline fuel to keep each running engine alive, beyond the electricity it makes">Gen overhead · gal</td>';
+  h+='<tr class="band kwrow"><td class="rowlab" title="2 gal per running generator per day: the fuel each engine drinks just to be running, on top of the device fuel above. Device rows + this row = Fuel spent.">Gen overhead · gal</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'" data-goh="'+i+'"></td>';
   h+='</tr>';
   h+='<tr class="band kwrow"><td class="rowlab">Fuel spent · gal</td>';
@@ -644,11 +644,14 @@ function updateDayCells(){
     {const gohEl=document.querySelector('[data-goh="'+i+'"]');if(gohEl)gohEl.textContent=f(IDLE2*(PLAN.g[i]||1),1);}
     document.querySelector('[data-fs="'+i+'"]').textContent='\u2212'+f(burn(i),1);
     const g1El=document.querySelector('[data-fg1="'+i+'"]'),g2El=document.querySelector('[data-fg2="'+i+'"]');
-    if(g1El&&g2El){const gg=genGal(i);
-      const ti=gg.length===1?'single-generator day \u00b7 the running generator'
-        :'each generator is billed its own assigned devices plus its own overhead';
-      g1El.textContent=f(gg[0],1);g1El.title=ti;
-      g2El.textContent=gg.length>1?f(gg[1],1):'\u2014';g2El.title=gg.length>1?ti:'not running';}
+    if(g1El&&g2El){const gg=genGal(i),ng=PLAN.g[i]||1;
+      const fsR=+f(burn(i),1),ovR=+f(IDLE2*ng,1);
+      const ti=gg.length===1?'single-generator day \u00b7 device fuel on the running generator'
+        :'device fuel only \u00b7 add this generator\u2019s 2.0 gal overhead for its tank total';
+      if(gg.length===1){g1El.textContent=f(fsR-ovR,1);g2El.textContent='\u2014';g2El.title='not running';}
+      else{const e1=+f(gg[0]-IDLE2,1),e2=+(fsR-ovR-e1).toFixed(1);
+        g1El.textContent=f(e1,1);g2El.textContent=f(e2,1);g2El.title=ti;}
+      g1El.title=ti;}
     const st=dayState(i),pk=dayPeak(i),[txt,cls]=chipFor(st);
     const pEl=document.querySelector('[data-pk="'+i+'"]');
     pEl.textContent=f(pk,1);pEl.className='pk pk-'+(st.pow===2?'over':st.pow===1?'warn':'ok');
