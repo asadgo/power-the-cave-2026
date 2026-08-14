@@ -16,7 +16,6 @@ Subwoofers,Structure,Sound,QSC E118sw,2,0,0,120,Pool,Cut if needed,"Passive - am
 The Source Computer,Structure,Art Installation,Mac Mini,2,140,140,120,Pool,Cut if needed,"Qty corrected 3 to 2 per camp count 8/13 (sheet also says 2; the 3 was unlogged). 140 W = Intel-era max PSU rating; if Apple-chip (M1/M2/M4) real draw is 10-40 W - chip ID pending, then true with kill-a-watt."
 The Source Projector,Structure,Art Installation,Panasonic PT-VMZ50,2,400,400,120,Pool,Cut if needed,"Product corrected from XGIMI Horizon Pro per nameplate photo 8/13 (S/N GA1353689): Panasonic PT-VMZ50 laser LCD, 100-240 V 3.9-1.7 A, approx 380-400 W max - the sheet 400 W was right. Laser = instant on, power-cycle friendly. Kill-a-watt at integration test for real draw at show brightness."
 Object motor,Structure,Art Installation,,1,30,60,12,Pool,Cut if needed,12 V. Needs a brick. Start kick estimated.
-Device charging,Shade City,Appliance,"Phones, misc",1,300,300,120,Pool,Cut if needed,Rough allowance for camp charging.
 Coffee maker,Kitchen,Appliance,Avantco CU65ETL 65 Cup,1,1500,1500,120,Pool,Cut first,"Heats water, no motor. Morning use only."
 Pioneer DJ Controller,Events,Sound,Pioneer XDJ-RX,1,200,200,120,Pool,Cut first,Event nights only (about 2).
 Monitor Speakers,Events,Sound,QSC E110,2,0,0,120,Pool,Cut first,Event nights only (about 2). Passive E110 - amp-fed; 300 W = handling rating.
