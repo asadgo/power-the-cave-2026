@@ -682,7 +682,8 @@ function eventTotals(){
 function updateSummary(){
   const t=eventTotals();
   const st=t.end>=FLOOR+WARNM?'ok':t.end>=FLOOR?'warn':'over';
-  $('sum').textContent='Whole event · '+f(t.tk,0)+' kWh · needs '+f(t.need,0)+' gal · plan delivers '+f(t.have,0)+' gal · ends at '+f(t.end,0)+' gal (floor '+FLOOR+')';
+  {const dv=t.tk/KPG, ov=t.need-dv;
+  $('sum').textContent='Whole event · '+f(t.tk,0)+' kWh · needs '+f(t.need,0)+' gal ('+f(dv,0)+' devices + '+f(ov,0)+' gen overhead) · plan delivers '+f(t.have,0)+' gal · ends at '+f(t.end,0)+' gal (floor '+FLOOR+')';}
   $('sum').className='sum s-'+st;
 }
 
@@ -1052,7 +1053,7 @@ function devPaint(){
       +'<span class="dline dbig">Devices &middot; '+f(tk,1)+' kWh &middot; \u2212'+f(tk/KPG,2)+' gal</span>'
       +'<span class="dline devsm">gen overhead ('+ng+' gen'+(ng>1?'s':'')+' running) &middot; \u2212'+f(goh,1)+' gal</span>'
       +'<span class="dline dbig">Fuel spent &middot; \u2212'+f(tk/KPG+goh,1)+' gal</span>'
-      +'<span class="dline devsm" style="margin-top:7px">devices &middot; all days</span>'+efSub(tev,tfr)+(function(){let ovE=0,ovF=0;for(let d=0;d<NDAYS;d++){const o=IDLE2*((PLAN&&PLAN.g[d])||1);ovE+=o;if(d>=ASOF())ovF+=o;}return '<span class="dline devsm">gen overhead &middot; \u2212'+f(ovE,0)+' gal event &middot; \u2212'+f(ovF,0)+' gal from '+dLab(ASOF())+'</span>'+'<span class="dline devsm"><b>fuel spent &middot; \u2212'+f(tev/KPG+ovE,0)+' gal event &middot; \u2212'+f(tfr/KPG+ovF,0)+' gal from '+dLab(ASOF())+'</b></span>';})();}
+      +'<span class="dline devsm" style="margin-top:7px">devices &middot; all days</span>'+efSub(tev,tfr);}
   const base=i=>{const t=ensureGen(structuredClone(DEVSEED));
     if(Array.isArray(DTYPE)&&/^off$/i.test(String(DTYPE[i]||'')))t.forEach(r=>{r.q=0;});
     if(PLAN){const a=t.find(x=>/air condition/i.test(x.n));if(a)a.q=PLAN.a[i];
