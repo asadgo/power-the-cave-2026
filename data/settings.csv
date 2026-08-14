@@ -22,7 +22,7 @@ camper_budget_kwh,1.0,"Flat personal-power allotment kWh per camper per day [con
 ac_unit_kwh_per_hour,0.6,"One AC unit kWh per running hour [console model constant, from console v44]"
 ac_hours_per_day,7,"Assumed AC running hours per day [console model constant, from console v44]"
 ebike_kwh_per_day,0.576,"One e-bike charge kWh per day [console model constant, from console v44]"
-second_gen_idle_gal,2,"Extra gal/day burned idling the second generator [console model constant, from console v44]"
+gen_overhead_gal_each,2,Baseline gal per running generator per day (engine overhead beyond electricity made). Was second_gen_idle_gal which charged only the second engine; tune after break-in metering and last-year log calibration.
 fuel_floor_gal,5,"Default reserve floor - never dip below (editable in console) [console model constant, from console v44]"
 fuel_warn_margin_gal,15,"Within this many gal above the floor reads LOW [console model constant, from console v44]"
 quiet_evening_cap_kw,3.7,"Evening camp cap with sound off [console model constant, from console v44]"
