@@ -159,6 +159,8 @@ summary.flagrow2{display:flex;flex-wrap:wrap;row-gap:6px;align-items:center}
 .qn{margin-bottom:12px}
 .qn .twrap{overflow-x:auto}
 .band.kwrow td:not(.rowlab){font-size:15px}
+.dline{display:block}
+.dbig{font-weight:700;font-size:15px;color:var(--fg)}
 .qn table{border-collapse:collapse;width:100%}
 .qn th{font:600 11px var(--mono);color:var(--muted);text-align:left;padding:0 8px 4px 0;letter-spacing:.08em;text-transform:uppercase}
 .qn th.qr,.qn td.qr{text-align:right;white-space:nowrap;width:270px;min-width:270px}
@@ -993,8 +995,15 @@ function devPaint(){
     +'<span class="devsm">from '+dLab(ASOF())+' &middot; '+f(fr,0)+' kWh &middot; '+f(fr/KPG,1)+' gal total</span>';
   const dsub=k=>efSub(k*NDAYS,k*rem);
   const duS=r=>r.du.reduce((a,x)=>a+x,0);
-  const sOff=d=>!!(PLAN&&PLAN.s&&!PLAN.s[d]);
-  const gRow=(r,d)=>(r&&!(r.cat==='Sound'&&sOff(d)))?r.q*r.w*duS(r)/1000:0;
+  const gFac=(r,d)=>{
+    if(!r)return 0;
+    const n=r.n.toLowerCase();
+    if(r.bus==='Battery'||n.includes('air condition')||n.includes('e-bike charging'))return 1;
+    const c=(PLAN&&typeof cf==='function')?cf(d):1;
+    if(r.cat==='Sound')return (PLAN&&PLAN.s?(PLAN.s[d]?1:0):1)*c;
+    return c;
+  };
+  const gRow=(r,d)=>r?r.q*r.w*duS(r)/1000*gFac(r,d):0;
   const rowKw=(d,idx)=>gRow(DEVD[d]&&DEVD[d][idx],d);
   const rowEF=idx=>{let ev=0,fr=0;for(let d=0;d<NDAYS;d++){const k=rowKw(d,idx);ev+=k;if(d>=ASOF())fr+=k;}return[ev,fr];};
   const pEF=per=>{let ev=0,fr=0;for(let d=0;d<NDAYS;d++){const k=per*pCount(d);ev+=k;if(d>=ASOF())fr+=k;}return[ev,fr];};
@@ -1035,7 +1044,13 @@ function devPaint(){
   let tev=0,tfr=0;
   DEVC.forEach((r,i)=>{const[e2,f2]=rowEF(i);tev+=e2;tfr+=f2;});
   {const[e2,f2]=pEF(PP);tev+=e2;tfr+=f2;}
-  const tt=$('dkT');if(tt){const goh=IDLE2*((PLAN&&PLAN.g[ASOF()])||1);tt.innerHTML=f(tk,1)+' kWh/day &middot; '+f(tk/KPG,2)+' gal/day'+efSub(tev,tfr)+'<br><span class="sub">-'+f(goh,1)+' gal/gen overhead = '+f(tk/KPG+goh,1)+' gal/day fuel spent total</span>';}
+  const tt=$('dkT');if(tt){const ng=(PLAN&&PLAN.g[ASOF()])||1,goh=IDLE2*ng;
+    const dn=new Date(START.getTime()+ASOF()*DAY).toLocaleDateString('en-US',{weekday:'short'});
+    tt.innerHTML='<span class="dline devsm">On this day: '+dn+' '+dLab(ASOF())+'</span>'
+      +'<span class="dline dbig">Devices &middot; '+f(tk,1)+' kWh &middot; \u2212'+f(tk/KPG,2)+' gal</span>'
+      +'<span class="dline devsm">gen overhead ('+ng+' gen'+(ng>1?'s':'')+' running) &middot; \u2212'+f(goh,1)+' gal</span>'
+      +'<span class="dline dbig">Fuel spent &middot; \u2212'+f(tk/KPG+goh,1)+' gal</span>'
+      +'<span class="dline devsm" style="margin-top:7px">devices &middot; all days</span>'+efSub(tev,tfr);}
   const base=i=>{const t=ensureGen(structuredClone(DEVSEED));
     if(Array.isArray(DTYPE)&&/^off$/i.test(String(DTYPE[i]||'')))t.forEach(r=>{r.q=0;});
     if(PLAN){const a=t.find(x=>/air condition/i.test(x.n));if(a)a.q=PLAN.a[i];
