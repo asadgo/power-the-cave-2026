@@ -819,6 +819,7 @@ function kitCalc(){
 const DGROUPS=['Critical','Sound','The Source','Camp lights & misc','ACs','E-bikes'];
 const ASOF=()=>Math.min(NDAYS-1,Math.max(0,+$('asof').value||0));
 let DEVVIEW=load('cavecsv_devview')||'category';
+let PERSOPEN=!!load('cavecsv_persopen');
 let DEVGRP=[];
 function groupsFor(view){
   if(view==='area'){
@@ -861,11 +862,11 @@ function buildDev(){
         +'</tr>';
     });
     if(g.syn&&op){
-      h+='<tr class="grow psyn"><td class="dname" title="camper personal loads">Personal items</td>'
+      h+='<tr class="grow psyn"><td class="dname pgrp" style="cursor:pointer" title="click to show or hide personal item lines">'+(PERSOPEN?'\u25be ':'\u25b8 ')+'Personal items</td>'
         +'<td class="gcell"><button type="button" class="gtag pgt '+((PLAN&&PLAN.g[ASOF()]<2)?'g1 gdim':'g'+PGEN)+'" title="'+((PLAN&&PLAN.g[ASOF()]<2)?'single-generator day · all loads run on the one generator':'which generator carries camper loads in split view')+'">'+((PLAN&&PLAN.g[ASOF()]<2)?'1':PGEN)+'</button></td>'
         +'<td><input id="psq" type="number" min="0" max="99" value="0"></td><td id="psw">\u2014</td><td class="hdc" id="psh">\u2014</td>'
         +'<td id="pstrip"></td><td class="qr" id="dkP">\u2014</td><td></td></tr>';
-      KITC.forEach((r,ki)=>{
+      if(PERSOPEN)KITC.forEach((r,ki)=>{
         let ks='<div class="hstrip">';
         for(let j=0;j<24;j++)ks+='<div class="hcol"><div class="hc'+(r.hs.includes(j)?' on':'')+'" data-khr="'+ki+'" data-j="'+j+'"></div><div class="hlb'+((j===7||j===19)?' maj':'')+'">'+HOURS[j]+'</div></div>';
         ks+='</div>';
@@ -878,11 +879,15 @@ function buildDev(){
           +'<td class="qr" id="kdr'+ki+'">\u2014</td>'
           +'<td><button type="button" class="kdel" data-khr="'+ki+'" title="Delete item">\u00d7</button></td></tr>';
       });
-      h+='<tr class="grow"><td colspan="8"><button type="button" id="kadd">+ Add personal item</button></td></tr>';
+      if(PERSOPEN)h+='<tr class="grow"><td colspan="8"><button type="button" id="kadd">+ Add personal item</button></td></tr>';
     }
     h+='<tr class="dsub"><td class="ktlab">'+(({'Camp lights & misc':'Lights & misc'})[g.name]||g.name)+' subtotal</td><td></td><td></td><td></td><td></td><td></td><td class="qr" id="dg'+gi+'">&mdash;</td><td></td></tr>';
   });
   T.innerHTML=h;
+  T.querySelectorAll('.pgrp').forEach(el=>el.addEventListener('click',()=>{
+    PERSOPEN=!PERSOPEN;store('cavecsv_persopen',PERSOPEN);
+    buildDev();devPaint();
+  }));
   T.querySelectorAll('.dgrp').forEach(el=>el.addEventListener('click',()=>{
     const nm=DEVGRP[+el.dataset.g].name;
     const st=load('cavecsv_devopen')||{};
