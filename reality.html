@@ -253,8 +253,8 @@ body.light .uibox h3{color:var(--ink)}
 .toast.err{border-color:var(--danger);color:var(--danger)}
 @keyframes spn{to{transform:rotate(360deg)}}
 .spin svg{animation:spn .9s linear infinite}
-body{--gen1:#5b9bd5;--gen2:#e086b6;--rline:#a78bda}
-body.light{--gen1:#2f6fad;--gen2:#c2568f;--rline:#6d4aa8}
+body{--gen1:#5b9bd5;--gen2:#e086b6;--rline:#2dd4bf;--planl:#8a91a0}
+body.light{--gen1:#2f6fad;--gen2:#c2568f;--rline:#0d9488;--planl:#b5aea2}
 .fgrid label.g1c{color:var(--gen1)}.fgrid label.g1c input{border-color:var(--gen1)}
 .fgrid label.g2c{color:var(--gen2)}.fgrid label.g2c input{border-color:var(--gen2)}
 #app>details.panel{margin:12px 0 0}
@@ -568,7 +568,7 @@ function renderStatus(){
   $('st_oh').textContent=EV.length?f(oh.v,0)+' gal':'—';
   $('st_oh_sub').textContent=oh.asof?('drums checked '+oh.asof.toLocaleDateString('en-US',{month:'numeric',day:'numeric'})+' '+oh.asof.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})):'drums not checked yet';
   $('st_rate').textContent=tr.rate!=null?f(tr.rate,1)+' gal/day':'—';
-  $('st_rate_sub').innerHTML=tr.rate!=null?([tr.r1!=null&&('<span style="color:var(--gen1)">gen 1 · '+f(tr.r1,1)+'</span>'),tr.r2!=null&&('<span style="color:var(--gen2)">gen 2 · '+f(tr.r2,1)+'</span>')].filter(Boolean).join(' — ')||'measured from pours'):'no refuels logged yet';
+  $('st_rate_sub').innerHTML=tr.rate!=null?([tr.r1!=null&&('<span style="color:var(--gen1)">gen 1 · '+f(tr.r1,1)+'</span>'),tr.r2!=null&&('<span style="color:var(--gen2)">gen 2 · '+f(tr.r2,1)+'</span>')].filter(Boolean).join('<br>')||'measured from pours'):'no refuels logged yet';
   const me=fc.end,mo=endFuel(NDAYS-1);
   $('st_end').textContent=me!=null?f(me,0)+' gal':'—';
   $('st_end').style.color=me!=null?(me<=FLOOR?'var(--danger)':'var(--safe)'):'';
@@ -588,7 +588,7 @@ function renderCharts(){
   const xt={type:'linear',min:0,max:NDAYS,ticks:{color:t.tick,font:{family:FONT,size:10},stepSize:1,callback:v=>Number.isInteger(v)&&v<NDAYS?dLab(v):''},grid:{color:t.grid}};
   const yt={ticks:{color:t.tick,font:{family:FONT,size:10}},grid:{color:t.grid},title:{display:true,text:'gallons',color:t.tick,font:{family:FONT,size:10}}};
   const dsA=[
-    {label:'Plan',data:P.pts,borderColor:cssv('--muted'),borderWidth:2,pointRadius:0,tension:0},
+    {label:'Plan',data:P.pts,borderColor:cssv('--planl'),borderWidth:2,pointRadius:0,tension:0},
     {label:'Reality — running estimate',data:A.line,borderColor:cssv('--rline'),borderWidth:2.5,pointRadius:0,tension:0},
     {label:'Drum counts — measured',data:A.dips,showLine:false,pointRadius:5,pointStyle:'rectRot',backgroundColor:cssv('--rline')},
     {label:'If current burn continues',data:F.pts,borderColor:cssv('--warn'),borderDash:[6,4],borderWidth:2,pointRadius:0,tension:0,segment:{borderColor:c=>((c.p0.parsed.y<0||c.p1.parsed.y<0)?cssv('--danger'):undefined)}},
@@ -601,7 +601,7 @@ function renderCharts(){
   const labs=Array.from({length:NDAYS},(_,i)=>dLab(i));
   if(chB)chB.destroy();
   chB=new Chart($('chartB'),{type:'bar',data:{labels:labs,datasets:[
-    {label:'Plan — total gal that day',stack:'plan',data:Array.from({length:NDAYS},(_,i)=>+burn(i).toFixed(1)),backgroundColor:cssv('--muted')+'66',borderColor:cssv('--muted'),borderWidth:1},
+    {label:'Plan — total gal that day',stack:'plan',data:Array.from({length:NDAYS},(_,i)=>+burn(i).toFixed(1)),backgroundColor:cssv('--planl')+'66',borderColor:cssv('--planl'),borderWidth:1},
     {label:'Poured — gen 1',stack:'real',data:add1.map(v=>+v.toFixed(1)),backgroundColor:cssv('--gen1')+'aa',borderColor:cssv('--gen1'),borderWidth:1},
     {label:'Poured — gen 2',stack:'real',data:add2.map(v=>+v.toFixed(1)),backgroundColor:cssv('--gen2')+'aa',borderColor:cssv('--gen2'),borderWidth:1}]},
     options:{responsive:true,maintainAspectRatio:false,animation:false,
@@ -644,7 +644,9 @@ function validate(r){
   if(!r.logged_by)return 'Name is required — it\u2019s how the journal attributes entries.';
   if(!/^\d{4}-\d{2}-\d{2}$/.test(r.date))return 'Date looks off.';
   const nums=['gen1_hours','gen2_hours','gal_gen1','gal_gen2','gal_delivered','drum1_gal','drum2_gal'];
-  for(const k of nums){if(r[k]!==''&&(isNaN(+r[k])||+r[k]<0))return k.replace(/_/g,' ')+' must be a number \u2265 0.';}
+  const caps={gal_gen1:9,gal_gen2:9,gal_delivered:200,drum1_gal:50,drum2_gal:50,gen1_hours:20000,gen2_hours:20000};
+  for(const k of nums){if(r[k]!==''&&(isNaN(+r[k])||+r[k]<0))return k.replace(/_/g,' ')+' must be a number \u2265 0.';
+    if(r[k]!==''&&+r[k]>caps[k])return (k.startsWith('gal_gen')?'The gen tank holds 7.9 gal \u2014 ':'')+k.replace(/_/g,' ')+' looks too high (max '+caps[k]+').';}
   if(!nums.some(k=>r[k]!==''))return 'Log at least one number (fuel, meter, delivery, or drum level).';
   if((r.drum1_gal!=='')!==(r.drum2_gal!==''))return 'Log both drums \u2014 enter 0 for an empty drum.';
   return null;
