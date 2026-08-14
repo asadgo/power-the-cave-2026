@@ -160,7 +160,7 @@ summary.flagrow2{display:flex;flex-wrap:wrap;row-gap:6px;align-items:center}
 .qn .twrap{overflow-x:auto}
 .band.kwrow td:not(.rowlab){font-size:15px}
 .dline{display:block}
-.dbig{font-weight:700;font-size:15px;color:var(--fg)}
+#devtable .dbig,.dbig{font-weight:700 !important;font-size:15px;color:var(--fg)}
 .qn table{border-collapse:collapse;width:100%}
 .qn th{font:600 11px var(--mono);color:var(--muted);text-align:left;padding:0 8px 4px 0;letter-spacing:.08em;text-transform:uppercase}
 .qn th.qr,.qn td.qr{text-align:right;white-space:nowrap;width:270px;min-width:270px}
@@ -357,7 +357,7 @@ function buildModel(D){
   DEVSEED=D.devices.map(r=>{const s=D.schedule.find(x=>x.device===r.device);
     let q=+r.qty||0,w=+r.running_w_each||0;
     if(/e-bike charging/i.test(r.device)&&q===1&&w>500){q=10;w=Math.round(w/10);}
-    return {n:r.device,area:r.area,cat:r.category,bus:r.bus,pr:r.priority,q,w,
+    return {n:r.device,area:r.area,cat:r.category,bus:r.bus,pr:r.priority,q,w,sc:(r.scaling==='people')?'people':'full',
       gen:(r.gen==='1'||r.gen==='2')?r.gen:(r.gen==='A'?'2':(r.gen==='B'?'1':autoGen(r.device))),
       du:HOURS.map(hh=>s?(+s['h_'+hh]||0):0)};});
   const dfp=JSON.stringify(DEVSEED),nd_=D.calendar_plan.length;
@@ -407,9 +407,10 @@ function wireDay(rows){
   const AC1=acD?+(dayK(acD)/(acD.q||1)).toFixed(3):0;
   const EBT=ebD?+dayK(ebD).toFixed(3):0;
   const POOLK=+dev.filter(d=>d.bus==='Pool').reduce((a,d)=>a+dayK(d),0).toFixed(3);
+  const LMP=+dev.filter(d=>d.bus==='Pool'&&d.sc==='people'&&d.cat!=='Sound'&&!SRCSET.has(d.n)&&d!==acD&&d!==ebD).reduce((a,d)=>a+dayK(d),0).toFixed(3);
   return {BOB:B,ALICE:A,aliceRef:Math.max(...A)||1,fansKw:(fanD&&fanD.gen==='2')?fanD.tot/1000:0,acInB:!!(acD&&acD.gen==='2'),
-    ACW:acD&&acD.w?acD.w/1000:S.ac_unit_kwh_per_hour,SOUND:SN,CRITK,SRCK,AC1,EBT,
-    LMISCK:+(POOLK-SN-SRCK-(acD?dayK(acD):0)-(ebD?dayK(ebD):0)).toFixed(3)};
+    ACW:acD&&acD.w?acD.w/1000:S.ac_unit_kwh_per_hour,SOUND:SN,CRITK,SRCK,AC1,EBT,LMP,
+    LMISCK:+(POOLK-SN-SRCK-(acD?dayK(acD):0)-(ebD?dayK(ebD):0)-LMP).toFixed(3)};
 }
 function syncACFromPlan(){
   if(!PLAN||!DEVD.length)return;
@@ -437,9 +438,9 @@ function wireDevices(){
   BOB=d0.BOB;ALICE=d0.ALICE;aliceRef=d0.aliceRef;fansKw=d0.fansKw;ACW=d0.ACW;SOUND=d0.SOUND;
   CATS=[
    ['Critical',i=>DER[i].CRITK],
-   ['Sound',i=>DER[i].SOUND*PLAN.s[i]*cf(i)],
-   ['The Source',i=>DER[i].SRCK*cf(i)],
-   ['Camp lights &amp; misc<span class="rl2">(fans, charging, coffee)</span>',i=>DER[i].LMISCK*cf(i)],
+   ['Sound',i=>DER[i].SOUND*PLAN.s[i]],
+   ['The Source',i=>DER[i].SRCK],
+   ['Camp lights &amp; misc<span class="rl2">(fans, charging, coffee)</span>',i=>DER[i].LMISCK+DER[i].LMP*cf(i)],
    ['ACs',i=>DER[i].AC1*PLAN.a[i]],
    ['E-bikes',i=>DER[i].EBT],
    ['Personal items<span class="rl2" id="pplab">('+f(PP,2)+' kWh/camper \u00b7 from Devices table)</span>',i=>PP*pCount(i)]];
@@ -999,9 +1000,9 @@ function devPaint(){
     if(!r)return 0;
     const n=r.n.toLowerCase();
     if(r.bus==='Battery'||n.includes('air condition')||n.includes('e-bike charging'))return 1;
-    const c=(PLAN&&typeof cf==='function')?cf(d):1;
-    if(r.cat==='Sound')return (PLAN&&PLAN.s?(PLAN.s[d]?1:0):1)*c;
-    return c;
+    const sg=(r.cat==='Sound')?((PLAN&&PLAN.s&&!PLAN.s[d])?0:1):1;
+    const c=(r.sc==='people'&&PLAN)?cf(d):1;
+    return sg*c;
   };
   const gRow=(r,d)=>r?r.q*r.w*duS(r)/1000*gFac(r,d):0;
   const rowKw=(d,idx)=>gRow(DEVD[d]&&DEVD[d][idx],d);
