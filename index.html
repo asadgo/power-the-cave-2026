@@ -1028,7 +1028,7 @@ function devPaint(){
   let tev=0,tfr=0;
   DEVC.forEach((r,i)=>{const[e2,f2]=rowEF(i);tev+=e2;tfr+=f2;});
   {const[e2,f2]=pEF(PP);tev+=e2;tfr+=f2;}
-  const tt=$('dkT');if(tt){const goh=IDLE2*((PLAN&&PLAN.g[ASOF()])||1);tt.innerHTML=f(tk,1)+' kWh/day &middot; '+f(tk/KPG,2)+' gal/day'+efSub(tev,tfr)+'<br><span class="sub">+ '+f(goh,1)+' gal gen overhead = '+f(tk/KPG+goh,1)+' gal/day at the tanks</span>';}
+  const tt=$('dkT');if(tt){const goh=IDLE2*((PLAN&&PLAN.g[ASOF()])||1);tt.innerHTML=f(tk,1)+' kWh/day &middot; '+f(tk/KPG,2)+' gal/day'+efSub(tev,tfr)+'<br><span class="sub">-'+f(goh,1)+' gal/gen overhead = '+f(tk/KPG+goh,1)+' gal/day fuel spent total</span>';}
   const base=i=>{const t=ensureGen(structuredClone(DEVSEED));
     if(Array.isArray(DTYPE)&&/^off$/i.test(String(DTYPE[i]||'')))t.forEach(r=>{r.q=0;});
     if(PLAN){const a=t.find(x=>/air condition/i.test(x.n));if(a)a.q=PLAN.a[i];
