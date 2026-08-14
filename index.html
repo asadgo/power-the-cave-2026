@@ -230,7 +230,7 @@ body.light .uibox h3{color:var(--ink)}
 
 <details class="panel info qn chartwide" id="capbox2"><summary class="flag flagrow2"><span class="flagtxt" id="capflag">—</span><label class="floorlab" id="genlab">Gens <span class="gsel"><button type="button" id="pooltog">POOLED</button><div id="genmenu"><button type="button" data-gm="pooled">POOLED</button><button type="button" data-gm="split">BOTH GEN</button><button type="button" data-gm="g1">GEN 1 ONLY</button><button type="button" data-gm="g2">GEN 2 ONLY</button></div></span></label></summary>
   <div class="chartbox capbox" id="capbody"><canvas id="capchart" role="img" aria-label="Hourly camp load vs the safe and absolute limits for the selected day"></canvas></div></details>
-<details class="panel info qn chartwide" id="runbox2"><summary class="flag flagrow2"><span class="flagtxt" id="runflag">—</span><label class="floorlab" id="eglab">By Gen <button type="button" id="egtog">ON</button></label> <label class="floorlab" id="fslab">Split <button type="button" id="fstog" title="How the two Gen gal rows divide the day&#39;s fuel. BY LOAD: each generator is billed the devices assigned to it (the 1/2 chips) plus its own overhead. 50/50: both billed evenly, for pooled refueling with the parallel kit. Total fuel is identical either way.">BY LOAD</button></label> <label class="floorlab" id="dellab">Delivery <button type="button" id="deltog">AM</button></label> <label class="floorlab">Fuel floor <input type="number" id="floor" min="0"> gal</label></summary>
+<details class="panel info qn chartwide" id="runbox2"><summary class="flag flagrow2"><span class="flagtxt" id="runflag">—</span><label class="floorlab" id="eglab">By Gen <button type="button" id="egtog">ON</button></label> <label class="floorlab" id="dellab">Delivery <button type="button" id="deltog">AM</button></label> <label class="floorlab">Fuel floor <input type="number" id="floor" min="0"> gal</label></summary>
   <div class="chartbox runbox" id="runbody"><canvas id="runchart" role="img" aria-label="Fuel on hand day by day under the plan"></canvas></div></details>
 
 
@@ -460,7 +460,6 @@ const endFuel=i=>autoMorning(i)-burn(i);
 function genGal(i){
   const g=PLAN.g[i]||1,b=burn(i);
   if(g<2)return[b];
-  if(FUELSPLIT==='shared')return[b/2,b/2];
   const e=b-IDLE2*2;
   const cs=curvesAB(i);
   const s1=cs[0].data.reduce((a,x)=>a+x,0),s2=cs[1].data.reduce((a,x)=>a+x,0),t=(s1+s2)||1;
@@ -641,12 +640,11 @@ function updateDayCells(){
     const sEl=document.querySelector('[data-sod="'+i+'"]');
     if(sEl)sEl.textContent=f(startFuel(i),0);
     {const gohEl=document.querySelector('[data-goh="'+i+'"]');if(gohEl)gohEl.textContent=f(IDLE2*(PLAN.g[i]||1),1);}
-    document.querySelector('[data-fs="'+i+'"]').textContent=f(burn(i),1);
+    document.querySelector('[data-fs="'+i+'"]').textContent='\u2212'+f(burn(i),1);
     const g1El=document.querySelector('[data-fg1="'+i+'"]'),g2El=document.querySelector('[data-fg2="'+i+'"]');
     if(g1El&&g2El){const gg=genGal(i);
       const ti=gg.length===1?'single-generator day \u00b7 the running generator'
-        :FUELSPLIT==='shared'?'50/50 \u00b7 fuel billed evenly to both generators regardless of outlet'
-        :'BY LOAD \u00b7 each generator burns its own assigned devices plus its own overhead';
+        :'each generator is billed its own assigned devices plus its own overhead';
       g1El.textContent=f(gg[0],1);g1El.title=ti;
       g2El.textContent=gg.length>1?f(gg[1],1):'\u2014';g2El.title=gg.length>1?ti:'not running';}
     const st=dayState(i),pk=dayPeak(i),[txt,cls]=chipFor(st);
@@ -1284,16 +1282,7 @@ function boot(D){
   });
   document.addEventListener('keydown',e=>{if(e.key==='Escape')$('genmenu').classList.remove('on');});
   document.querySelector('#capbox2 #genlab').addEventListener('click',e=>{e.stopPropagation();});
-  FUELSPLIT=load('cavecsv_fuelsplit')==='shared'?'shared':'wired';
-  $('fstog').textContent=FUELSPLIT==='shared'?'50/50':'BY LOAD';
-  $('fstog').addEventListener('click',e=>{e.stopPropagation();e.preventDefault();
-    FUELSPLIT=FUELSPLIT==='wired'?'shared':'wired';
-    store('cavecsv_fuelsplit',FUELSPLIT);
-    $('fstog').textContent=FUELSPLIT==='shared'?'50/50':'BY LOAD';
-    refresh(false);
-  });
-  document.querySelector('#runbox2 #fslab').addEventListener('click',e=>{e.stopPropagation();});
-  FUELGENS=load('cavecsv_fuelgens')!==false;
+    FUELGENS=load('cavecsv_fuelgens')!==false;
   $('egtog').textContent=FUELGENS?'ON':'OFF';
   $('egtog').addEventListener('click',e=>{e.stopPropagation();e.preventDefault();
     FUELGENS=!FUELGENS;store('cavecsv_fuelgens',FUELGENS);
