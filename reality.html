@@ -284,7 +284,6 @@ body.light{--gen1:#2f6fad;--gen2:#c2568f;--rline:#0d9488;--planl:#b5aea2}
   <div class="st"><div class="k">Last entry</div><div class="v" id="st_last">—</div><div class="s" id="st_last_sub"></div></div>
 <div id="toast" class="toast"></div>
 </div>
-<div class="gph" id="st_gph"></div>
 
 <details class="panel info" open><summary class="flag">Log an entry</summary>
 <div class="fgrid">
@@ -303,7 +302,7 @@ body.light{--gen1:#2f6fad;--gen2:#c2568f;--rline:#0d9488;--planl:#b5aea2}
 <button type="button" id="fsub">Commit to the journal</button>
 <p id="fmsg"></p>
 <div id="prevbox"><div style="font-size:10.5px;color:var(--warn);letter-spacing:.5px;margin-bottom:4px">CSV ROW (tap to select)</div><div id="prevrow"></div></div>
-<p class="note">A refuel = name + gallons into that gen + its hour meter. The drum check = name + both drum levels (0 for an empty drum). Blank fields are fine. Every entry is a git commit — typo fixes happen via the GitHub pencil.</p></details>
+<p class="note">A refuel = name + gallons into that gen + its hour meter. The drum check = name + both drum levels (0 for an empty drum). Blank fields are fine. Fill tanks to full each pour — then the pour size is exactly the fuel burned since the last fill. Every entry is a git commit — typo fixes happen via the GitHub pencil.</p></details>
 
 <details class="panel info chartwide" open><summary class="flag">Fuel on hand — plan vs reality</summary>
   <div class="chbox"><canvas id="chartA"></canvas></div>
@@ -519,11 +518,9 @@ function trailingRate(){ /* gal/day from gal_added, last 72 h (or since first ev
   const cut=new Date(RNOW()-72*3600e3);
   const w=adds.filter(e=>e.ts>=cut);
   const use=w.length?w:adds;
-  const t0=Math.min(use[0].ts,cut>adds[0].ts?cut:adds[0].ts);
-  const span=Math.max(0.5,(RNOW()-t0)/DAY);
+  const span=use.length>1?Math.max(0.5,(use[use.length-1].ts-use[0].ts)/DAY):Math.max(0.5,(RNOW()-use[0].ts)/DAY);
   const g=use.reduce((a,e)=>a+e.add,0);
-  const g1=use.reduce((a,e)=>a+(e.a1||0),0),g2=use.reduce((a,e)=>a+(e.a2||0),0);
-  return {rate:g/span,r1:g1?g1/span:null,r2:g2?g2/span:null,label:f(g/span,1)+' gal/day (trailing '+f(span,1)+' d)'};
+  return {rate:g/span,span,label:'measured between logged pours'};
 }
 function genRate(mk,ak){
   const v=EV.map(e=>e[mk]).filter(x=>x!=null);
@@ -568,7 +565,8 @@ function renderStatus(){
   $('st_oh').textContent=EV.length?f(oh.v,0)+' gal':'—';
   $('st_oh_sub').textContent=oh.asof?('drums checked '+oh.asof.toLocaleDateString('en-US',{month:'numeric',day:'numeric'})+' '+oh.asof.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})):'drums not checked yet';
   $('st_rate').textContent=tr.rate!=null?f(tr.rate,1)+' gal/day':'—';
-  $('st_rate_sub').innerHTML=tr.rate!=null?([tr.r1!=null&&('<span style="color:var(--gen1)">gen 1 · '+f(tr.r1,1)+'</span>'),tr.r2!=null&&('<span style="color:var(--gen2)">gen 2 · '+f(tr.r2,1)+'</span>')].filter(Boolean).join('<br>')||'measured from pours'):'no refuels logged yet';
+  const rr1=genRate('g1','a1'),rr2=genRate('g2','a2');
+  $('st_rate_sub').innerHTML=tr.rate!=null?([rr1&&('<span style="color:var(--gen1)">gen 1 · '+f(rr1.r,2)+' gal/hr</span>'),rr2&&('<span style="color:var(--gen2)">gen 2 · '+f(rr2.r,2)+' gal/hr</span>')].filter(Boolean).join('<br>')||'per-gen gal/hr needs 2 meter readings'):'no refuels logged yet';
   const me=fc.end,mo=endFuel(NDAYS-1);
   $('st_end').textContent=me!=null?f(me,0)+' gal':'—';
   $('st_end').style.color=me!=null?(me<=FLOOR?'var(--danger)':'var(--safe)'):'';
@@ -578,7 +576,6 @@ function renderStatus(){
   $('st_last').textContent=last?(hrs<0?(last.toLocaleDateString('en-US',{month:'numeric',day:'numeric'})+' '+last.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})):(hrs<1?f(hrs*60,0)+' min ago':f(hrs,0)+' h ago')):'—';
   $('st_last').style.color=hrs!=null&&hrs>26?'var(--warn)':'';
   $('st_last_sub').textContent=last?('by '+EV[EV.length-1].name):'journal is empty';
-  $('st_gph').textContent=m?('measured '+f(m.v,2)+' gal/gen-hr over '+f(m.hrs,1)+' gen-hrs'):'gal/gen-hr: needs two meter readings + a refuel';
 }
 
 /* ---------- render: charts ---------- */
