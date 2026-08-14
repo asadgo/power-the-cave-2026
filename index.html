@@ -214,7 +214,7 @@ body.light .uibox h3{color:var(--ink)}
 <div id="loader"><h2>Loading data/*.csv &hellip;</h2><p id="loadmsg">Reading the plan.</p></div>
 <div id="app" style="display:none">
 <select id="asof" style="display:none"></select>
-<details class="panel info" id="calbox" open><summary class="flag">Calendar <span class="devday" id="calday"></span></summary>
+<details class="panel info" id="calbox"><summary class="flag">Calendar <span class="devday" id="calday"></span></summary>
 <div class="plan" id="plan">
   <table id="plantable"></table>
 </div></details>
@@ -1246,7 +1246,7 @@ function boot(D){
   noteCue();
   $('notes').addEventListener('input',()=>{NOTES=$('notes').value;store('cavecsv_notes',NOTES);noteCue();});
   window.__noteCue=noteCue;
-  const chOp=load('cavecsv_chartopen2')||{cal:true};
+  const chOp=load('cavecsv_chartopen2')||{};
   [['calbox','cal'],['capbox2','cap'],['runbox2','run']].forEach(([id,k])=>{
     const el=$(id);
     el.open=!!chOp[k];
