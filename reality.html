@@ -278,20 +278,22 @@ body.light .uibox h3{color:var(--ink)}
 
 <details class="panel info" open><summary class="flag">Log an entry</summary>
 <div class="fgrid">
-  <label>Your name<input id="f_name" autocomplete="name" placeholder="who's logging"></label>
+  <label>Your name<input id="f_name" autocomplete="name"></label>
   <label>Date<input id="f_date" type="date"></label>
   <label>Time<input id="f_time" type="time"></label>
-  <label>Fuel into gens (gal)<input id="f_add" inputmode="decimal" placeholder="this refuel"></label>
-  <label>Gen 1 hour meter<input id="f_g1" inputmode="decimal" placeholder="LCD reading"></label>
-  <label>Gen 2 hour meter<input id="f_g2" inputmode="decimal" placeholder="LCD reading"></label>
-  <label>Delivery received (gal)<input id="f_del" inputmode="decimal" placeholder="if drums arrived"></label>
-  <label>Fuel left in drums (gal)<input id="f_dip" inputmode="decimal" placeholder="daily drum count"></label>
-  <label class="wide">Notes<input id="f_notes" placeholder="only if something odd happened"></label>
+  <label>Delivery received (gal)<input id="f_del" inputmode="decimal"></label>
+  <label>Fuel into gen 1 (gal)<input id="f_a1" inputmode="decimal"></label>
+  <label>Gen 1 hour meter<input id="f_g1" inputmode="decimal"></label>
+  <label>Fuel into gen 2 (gal)<input id="f_a2" inputmode="decimal"></label>
+  <label>Gen 2 hour meter<input id="f_g2" inputmode="decimal"></label>
+  <label>Fuel left in drum 1 (gal)<input id="f_d1" inputmode="decimal"></label>
+  <label>Fuel left in drum 2 (gal)<input id="f_d2" inputmode="decimal"></label>
+  <label class="wide">Notes<input id="f_notes"></label>
 </div>
 <button type="button" id="fsub">Commit to the journal</button>
 <p id="fmsg"></p>
 <div id="prevbox"><div style="font-size:10.5px;color:var(--warn);letter-spacing:.5px;margin-bottom:4px">CSV ROW (tap to select)</div><div id="prevrow"></div></div>
-<p class="note">A refuel = name + gallons + both hour meters. The daily drum check = name + gallons left in the drums. Blank fields are fine. Every entry is a git commit — typo fixes happen via the GitHub pencil.</p></details>
+<p class="note">A refuel = name + gallons into that gen + its hour meter. The drum check = name + both drum levels (0 for an empty drum). Blank fields are fine. Every entry is a git commit — typo fixes happen via the GitHub pencil.</p></details>
 
 <details class="panel info chartwide" open><summary class="flag">Fuel on hand — plan vs reality</summary>
   <div class="chbox"><canvas id="chartA"></canvas></div></details>
@@ -479,9 +481,12 @@ function normEv(r){
   const ts=new Date(r.date+'T'+(r.time&&/^\d{1,2}:\d{2}/.test(r.time)?r.time:'12:00'));
   if(isNaN(ts))return null;
   const num=v=>(v===''||v==null||isNaN(+v))?null:+v;
+  const a1=num(r.gal_gen1),a2=num(r.gal_gen2),d1=num(r.drum1_gal),d2=num(r.drum2_gal);
   return {ts,day:(ts-START)/DAY,name:r.logged_by||'?',
-    g1:num(r.gen1_hours),g2:num(r.gen2_hours),
-    add:num(r.gal_added),del:num(r.gal_delivered),dip:num(r.on_hand_est),
+    g1:num(r.gen1_hours),g2:num(r.gen2_hours),a1,a2,d1,d2,
+    add:(a1!=null||a2!=null)?(a1||0)+(a2||0):null,
+    del:num(r.gal_delivered),
+    dip:(d1!=null||d2!=null)?(d1||0)+(d2||0):null,
     notes:r.notes||'',local:!!r._local};
 }
 
@@ -506,11 +511,11 @@ function trailingRate(){ /* gal/day from gal_added, last 72 h (or since first ev
   const g=use.reduce((a,e)=>a+e.add,0);
   return {rate:g/span,label:f(g/span,1)+' gal/day (trailing '+f(span,1)+' d)'};
 }
-function measuredGalPerHr(){
-  const gs=[['g1'],['g2']].map(([k])=>{const v=EV.map(e=>e[k]).filter(x=>x!=null);return v.length>1?Math.max(...v)-Math.min(...v):0;});
-  const hrs=gs[0]+gs[1];
-  const add=EV.reduce((a,e)=>a+(e.add||0),0);
-  return hrs>0.5&&add>0?{v:add/hrs,hrs}:null;
+function genRate(mk,ak){
+  const v=EV.map(e=>e[mk]).filter(x=>x!=null);
+  const hrs=v.length>1?Math.max(...v)-Math.min(...v):0;
+  const add=EV.reduce((s,e)=>s+(e[ak]||0),0);
+  return (hrs>0.5&&add>0)?{r:add/hrs,hrs}:null;
 }
 function forecastPts(){
   const {v}=onHandNow();const tr=trailingRate();
@@ -538,7 +543,7 @@ function actualSeries(){ /* reconstructed on-hand line + dip points */
 
 /* ---------- render: status ---------- */
 function renderStatus(){
-  const oh=onHandNow(),tr=trailingRate(),fc=forecastPts(),m=measuredGalPerHr();
+  const oh=onHandNow(),tr=trailingRate(),fc=forecastPts();
   $('st_oh').textContent=EV.length?f(oh.v,0)+' gal':'—';
   $('st_oh_sub').textContent=oh.asof?('drums checked '+oh.asof.toLocaleDateString('en-US',{month:'numeric',day:'numeric'})+' '+oh.asof.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})):'drums not checked yet';
   $('st_rate').textContent=tr.rate!=null?f(tr.rate,1)+' gal/day':'—';
@@ -596,12 +601,12 @@ function renderLedger(){
     if(e.g1!=null)prev.g1=e.g1;if(e.g2!=null)prev.g2=e.g2;
     return {e,d1,d2};
   }).reverse();
-  $('ledger').innerHTML='<tr><th>when</th><th>who</th><th>gen 1 h</th><th>gen 2 h</th><th>into gens</th><th>delivery</th><th>drums</th><th>notes</th></tr>'+
+  $('ledger').innerHTML='<tr><th>when</th><th>who</th><th>gen 1 h</th><th>gen 2 h</th><th>\u2192 gen 1</th><th>\u2192 gen 2</th><th>delivery</th><th>drum 1</th><th>drum 2</th><th>notes</th></tr>'+
    (rows.length?rows.map(({e,d1,d2})=>'<tr'+(e.local?' class="loc"':'')+'><td>'+e.ts.toLocaleDateString('en-US',{month:'numeric',day:'numeric'})+' '+e.ts.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</td><td>'+esc(e.name)+(e.local?' <span class="badge">just logged</span>':'')+'</td>'+
     '<td>'+(e.g1!=null?f(e.g1,1)+(d1!=null?' <span class="dlt">+'+f(d1,1)+'</span>':''):'')+'</td>'+
     '<td>'+(e.g2!=null?f(e.g2,1)+(d2!=null?' <span class="dlt">+'+f(d2,1)+'</span>':''):'')+'</td>'+
-    '<td>'+(e.add!=null?f(e.add,1)+' gal':'')+'</td><td>'+(e.del!=null?f(e.del,0)+' gal':'')+'</td><td>'+(e.dip!=null?f(e.dip,0)+' gal':'')+'</td><td class="nt">'+esc(e.notes)+'</td></tr>').join('')
-   :'<tr><td colspan="8" class="nt">Journal is empty — first entry lands here.</td></tr>');
+    '<td>'+(e.a1!=null?f(e.a1,1):'')+'</td><td>'+(e.a2!=null?f(e.a2,1):'')+'</td><td>'+(e.del!=null?f(e.del,0):'')+'</td><td>'+(e.d1!=null?f(e.d1,0):'')+'</td><td>'+(e.d2!=null?f(e.d2,0):'')+'</td><td class="nt">'+esc(e.notes)+'</td></tr>').join('')
+   :'<tr><td colspan="10" class="nt">Journal is empty — first entry lands here.</td></tr>');
 }
 
 /* ---------- form ---------- */
@@ -609,15 +614,16 @@ function csvCell(v){v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace
 function collect(){
   const g=id=>$(id).value.trim();
   return {date:g('f_date'),time:g('f_time'),logged_by:g('f_name'),
-    gen1_hours:g('f_g1'),gen2_hours:g('f_g2'),gal_added:g('f_add'),
-    gal_delivered:g('f_del'),on_hand_est:g('f_dip'),notes:g('f_notes')};
+    gen1_hours:g('f_g1'),gen2_hours:g('f_g2'),gal_gen1:g('f_a1'),gal_gen2:g('f_a2'),
+    gal_delivered:g('f_del'),drum1_gal:g('f_d1'),drum2_gal:g('f_d2'),notes:g('f_notes')};
 }
 function validate(r){
   if(!r.logged_by)return 'Name is required — it\u2019s how the journal attributes entries.';
   if(!/^\d{4}-\d{2}-\d{2}$/.test(r.date))return 'Date looks off.';
-  const nums=['gen1_hours','gen2_hours','gal_added','gal_delivered','on_hand_est'];
+  const nums=['gen1_hours','gen2_hours','gal_gen1','gal_gen2','gal_delivered','drum1_gal','drum2_gal'];
   for(const k of nums){if(r[k]!==''&&(isNaN(+r[k])||+r[k]<0))return k.replace(/_/g,' ')+' must be a number \u2265 0.';}
-  if(!nums.some(k=>r[k]!==''))return 'Log at least one number (fuel, meter, delivery, or dip).';
+  if(!nums.some(k=>r[k]!==''))return 'Log at least one number (fuel, meter, delivery, or drum level).';
+  if((r.drum1_gal!=='')!==(r.drum2_gal!==''))return 'Log both drums \u2014 enter 0 for an empty drum.';
   return null;
 }
 async function submit(){
@@ -625,7 +631,7 @@ async function submit(){
   const msg=$('fmsg');msg.className='';
   if(err){msg.textContent=err;msg.className='bad';return;}
   if(!WORKER_URL){ /* preview mode: Worker not wired yet */
-    const line=['date','time','logged_by','gen1_hours','gen2_hours','gal_added','gal_delivered','on_hand_est','notes'].map(k=>csvCell(r[k])).join(',');
+    const line=['date','time','logged_by','gen1_hours','gen2_hours','gal_gen1','gal_gen2','gal_delivered','drum1_gal','drum2_gal','notes'].map(k=>csvCell(r[k])).join(',');
     $('prevrow').textContent=line;
     $('prevbox').style.display='block';
     msg.textContent='Preview mode — Worker not connected. Row shown below; append it to data/reality.csv via the GitHub pencil if needed.';
@@ -640,7 +646,7 @@ async function submit(){
     msg.textContent='Committed \u2713 \u2014 in the repo now; other phones see it on their next reload (\u224830\u201360 s).';
     msg.className='good';
     localEcho(r);
-    ['f_add','f_del','f_dip','f_notes'].forEach(id=>$(id).value='');
+    ['f_a1','f_a2','f_del','f_d1','f_d2','f_notes'].forEach(id=>$(id).value='');
   }catch(e){msg.textContent='Not committed \u2014 '+e.message+' (Starlink down? Use the paper sheet, backfill later.)';msg.className='bad';}
   btn.disabled=false;
 }
