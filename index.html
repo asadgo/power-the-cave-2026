@@ -225,6 +225,7 @@ body.light .uibox h3{color:var(--ink)}
   input,select,button{min-height:44px}
   .twrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 }
+html,body{overflow-x:hidden;max-width:100%}
 </style>
 </head>
 <body>
@@ -823,7 +824,7 @@ function refresh(rebuild){
     {label:'Fuel floor',stack:'_floor',data:[{x:asof,y:FLOOR},{x:NDAYS,y:FLOOR}],borderColor:'#FFA733',borderDash:[6,4],borderWidth:1.5,pointRadius:0}]};
   if(run){run.options.scales.x.min=asof;run.data=runData;run.update('none');}
   else run=new Chart($('runchart'),{type:'line',data:runData,options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{labels:{color:t.leg,font:{family:FONT,size:11},boxWidth:10}}},
+    plugins:{legend:(window.matchMedia&&window.matchMedia('(max-width:720px)').matches)?{position:'bottom',align:'start',maxWidth:260,labels:{color:t.leg,font:{family:FONT,size:11},boxWidth:10,padding:10}}:{labels:{color:t.leg,font:{family:FONT,size:11},boxWidth:10}}},
     scales:{x:{type:'linear',min:asof,max:NDAYS,stacked:true,ticks:{...tick,stepSize:1,autoSkip:false,maxRotation:0,callback:v=>Number.isInteger(v)&&v<NDAYS?dLab(v):''},grid:{display:false}},y:{stacked:true,ticks:tick,grid:{color:t.grid}}}}});
 }
 
