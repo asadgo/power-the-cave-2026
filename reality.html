@@ -125,7 +125,8 @@ summary.flagrow2{display:flex;flex-wrap:wrap;row-gap:6px;align-items:center}
 .gtag{background:transparent}
 .gtag.gdim{opacity:.45;filter:grayscale(.6);cursor:default}
 #devtable tr.hrow.hth-hide th{visibility:hidden}
-#devtable tr.hrow th{height:34px;box-sizing:border-box}
+#devtable tr.hrow th{height:34px;box-sizing:border-box;white-space:nowrap;overflow:hidden}
+.whenshort{display:none}
 #devtable tr.hrow th{text-align:center}
 #devtable tr.hrow th:first-child{text-align:left}
 #devtable tr.hrow th.qr{text-align:right}
@@ -231,6 +232,9 @@ html,body{overflow-x:hidden;max-width:100%;-webkit-text-size-adjust:100%;text-si
 /* ---- console mobile refinements (<=720px) ---- */
 @media (max-width:720px){
   /* Devices: On-this-day totals and each subtotal row become a pinned, flowing label+numbers pair reading left */
+  #devtable tr.hrow th{height:30px !important;line-height:30px;padding-top:0;padding-bottom:0;white-space:nowrap;overflow:hidden;font-size:9px}
+  #devtable tr.hrow th .whenlong{display:none}
+  #devtable tr.hrow th .whenshort{display:inline}
   #devtable tr.dgrp td{height:44px;box-sizing:border-box;font-size:13px !important;line-height:1.2;white-space:nowrap}
   #devtable tr.qtot,#devtable tr.dsub{display:flex;flex-wrap:wrap;align-items:flex-start;width:calc(100vw - 44px);position:sticky;left:0;height:auto}
   #devtable tr.qtot{margin:14px 0 4px}
