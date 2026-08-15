@@ -264,6 +264,7 @@ body.light{--gen1:#2f6fad;--gen2:#c2568f;--rline:#0d9488;--planl:#b5aea2}
 #daybar b{color:var(--bone)}
 </style>
 <body>
+<script>try{if(JSON.parse(localStorage.getItem("cave_theme"))==="light"){document.body.classList.add("light");document.documentElement.classList.add("light");}}catch(e){}</script>
 <div class="wrap">
 <div class="hd"><h1>THE CAVE · REALITY<span id="ver"></span></h1>
   <div class="hbtns">
@@ -459,7 +460,7 @@ function planSeries(){
 
 /* ================= REALITY APP ================= */
 /* CONFIG — the only lines to edit after Worker deploy */
-const WORKER_URL='https://reality-writer.agoodjbx.workers.dev';              /* paste Cloudflare Worker URL here, e.g. 'https://reality-writer.xxx.workers.dev' */
+const WORKER_URL='';              /* paste Cloudflare Worker URL here, e.g. 'https://reality-writer.xxx.workers.dev' */
 const RAW_BASE='https://raw.githubusercontent.com/asadgo/power-the-cave-2026/main/'; /* freshest reads for viewers */
 
 const $=id=>document.getElementById(id);
@@ -673,6 +674,7 @@ async function submit(){
     msg.className='good';
     localEcho(r);
     ['f_a1','f_a2','f_del','f_d1','f_d2','f_notes'].forEach(id=>$(id).value='');
+    stampNow();
   }catch(e){msg.textContent='Not committed \u2014 '+e.message+' (Starlink down? Use the paper sheet, backfill later.)';msg.className='bad';}
   btn.disabled=false;
 }
@@ -685,14 +687,15 @@ const storeLS=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 function applyTheme(m){document.body.classList.toggle('light',m==='light');document.documentElement.classList.toggle('light',m==='light');$('themebtn').textContent=m==='light'?MOONI:SUNI;storeLS('cave_theme',m);renderCharts();}
 let _tt=null;function toast(m,err){const t=$('toast');t.textContent=m;t.className='toast show'+(err?' err':'');clearTimeout(_tt);_tt=setTimeout(()=>t.className='toast',2600);}
 function renderAll(){NOW=new Date();renderDaybar();renderStatus();renderCharts();renderLedger();}
+function stampNow(){const n=new Date();
+  $('f_date').value=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');
+  $('f_time').value=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');}
 async function boot(){
   try{
     await loadPlan();
     await loadReality();
     fetch('data/log.csv',{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const rows=t.trim().split('\n'),v=rows[rows.length-1].split(',')[0];if(v&&!isNaN(+v))$('ver').textContent='v'+v;}).catch(()=>{});
-    const n=new Date();
-    $('f_date').value=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');
-    $('f_time').value=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+    stampNow();
     const lgp=k=>{const v=EV.map(e=>e[k]).filter(x=>x!=null);return v.length?v[v.length-1]:null;};
     const p1=lgp('g1'),p2=lgp('g2');
     $('f_g1').placeholder=p1!=null?('last '+f(p1,1)):'run-hours odometer';
