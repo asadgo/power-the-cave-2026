@@ -258,6 +258,11 @@ html,body{overflow-x:hidden;max-width:100%}
 #ledger .dlt{color:var(--safe);font-size:10.5px}
 #ledger th.c1,#ledger td.c1{color:var(--gen1)}#ledger th.c2,#ledger td.c2{color:var(--gen2)}#ledger th.cd,#ledger td.cd{color:var(--rline)}
 #ledger .loc td{background:var(--webg)}
+#ledger tr.ret td{opacity:.55;text-decoration:line-through}
+#ledger tr.ret td.nt{text-decoration:none}
+#ledger .retby{color:var(--danger);font-size:10.5px;text-decoration:none;margin-top:3px;opacity:1}
+.retbtn{display:inline-block;margin-left:6px;padding:2px 8px;min-height:0;width:auto;font:600 10px var(--mono);letter-spacing:.5px;color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:6px;cursor:pointer;text-transform:uppercase}
+.retbtn:hover{color:var(--danger);border-color:var(--danger)}
 .badge{font-size:9.5px;color:var(--warn);border:1px solid var(--warn);border-radius:6px;padding:0 5px;letter-spacing:.4px}
 .twrapx{overflow-x:auto;-webkit-overflow-scrolling:touch;position:relative}
 .scrollhint{display:none;position:sticky;left:100%;top:0;float:right;font-size:14px;line-height:1;padding:2px 6px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);color:var(--muted);margin:0 0 -22px 0;z-index:2}
@@ -316,13 +321,13 @@ html,body{overflow-x:hidden;max-width:100%}
 <div class="wrap">
 <div class="hd"><h1>THE CAVE · REALITY<span id="ver"></span></h1>
   <div class="hbtns">
-    <button type="button" id="reloadbtn" class="hbtn aux" title="Reload journal from the repo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
+    <button type="button" id="reloadbtn" class="hbtn aux" title="Reload fuel log from the repo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
     <button type="button" id="themebtn" class="hbtn" title="Dark/light mode">&#9728;</button>
   </div></div>
 
 <div class="ptabs"><a href="index.html">PROJECTED</a><a class="on" href="reality.html">REALITY</a></div>
 
-<div id="loader"><h2>Loading data/*.csv &hellip;</h2><p id="loadmsg">Reading the plan and the journal.</p></div>
+<div id="loader"><h2>Loading data/*.csv &hellip;</h2><p id="loadmsg">Reading the plan and the fuel log.</p></div>
 <div id="app" style="display:none">
 
 <div id="daybar"></div>
@@ -351,7 +356,7 @@ html,body{overflow-x:hidden;max-width:100%}
 <button type="button" id="fsub">Commit to the journal</button>
 <p id="fmsg"></p>
 <div id="prevbox"><div style="font-size:10.5px;color:var(--warn);letter-spacing:.5px;margin-bottom:4px">CSV ROW (tap to select)</div><div id="prevrow"></div></div>
-<details class="hint"><summary>How to log</summary><p>A refuel = name + gallons into that gen + its hour meter. The drum check = name + both drum levels (0 for an empty drum). Blank fields are fine. Fill tanks to full each pour — then the pour size is exactly the fuel burned since the last fill. Meter = the run-hours odometer on the gen screen; copy it as-is. Every entry is a git commit — typo fixes happen via the GitHub pencil.</p></details></details>
+<details class="hint"><summary>How to log</summary><p>Made a mistake? Tap <b>retract</b> on the row — it stays visible, struck through, with your name and reason. A refuel = name + gallons into that gen + its hour meter. The drum check = name + both drum levels (0 for an empty drum). Blank fields are fine. Fill tanks to full each pour — then the pour size is exactly the fuel burned since the last fill. Meter = the run-hours odometer on the gen screen; copy it as-is. Every entry is a git commit — typo fixes happen via the GitHub pencil.</p></details></details>
 
 <details class="panel info chartwide" open><summary class="flag">Fuel on hand — plan vs reality</summary>
   <div class="chbox"><canvas id="chartA"></canvas></div>
@@ -362,10 +367,10 @@ html,body{overflow-x:hidden;max-width:100%}
   <div id="daynotes"></div>
   <details class="hint"><summary>How to read this chart</summary><p>Each bar = gallons poured into the generators that calendar day. Plan = what the model expects them to drink; gen 1 + gen 2 stack to the real total. Tap a bar for that day&rsquo;s notes.</p></details></details>
 
-<details class="panel info" open><summary class="flag">Journal</summary>
+<details class="panel info" open><summary class="flag">Fuel log</summary>
 <div class="twrapx" id="ledgerwrap"><span class="scrollhint" aria-hidden="true">&#8596;</span><table id="ledger"></table></div></details>
 
-<p class="src">Plan line = committed data/*.csv at page load. Journal = data/reality.csv. Projection-page whiteboards never appear here.</p>
+<p class="src">Plan line = committed data/*.csv at page load. Fuel log = data/reality.csv (mirrored to the backup sheet). Projection-page whiteboards never appear here.</p>
 </div>
 </div>
 
@@ -541,9 +546,20 @@ async function loadReality(){
   /* committed-but-not-yet-visible entries from this phone: keep showing them until the repo copy catches up (raw CDN can lag ~5 min) */
   const pend=(loadLS('reality_pending')||[]).filter(p=>p&&p.r&&Date.now()-p.t<30*60000&&!have.has(rowKey(p.r)));
   storeLS('reality_pending',pend);
-  EV=rows.map(normEv).filter(Boolean);
+  EV=rows.map((r,i)=>normEv({...r,_row:i+1})).filter(Boolean);
   pend.forEach(p=>{const e=normEv({...p.r,_local:true});if(e)EV.push(e);});
+  applyRetractions();
   EV.sort((a,b)=>a.ts-b.ts);
+}
+/* A retraction is a normal row whose notes start with RETRACT#<row>: <reason>. It strikes that row out of all math and shows who/why. */
+let ALL=[];
+function applyRetractions(){
+  const byRow=new Map();EV.forEach(e=>{if(e.row)byRow.set(e.row,e);});
+  EV.forEach(e=>{e.retracted=null;e.isRetraction=false;});
+  EV.forEach(e=>{const m=/^RETRACT#(\d+):\s*([\s\S]*)$/.exec(e.notes||'');
+    if(m){e.isRetraction=true;e.target=+m[1];e.reason=m[2];const t=byRow.get(+m[1]);if(t){t.retracted={by:e.name,reason:m[2],ts:e.ts};}}});
+  ALL=EV.slice();
+  EV=EV.filter(e=>!e.retracted&&!e.isRetraction);
 }
 function normEv(r){
   if(!r.date)return null;
@@ -551,7 +567,7 @@ function normEv(r){
   if(isNaN(ts))return null;
   const num=v=>(v===''||v==null||isNaN(+v))?null:+v;
   const a1=num(r.gal_gen1),a2=num(r.gal_gen2),d1=num(r.drum1_gal),d2=num(r.drum2_gal);
-  return {ts,day:(ts-DAY0)/DAY,name:r.logged_by||'?',
+  return {ts,day:(ts-DAY0)/DAY,name:r.logged_by||'?',row:r._row||null,
     g1:num(r.gen1_hours),g2:num(r.gen2_hours),a1,a2,d1,d2,
     add:(a1!=null||a2!=null)?(a1||0)+(a2||0):null,
     del:num(r.gal_delivered),
@@ -674,18 +690,21 @@ function showNotes(d){
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function renderLedger(){
   const prev={g1:null,g2:null};
-  const rows=EV.map(e=>{
+  const src=(ALL.length?ALL:EV).filter(e=>!e.isRetraction);
+  const rows=src.map(e=>{
+    if(e.retracted)return {e,d1:null,d2:null};
     const d1=(e.g1!=null&&prev.g1!=null)?e.g1-prev.g1:null;
     const d2=(e.g2!=null&&prev.g2!=null)?e.g2-prev.g2:null;
     if(e.g1!=null)prev.g1=e.g1;if(e.g2!=null)prev.g2=e.g2;
     return {e,d1,d2};
   }).reverse();
   $('ledger').innerHTML='<tr><th>when</th><th>who</th><th class="c1">gen 1 hours</th><th class="c2">gen 2 hours</th><th class="c1">fuel \u2192 gen 1</th><th class="c2">fuel \u2192 gen 2</th><th>delivery</th><th class="cd">drum 1</th><th class="cd">drum 2</th><th>notes</th></tr>'+
-   (rows.length?rows.map(({e,d1,d2})=>'<tr'+(e.local?' class="loc"':'')+'><td>'+e.ts.toLocaleDateString('en-US',{weekday:'short'})+' '+e.ts.toLocaleDateString('en-US',{month:'numeric',day:'numeric'})+' '+e.ts.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</td><td>'+esc(e.name)+(e.local?' <span class="badge">just logged</span>':'')+'</td>'+
+   (rows.length?rows.map(({e,d1,d2})=>'<tr class="'+(e.local?'loc ':'')+(e.retracted?'ret':'')+'"><td>'+e.ts.toLocaleDateString('en-US',{weekday:'short'})+' '+e.ts.toLocaleDateString('en-US',{month:'numeric',day:'numeric'})+' '+e.ts.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</td><td>'+esc(e.name)+(e.local?' <span class="badge">just logged</span>':'')+'</td>'+
     '<td class="c1">'+(e.g1!=null?f(e.g1,1)+(d1!=null?' <span class="dlt"'+(d1<0?' style="color:var(--danger)"':'')+'>'+(d1>=0?'+':'')+f(d1,1)+'</span>':''):'')+'</td>'+
     '<td class="c2">'+(e.g2!=null?f(e.g2,1)+(d2!=null?' <span class="dlt"'+(d2<0?' style="color:var(--danger)"':'')+'>'+(d2>=0?'+':'')+f(d2,1)+'</span>':''):'')+'</td>'+
-    '<td class="c1">'+(e.a1!=null?f(e.a1,1):'')+'</td><td class="c2">'+(e.a2!=null?f(e.a2,1):'')+'</td><td>'+(e.del!=null?f(e.del,0):'')+'</td><td class="cd">'+(e.d1!=null?f(e.d1,0):'')+'</td><td class="cd">'+(e.d2!=null?f(e.d2,0):'')+'</td><td class="nt">'+esc(e.notes)+'</td></tr>').join('')
-   :'<tr><td colspan="10" class="nt">Journal is empty — first entry lands here.</td></tr>');
+    '<td class="c1">'+(e.a1!=null?f(e.a1,1):'')+'</td><td class="c2">'+(e.a2!=null?f(e.a2,1):'')+'</td><td>'+(e.del!=null?f(e.del,0):'')+'</td><td class="cd">'+(e.d1!=null?f(e.d1,0):'')+'</td><td class="cd">'+(e.d2!=null?f(e.d2,0):'')+'</td><td class="nt">'+esc(e.notes)+(e.retracted?'<div class="retby">retracted by '+esc(e.retracted.by)+' \u2014 '+esc(e.retracted.reason)+'</div>':(e.row&&!e.local?'<button type="button" class="retbtn" data-row="'+e.row+'" title="Mark this entry as a mistake">retract</button>':''))+'</td></tr>').join('')
+   :'<tr><td colspan="10" class="nt">Fuel log is empty — first entry lands here.</td></tr>');
+  $('ledger').querySelectorAll('.retbtn').forEach(bn=>{bn.onclick=()=>openRetract(+bn.dataset.row);});
   const w=$('ledgerwrap');if(w){requestAnimationFrame(()=>{w.classList.toggle('can-scroll',w.scrollWidth>w.clientWidth+4);});if(!w._hint){w._hint=1;w.addEventListener('scroll',()=>{if(w.scrollLeft>20)w.classList.remove('can-scroll');},{passive:true});}}
 }
 
@@ -704,13 +723,24 @@ function validate(r){
   const caps={gal_gen1:9,gal_gen2:9,gal_delivered:200,drum1_gal:50,drum2_gal:50,gen1_hours:20000,gen2_hours:20000};
   for(const k of nums){if(r[k]!==''&&(isNaN(+r[k])||+r[k]<0))return k.replace(/_/g,' ')+' must be a number \u2265 0.';
     if(r[k]!==''&&+r[k]>caps[k])return (k.startsWith('gal_gen')?'The gen tank holds 7.9 gal \u2014 ':'')+k.replace(/_/g,' ')+' looks too high (max '+caps[k]+').';}
-  if(!nums.some(k=>r[k]!==''))return 'Log at least one number (fuel, meter, delivery, or drum level).';
+  if(!nums.some(k=>r[k]!=='')&&!/^RETRACT#\d+:/.test(r.notes))return 'Log at least one number (fuel, meter, delivery, or drum level).';
   if((r.drum1_gal!=='')!==(r.drum2_gal!==''))return 'Log both drums \u2014 enter 0 for an empty drum.';
   const lg=k=>{const v=EV.map(e=>e[k]).filter(x=>x!=null);return v.length?v[v.length-1]:null;};
   const l1=lg('g1'),l2=lg('g2');
   if(r.gen1_hours!==''&&l1!=null&&+r.gen1_hours<l1-0.05)return 'Gen 1 meter reads '+r.gen1_hours+' but the last entry was '+f(l1,1)+' \u2014 meters only count up. (Gen actually swapped? Log that row via the GitHub pencil.)';
   if(r.gen2_hours!==''&&l2!=null&&+r.gen2_hours<l2-0.05)return 'Gen 2 meter reads '+r.gen2_hours+' but the last entry was '+f(l2,1)+' \u2014 meters only count up. (Gen actually swapped? Log that row via the GitHub pencil.)';
   return null;
+}
+let RETRACT_MODE=false;
+function openRetract(row){
+  const t=ALL.find(e=>e.row===row);if(!t)return;
+  const who=($('f_name').value||'').trim()||prompt('Your name (who is retracting):','');if(!who)return;
+  const why=prompt('Reason for retracting the '+t.ts.toLocaleDateString('en-US',{weekday:'short',month:'numeric',day:'numeric'})+' '+t.ts.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+' entry by '+t.name+':','');
+  if(why===null||!why.trim())return;
+  $('f_name').value=who;$('f_notes').value='RETRACT#'+row+': '+why.trim();
+  ['f_a1','f_a2','f_del','f_d1','f_d2','f_g1','f_g2'].forEach(id=>$(id).value='');
+  stampNow();
+  RETRACT_MODE=true;submit();
 }
 async function submit(){
   const r=collect(),err=validate(r);
@@ -734,12 +764,13 @@ async function submit(){
     localEcho(r);
     ['f_a1','f_a2','f_del','f_d1','f_d2','f_notes'].forEach(id=>$(id).value='');
     stampNow();
+    if(RETRACT_MODE){RETRACT_MODE=false;msg.textContent='Retracted \u2713 \u2014 struck from the log; the original stays visible with your name and reason.';}
   }catch(e){msg.textContent='Not committed \u2014 '+e.message+' (Starlink down? Use the paper sheet, backfill later.)';msg.className='bad';}
   btn.disabled=false;
 }
 function localEcho(r){
   const pend=(loadLS('reality_pending')||[]).slice(-19);pend.push({r,t:Date.now()});storeLS('reality_pending',pend);
-  const e=normEv({...r,_local:true});if(e){EV.push(e);EV.sort((a,b)=>a.ts-b.ts);renderAll();}}
+  const e=normEv({...r,_local:true});if(e){EV=(ALL.length?ALL:EV).concat([e]);applyRetractions();EV.sort((a,b)=>a.ts-b.ts);renderAll();}}
 
 /* ---------- theme / boot ---------- */
 const SUNI='\u2600',MOONI='\u263E';
@@ -763,7 +794,7 @@ async function boot(){
     $('f_g2').placeholder=p2!=null?('last '+f(p2,1)):'run-hours odometer';
     $('fsub').onclick=submit;
     $('reloadbtn').onclick=async()=>{const b=$('reloadbtn');b.classList.add('spin');
-      try{await loadPlan();await loadReality();renderAll();toast('Synced \u2713 plan + journal \u00b7 '+EV.length+' entr'+(EV.length===1?'y':'ies'));}
+      try{await loadPlan();await loadReality();renderAll();toast('Synced \u2713 plan + fuel log \u00b7 '+EV.length+' entr'+(EV.length===1?'y':'ies'));}
       catch(e){toast('Reload failed \u2014 '+e.message,true);}
       b.classList.remove('spin');};
     $('themebtn').onclick=()=>applyTheme(document.body.classList.contains('light')?'dark':'light');
