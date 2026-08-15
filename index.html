@@ -124,7 +124,8 @@ summary.flagrow2{display:flex;flex-wrap:wrap;row-gap:6px;align-items:center}
 .gcell{text-align:center}
 .gtag{background:transparent}
 .gtag.gdim{opacity:.45;filter:grayscale(.6);cursor:default}
-#devtable tr.hrow.hth-hide{display:none}
+#devtable tr.hrow.hth-hide th{visibility:hidden}
+#devtable tr.hrow th{height:34px;box-sizing:border-box}
 #devtable tr.hrow th{text-align:center}
 #devtable tr.hrow th:first-child{text-align:left}
 #devtable tr.hrow th.qr{text-align:right}
@@ -240,8 +241,6 @@ html,body{overflow-x:hidden;max-width:100%}
   #devtable tr.qtot .dline,#devtable tr.dsub .dline,#devtable .devsm{white-space:normal}
   #devtable tr.qtot .dbig{font-size:14px}
   /* the wide device table itself scrolls sideways; make it discoverable */
-  #devbox .twrap{position:relative}
-  #devbox .twrap::before{content:"\2194";position:sticky;left:100%;float:right;top:0;font-size:14px;line-height:1;padding:2px 6px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);color:var(--muted);margin:0 0 -22px 0;z-index:2}
   /* Fuel panel controls: headline, then three compact controls in one row */
   summary.flagrow2{display:flex;flex-wrap:wrap;row-gap:8px;column-gap:10px;align-items:center}
   summary.flagrow2 .flagtxt{flex:1 1 100%;padding-right:0}
