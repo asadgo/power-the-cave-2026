@@ -226,11 +226,12 @@ body.light .uibox h3{color:var(--ink)}
   input,select,button{min-height:44px}
   .twrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 }
-html,body{overflow-x:hidden;max-width:100%}
+html,body{overflow-x:hidden;max-width:100%;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 
 /* ---- console mobile refinements (<=720px) ---- */
 @media (max-width:720px){
   /* Devices: On-this-day totals and each subtotal row become a pinned, flowing label+numbers pair reading left */
+  #devtable tr.dgrp td{height:44px;box-sizing:border-box;font-size:13px !important;line-height:1.2;white-space:nowrap}
   #devtable tr.qtot,#devtable tr.dsub{display:flex;flex-wrap:wrap;align-items:flex-start;width:calc(100vw - 44px);position:sticky;left:0;height:auto}
   #devtable tr.qtot{margin:14px 0 4px}
   #devtable tr.qtot>td:empty,#devtable tr.dsub>td:empty{display:none}
