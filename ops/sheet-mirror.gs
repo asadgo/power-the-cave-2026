@@ -10,7 +10,7 @@ const HEADERS=['date','time','logged_by','gen1_hours','gen2_hours','gal_gen1','g
 const HUMAN_HDR=['When','Who','Gen 1 hours','Gen 2 hours','Fuel → gen 1','Fuel → gen 2','Delivery','Drum 1','Drum 2','Notes','Retracted by / reason'];
 
 function ss(){return SpreadsheetApp.getActiveSpreadsheet();}
-function raw(){let s=ss().getSheetByName(RAW);if(!s){s=ss().getSheets()[0];s.setName(RAW);}if(s.getLastRow()===0)s.appendRow(HEADERS);return s;}
+function raw(){let s=ss().getSheetByName(RAW);if(!s){s=ss().getSheets()[0];s.setName(RAW);}if(s.getLastRow()===0)s.appendRow(HEADERS);s.getRange('A:B').setNumberFormat('@');return s;}
 
 /* ---------- Worker → raw (unchanged contract) ---------- */
 function doPost(e){
@@ -38,7 +38,7 @@ function buildHuman(h){
   col(3,'#2f6fad');col(5,'#2f6fad');col(4,'#c2568f');col(6,'#c2568f');col(8,'#0d9488');col(9,'#0d9488');
   h.getRange('A3').setFormula(
    '=IFERROR(SORT(ARRAYFORMULA(IF(LEN(raw!A2:A),{' +
-   'TEXT(raw!A2:A,"ddd m/d")&" "&TEXT(raw!B2:B,"h:mm am/pm"),' +
+   'IFERROR(TEXT(DATEVALUE(raw!A2:A),"ddd m/d"),TEXT(raw!A2:A,"ddd m/d"))&" "&IFERROR(TEXT(TIMEVALUE(raw!B2:B),"h:mm am/pm"),TEXT(raw!B2:B,"h:mm am/pm")),' +
    'raw!C2:C, raw!D2:D, raw!E2:E, raw!F2:F, raw!G2:G, raw!H2:H, raw!I2:I, raw!J2:J, raw!K2:K,' +
    'IFERROR(VLOOKUP("RETRACT#"&(ROW(raw!A2:A)-1)&":",' +
    '{REGEXEXTRACT(raw!K2:K,"^(RETRACT#\\d+:)"), raw!C2:C&" — "&REGEXREPLACE(raw!K2:K,"^RETRACT#\\d+:\\s*","")},2,FALSE),"")' +
@@ -60,7 +60,7 @@ function buildTotals(t){
    ['THE CAVE · BAD-DAY TOTALS','(same math as the page tiles, computed from raw)'],
    ['',''],
    ['Fuel on hand (gal)','=IFERROR(LET(d,FILTER(ROW(raw!A2:A),LEN(raw!I2:I),NOT(REGEXMATCH(raw!K2:K,"^RETRACT#"))),last,MAX(d),base,INDEX(raw!I:I,last)+INDEX(raw!J:J,last),after,FILTER(N(raw!H2:H)-N(raw!F2:F)-N(raw!G2:G),ROW(raw!A2:A)>last),base+SUM(after)),"—")'],
-   ['Last drum check','=IFERROR(LET(d,FILTER(ROW(raw!A2:A),LEN(raw!I2:I)),last,MAX(d),INDEX(raw!A:A,last)&" "&INDEX(raw!B:B,last)&" by "&INDEX(raw!C:C,last)),"—")'],
+   ['Last drum check','=IFERROR(LET(d,FILTER(ROW(raw!A2:A),LEN(raw!I2:I)),last,MAX(d),TEXT(INDEX(raw!A:A,last),"yyyy-mm-dd")&" "&TEXT(INDEX(raw!B:B,last),"hh:mm")&" by "&INDEX(raw!C:C,last)),"—")'],
    ['',''],
    ['Poured — total (gal)','=SUM(raw!F2:F)+SUM(raw!G2:G)'],
    ['Poured — gen 1 (gal)','=SUM(raw!F2:F)'],
@@ -70,7 +70,7 @@ function buildTotals(t){
    ['Gen 1 gal/hr','=IFERROR(SUM(raw!F2:F)/(MAX(raw!D2:D)-MIN(FILTER(raw!D2:D,LEN(raw!D2:D)))),"needs 2 meter readings")'],
    ['Gen 2 gal/hr','=IFERROR(SUM(raw!G2:G)/(MAX(raw!E2:E)-MIN(FILTER(raw!E2:E,LEN(raw!E2:E)))),"needs 2 meter readings")'],
    ['',''],
-   ['Last entry','=IFERROR(INDEX(raw!A:A,COUNTA(raw!A:A))&" "&INDEX(raw!B:B,COUNTA(raw!A:A))&" by "&INDEX(raw!C:C,COUNTA(raw!A:A)),"—")'],
+   ['Last entry','=IFERROR(TEXT(INDEX(raw!A:A,COUNTA(raw!A:A)),"yyyy-mm-dd")&" "&TEXT(INDEX(raw!B:B,COUNTA(raw!A:A)),"hh:mm")&" by "&INDEX(raw!C:C,COUNTA(raw!A:A))),"—")'],
    ['Entries logged','=MAX(0,COUNTA(raw!A:A)-1)'],
    ['',''],
    ['Note','Retracted rows are excluded from Fuel on hand. The pour/delivery sums include every row; on a bad day subtract a retracted pour by hand.']];
