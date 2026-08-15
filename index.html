@@ -226,6 +226,24 @@ body.light .uibox h3{color:var(--ink)}
   .twrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 }
 html,body{overflow-x:hidden;max-width:100%}
+
+/* ---- console mobile refinements (<=720px) ---- */
+@media (max-width:720px){
+  /* Devices header totals: pull left, full width, no side-scroll needed */
+  #devtable td#dkT,#devtable th#dkT{text-align:left !important;position:sticky;left:0;background:var(--panel);z-index:1;max-width:calc(100vw - 44px)}
+  #devtable td#dkT .dline{white-space:normal}
+  #devtable td#dkT .dbig{font-size:14px}
+  #devtable .devsm{white-space:normal}
+  /* subtotal rows: keep the label sticky-left so numbers scroll but context stays */
+  #devtable td.rowlab{position:sticky;left:0;background:var(--panel);z-index:1}
+  /* Fuel panel controls: one tidy row under the headline */
+  summary.flagrow2{flex-wrap:wrap;row-gap:8px}
+  summary.flagrow2 .flagtxt{flex:1 1 100%;padding-right:0}
+  summary.flagrow2 .floorlab{flex:1 1 auto;justify-content:space-between;margin-left:0 !important;gap:6px;font-size:10px}
+  summary.flagrow2 .floorlab+.floorlab{margin-left:8px !important}
+  summary.flagrow2 #floor{width:52px;padding:6px 4px}
+  #egtog,#deltog{padding:4px 8px}
+}
 </style>
 </head>
 <body>
