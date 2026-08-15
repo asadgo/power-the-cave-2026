@@ -212,6 +212,19 @@ body.light .uibox h3{color:var(--ink)}
 .ptabs{display:flex;gap:6px;margin:2px 0 10px}
 .ptabs a{flex:1;text-align:center;padding:9px 0;border:1px solid var(--line);border-radius:9px;color:var(--muted);text-decoration:none;font-size:11.5px;letter-spacing:1.2px;font-weight:600}
 .ptabs a.on{background:var(--panel2);color:var(--bone);border-color:var(--muted2)}
+
+/* ---- mobile layer (<=720px): desktop untouched ---- */
+@media (max-width:720px){
+  .wrap{padding:12px 10px 40px}
+  h1{font-size:15px;letter-spacing:.12em}
+  #ver{display:block;margin:2px 0 0}
+  .hbtn{width:44px;height:44px}
+  .ptabs a{padding:12px 0;font-size:12px}
+  .panel{padding:12px 10px}
+  summary.flag{padding:12px 0}
+  input,select,button{min-height:44px}
+  .twrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+}
 </style>
 </head>
 <style>
@@ -244,7 +257,9 @@ body.light .uibox h3{color:var(--ink)}
 #ledger .dlt{color:var(--safe);font-size:10.5px}
 #ledger .loc td{background:var(--webg)}
 .badge{font-size:9.5px;color:var(--warn);border:1px solid var(--warn);border-radius:6px;padding:0 5px;letter-spacing:.4px}
-.twrapx{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.twrapx{overflow-x:auto;-webkit-overflow-scrolling:touch;position:relative}
+.scrollhint{display:none;position:sticky;left:100%;top:0;float:right;font-size:14px;line-height:1;padding:2px 6px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);color:var(--muted);margin:0 0 -22px 0;z-index:2}
+@media (max-width:720px){.twrapx.can-scroll .scrollhint{display:inline-block}}
 .ptabs{display:flex;gap:6px;margin:2px 0 10px}
 .ptabs a{flex:1;text-align:center;padding:9px 0;border:1px solid var(--line);border-radius:9px;color:var(--muted);text-decoration:none;font-size:11.5px;letter-spacing:1.2px;font-weight:600}
 .ptabs a.on{background:var(--panel2);color:var(--bone);border-color:var(--muted2)}
@@ -262,9 +277,30 @@ body.light{--gen1:#2f6fad;--gen2:#c2568f;--rline:#0d9488;--planl:#b5aea2}
 .cap{font-size:11.5px;color:var(--muted);margin:8px 2px 0;line-height:1.5}
 #daybar{font-size:12px;letter-spacing:.6px;color:var(--muted);text-transform:uppercase;margin:0 2px 10px}
 #daybar b{color:var(--bone)}
+
+@media (max-width:720px){
+  .stgrid{gap:8px}
+  .st{padding:9px 10px}
+  .st .v{font-size:19px}
+  .st .s{font-size:10.5px}
+  #daybar{font-size:11px;margin-bottom:8px}
+  .fgrid{gap:10px;grid-template-columns:1fr}
+  .fgrid label{font-size:11px}
+  .fgrid label.wide{grid-column:1/-1}
+  .chbox{height:300px}
+  #fsub{position:sticky;bottom:8px;z-index:5;box-shadow:0 6px 18px rgba(0,0,0,.25);min-height:50px}
+  .chbox{height:260px}
+  .cap{font-size:11px}
+  #ledger{font-size:11.5px}
+  #ledger th,#ledger td{padding:7px 8px;white-space:nowrap;border-right:1px solid var(--line)}
+  #ledger th:last-child,#ledger td:last-child{border-right:0}
+  #ledger th:first-child,#ledger td:first-child{position:sticky;left:0;background:var(--panel);z-index:1}
+  #ledger .nt{white-space:normal;min-width:140px}
+  .toast{bottom:74px}
+}
 </style>
 <body>
-<script>try{if(JSON.parse(localStorage.getItem("cave_theme"))==="light"){document.body.classList.add("light");document.documentElement.classList.add("light");}}catch(e){}</script>
+<script>try{if(JSON.parse(localStorage.getItem("cave_theme"))==="light"){document.documentElement.classList.add("light");document.body.classList.add("light");}}catch(e){}</script>
 <div class="wrap">
 <div class="hd"><h1>THE CAVE · REALITY<span id="ver"></span></h1>
   <div class="hbtns">
@@ -291,11 +327,11 @@ body.light{--gen1:#2f6fad;--gen2:#c2568f;--rline:#0d9488;--planl:#b5aea2}
   <label>Your name<input id="f_name" autocomplete="name"></label>
   <label>Date<input id="f_date" type="date"></label>
   <label>Time<input id="f_time" type="time"></label>
-  <label>Delivery received (gal)<input id="f_del" inputmode="decimal"></label>
   <label class="g1c">Fuel into gen 1 (gal)<input id="f_a1" inputmode="decimal"></label>
   <label class="g1c">Gen 1 meter (hours)<input id="f_g1" inputmode="decimal"></label>
   <label class="g2c">Fuel into gen 2 (gal)<input id="f_a2" inputmode="decimal"></label>
   <label class="g2c">Gen 2 meter (hours)<input id="f_g2" inputmode="decimal"></label>
+  <label>Delivery received (gal)<input id="f_del" inputmode="decimal"></label>
   <label>Fuel left in drum 1 (gal)<input id="f_d1" inputmode="decimal"></label>
   <label>Fuel left in drum 2 (gal)<input id="f_d2" inputmode="decimal"></label>
   <label class="wide">Notes<input id="f_notes"></label>
@@ -315,7 +351,7 @@ body.light{--gen1:#2f6fad;--gen2:#c2568f;--rline:#0d9488;--planl:#b5aea2}
   <div id="daynotes"></div></details>
 
 <details class="panel info" open><summary class="flag">Journal</summary>
-<div class="twrapx"><table id="ledger"></table></div></details>
+<div class="twrapx" id="ledgerwrap"><span class="scrollhint" aria-hidden="true">&#8596;</span><table id="ledger"></table></div></details>
 
 <p class="src">Plan line = committed data/*.csv at page load. Journal = data/reality.csv. Projection-page whiteboards never appear here.</p>
 </div>
@@ -589,6 +625,8 @@ function renderStatus(){
 
 /* ---------- render: charts ---------- */
 function themeC(){return {tick:cssv('--muted'),leg:cssv('--dw'),grid:cssv('--line')};}
+const PHONE=()=>typeof window!=='undefined'&&window.matchMedia&&window.matchMedia('(max-width:720px)').matches;
+const legendOpts=t=>({position:PHONE()?'bottom':'top',align:PHONE()?'start':'center',labels:{color:t.leg,font:{family:FONT,size:10},boxWidth:10,padding:PHONE()?12:8}});
 function renderCharts(){
   const t=themeC(),P=planSeries(),A=actualSeries(),F=forecastPts();
   const xt={type:'linear',min:0,max:NDAYS,ticks:{color:t.tick,font:{family:FONT,size:10},stepSize:1,callback:v=>Number.isInteger(v)&&v<NDAYS?dLab(v):''},grid:{color:t.grid}};
@@ -601,7 +639,7 @@ function renderCharts(){
     {label:'Fuel floor',data:[{x:0,y:FLOOR},{x:NDAYS,y:FLOOR}],borderColor:cssv('--danger'),borderDash:[3,4],borderWidth:1.5,pointRadius:0}];
   if(chA)chA.destroy();
   chA=new Chart($('chartA'),{type:'line',data:{datasets:dsA},options:{responsive:true,maintainAspectRatio:false,animation:false,
-    plugins:{legend:{labels:{color:t.leg,font:{family:FONT,size:10},boxWidth:10}}},scales:{x:xt,y:yt}}});
+    plugins:{legend:legendOpts(t)},scales:{x:xt,y:yt}}});
   const add1=Array(NDAYS).fill(0),add2=Array(NDAYS).fill(0);
   EV.forEach(e=>{const d=Math.floor(e.day);if(d>=0&&d<NDAYS){if(e.a1!=null)add1[d]+=e.a1;if(e.a2!=null)add2[d]+=e.a2;}});
   const labs=Array.from({length:NDAYS},(_,i)=>dLab(i));
@@ -611,7 +649,7 @@ function renderCharts(){
     {label:'Poured — gen 1',stack:'real',data:add1.map(v=>+v.toFixed(1)),backgroundColor:cssv('--gen1')+'aa',borderColor:cssv('--gen1'),borderWidth:1},
     {label:'Poured — gen 2',stack:'real',data:add2.map(v=>+v.toFixed(1)),backgroundColor:cssv('--gen2')+'aa',borderColor:cssv('--gen2'),borderWidth:1}]},
     options:{responsive:true,maintainAspectRatio:false,animation:false,
-      plugins:{legend:{labels:{color:t.leg,font:{family:FONT,size:10},boxWidth:10}}},
+      plugins:{legend:legendOpts(t)},
       scales:{x:{stacked:true,ticks:{color:t.tick,font:{family:FONT,size:9}},grid:{display:false}},y:{...yt,stacked:true,title:{display:true,text:'gallons poured that day',color:t.tick,font:{family:FONT,size:10}}}},
       onClick:(ev,el)=>{if(el.length)showNotes(el[0].index);}}});
 }
@@ -631,11 +669,12 @@ function renderLedger(){
     return {e,d1,d2};
   }).reverse();
   $('ledger').innerHTML='<tr><th>when</th><th>who</th><th>gen 1 hours</th><th>gen 2 hours</th><th>fuel \u2192 gen 1</th><th>fuel \u2192 gen 2</th><th>delivery</th><th>drum 1</th><th>drum 2</th><th>notes</th></tr>'+
-   (rows.length?rows.map(({e,d1,d2})=>'<tr'+(e.local?' class="loc"':'')+'><td>'+e.ts.toLocaleDateString('en-US',{month:'numeric',day:'numeric'})+' '+e.ts.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</td><td>'+esc(e.name)+(e.local?' <span class="badge">just logged</span>':'')+'</td>'+
+   (rows.length?rows.map(({e,d1,d2})=>'<tr'+(e.local?' class="loc"':'')+'><td>'+e.ts.toLocaleDateString('en-US',{weekday:'short'})+' '+e.ts.toLocaleDateString('en-US',{month:'numeric',day:'numeric'})+' '+e.ts.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</td><td>'+esc(e.name)+(e.local?' <span class="badge">just logged</span>':'')+'</td>'+
     '<td>'+(e.g1!=null?f(e.g1,1)+(d1!=null?' <span class="dlt"'+(d1<0?' style="color:var(--danger)"':'')+'>'+(d1>=0?'+':'')+f(d1,1)+'</span>':''):'')+'</td>'+
     '<td>'+(e.g2!=null?f(e.g2,1)+(d2!=null?' <span class="dlt"'+(d2<0?' style="color:var(--danger)"':'')+'>'+(d2>=0?'+':'')+f(d2,1)+'</span>':''):'')+'</td>'+
     '<td>'+(e.a1!=null?f(e.a1,1):'')+'</td><td>'+(e.a2!=null?f(e.a2,1):'')+'</td><td>'+(e.del!=null?f(e.del,0):'')+'</td><td>'+(e.d1!=null?f(e.d1,0):'')+'</td><td>'+(e.d2!=null?f(e.d2,0):'')+'</td><td class="nt">'+esc(e.notes)+'</td></tr>').join('')
    :'<tr><td colspan="10" class="nt">Journal is empty — first entry lands here.</td></tr>');
+  const w=$('ledgerwrap');if(w){requestAnimationFrame(()=>{w.classList.toggle('can-scroll',w.scrollWidth>w.clientWidth+4);});if(!w._hint){w._hint=1;w.addEventListener('scroll',()=>{if(w.scrollLeft>20)w.classList.remove('can-scroll');},{passive:true});}}
 }
 
 /* ---------- form ---------- */
