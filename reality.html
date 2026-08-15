@@ -482,11 +482,19 @@ async function loadPlan(){
   buildModel(D);
   DAY0=new Date(S.event_start+'T00:00:00');
 }
+const RKEYS=['date','time','logged_by','gen1_hours','gen2_hours','gal_gen1','gal_gen2','gal_delivered','drum1_gal','drum2_gal','notes'];
+const rowKey=o=>RKEYS.map(k=>String(o[k]==null?'':o[k]).trim()).join('|');
 async function loadReality(){
   let txt=null;
   try{const r=await fetch(RAW_BASE+'data/reality.csv?t='+Date.now(),{cache:'no-store'});if(r.ok)txt=await r.text();}catch(e){}
   if(txt===null){const r=await fetch('data/reality.csv',{cache:'no-store'});if(r.ok)txt=await r.text();}
-  EV=(txt?parseCSV(txt):[]).map(normEv).filter(Boolean);
+  const rows=(txt?parseCSV(txt):[]);
+  const have=new Set(rows.map(rowKey));
+  /* committed-but-not-yet-visible entries from this phone: keep showing them until the repo copy catches up (raw CDN can lag ~5 min) */
+  const pend=(loadLS('reality_pending')||[]).filter(p=>p&&p.r&&Date.now()-p.t<30*60000&&!have.has(rowKey(p.r)));
+  storeLS('reality_pending',pend);
+  EV=rows.map(normEv).filter(Boolean);
+  pend.forEach(p=>{const e=normEv({...p.r,_local:true});if(e)EV.push(e);});
   EV.sort((a,b)=>a.ts-b.ts);
 }
 function normEv(r){
@@ -670,7 +678,7 @@ async function submit(){
     const res=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r)});
     const t=await res.text();
     if(!res.ok)throw new Error(t||('HTTP '+res.status));
-    msg.textContent='Committed \u2713 \u2014 in the repo now; other phones see it on their next reload (\u224830\u201360 s).';
+    msg.textContent='Committed \u2713 \u2014 saved to the repo. It stays on this phone; everyone else sees it within ~1\u20135 min.';
     msg.className='good';
     localEcho(r);
     ['f_a1','f_a2','f_del','f_d1','f_d2','f_notes'].forEach(id=>$(id).value='');
@@ -678,7 +686,9 @@ async function submit(){
   }catch(e){msg.textContent='Not committed \u2014 '+e.message+' (Starlink down? Use the paper sheet, backfill later.)';msg.className='bad';}
   btn.disabled=false;
 }
-function localEcho(r){const e=normEv({...r,_local:true});if(e){EV.push(e);EV.sort((a,b)=>a.ts-b.ts);renderAll();}}
+function localEcho(r){
+  const pend=(loadLS('reality_pending')||[]).slice(-19);pend.push({r,t:Date.now()});storeLS('reality_pending',pend);
+  const e=normEv({...r,_local:true});if(e){EV.push(e);EV.sort((a,b)=>a.ts-b.ts);renderAll();}}
 
 /* ---------- theme / boot ---------- */
 const SUNI='\u2600',MOONI='\u263E';
