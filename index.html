@@ -229,16 +229,20 @@ html,body{overflow-x:hidden;max-width:100%}
 
 /* ---- console mobile refinements (<=720px) ---- */
 @media (max-width:720px){
-  /* Devices: the "On this day" totals row and every subtotal row become a flowing 2-cell layout
-     (label + numbers), spacer cells collapse, numbers read left-aligned - no side-scroll to find them. */
-  #devtable tr.qtot,#devtable tr.dsub{display:flex;flex-wrap:wrap;align-items:flex-start;width:calc(100vw - 44px);position:sticky;left:0}
+  /* Devices: On-this-day totals and each subtotal row become a pinned, flowing label+numbers pair reading left */
+  #devtable tr.qtot,#devtable tr.dsub{display:flex;flex-wrap:wrap;align-items:flex-start;width:calc(100vw - 44px);position:sticky;left:0;height:auto}
+  #devtable tr.qtot{margin:14px 0 4px}
   #devtable tr.qtot>td:empty,#devtable tr.dsub>td:empty{display:none}
   #devtable tr.qtot>td.ktlab{display:none}
   #devtable tr.dsub>td.ktlab{flex:1 1 40%;padding-left:2px;white-space:normal}
   #devtable tr.qtot>td.qr,#devtable tr.dsub>td.qr{flex:1 1 55%;text-align:left !important;width:auto !important;min-width:0 !important;white-space:normal;padding-left:2px}
+  #devtable tr.qtot>td,#devtable tr.dsub>td{border-bottom:0 !important;height:auto;padding-top:4px;padding-bottom:6px}
   #devtable tr.qtot .dline,#devtable tr.dsub .dline,#devtable .devsm{white-space:normal}
   #devtable tr.qtot .dbig{font-size:14px}
-  /* Fuel panel controls: headline on its own line, then three compact controls in a row */
+  /* the wide device table itself scrolls sideways; make it discoverable */
+  #devbox .twrap{position:relative}
+  #devbox .twrap::before{content:"\2194";position:sticky;left:100%;float:right;top:0;font-size:14px;line-height:1;padding:2px 6px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);color:var(--muted);margin:0 0 -22px 0;z-index:2}
+  /* Fuel panel controls: headline, then three compact controls in one row */
   summary.flagrow2{display:flex;flex-wrap:wrap;row-gap:8px;column-gap:10px;align-items:center}
   summary.flagrow2 .flagtxt{flex:1 1 100%;padding-right:0}
   summary.flagrow2 .floorlab{flex:0 0 auto;margin-left:0 !important;gap:6px;font-size:10px;justify-content:flex-start}
