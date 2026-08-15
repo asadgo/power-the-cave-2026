@@ -353,7 +353,7 @@ html,body{overflow-x:hidden;max-width:100%}
   <label>Delivery received (gal)<input id="f_del" inputmode="decimal"></label>
   <label class="wide">Notes<input id="f_notes"></label>
 </div>
-<button type="button" id="fsub">Commit to the journal</button>
+<button type="button" id="fsub">Commit to the fuel log</button>
 <p id="fmsg"></p>
 <div id="prevbox"><div style="font-size:10.5px;color:var(--warn);letter-spacing:.5px;margin-bottom:4px">CSV ROW (tap to select)</div><div id="prevrow"></div></div>
 <details class="hint"><summary>How to log</summary><p>Made a mistake? Tap <b>retract</b> on the row — it stays visible, struck through, with your name and reason. A refuel = name + gallons into that gen + its hour meter. The drum check = name + both drum levels (0 for an empty drum). Blank fields are fine. Fill tanks to full each pour — then the pour size is exactly the fuel burned since the last fill. Meter = the run-hours odometer on the gen screen; copy it as-is. Every entry is a git commit — typo fixes happen via the GitHub pencil.</p></details></details>
@@ -513,7 +513,7 @@ function planSeries(){
 
 /* ================= REALITY APP ================= */
 /* CONFIG — the only lines to edit after Worker deploy */
-const WORKER_URL='';              /* paste Cloudflare Worker URL here, e.g. 'https://reality-writer.xxx.workers.dev' */
+const WORKER_URL='https://reality-writer.agoodjbx.workers.dev';              /* paste Cloudflare Worker URL here, e.g. 'https://reality-writer.xxx.workers.dev' */
 const RAW_BASE='https://raw.githubusercontent.com/asadgo/power-the-cave-2026/main/'; /* freshest reads for viewers */
 
 const $=id=>document.getElementById(id);
