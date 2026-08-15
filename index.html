@@ -124,7 +124,7 @@ summary.flagrow2{display:flex;flex-wrap:wrap;row-gap:6px;align-items:center}
 .gcell{text-align:center}
 .gtag{background:transparent}
 .gtag.gdim{opacity:.45;filter:grayscale(.6);cursor:default}
-#devtable tr.hrow.hth-hide th{visibility:hidden}
+#devtable tr.hrow.hth-hide{display:none}
 #devtable tr.hrow th{text-align:center}
 #devtable tr.hrow th:first-child{text-align:left}
 #devtable tr.hrow th.qr{text-align:right}
@@ -903,7 +903,7 @@ function buildDev(){
   const open=new Set(opSt[DEVVIEW]||[]);
   const T=$('devtable');
   let h='<tr class="qtot"><td class="ktlab"></td><td></td><td></td><td></td><td></td><td></td><td class="qr" id="dkT">&mdash;</td><td></td></tr>';
-  h+='<tr class="hrow'+(DEVGRP.some(g=>open.has(g.name))?'':' hth-hide')+'"><th>Device</th><th>Gen</th><th>Qty</th><th>Watts</th><th>Hrs</th><th>When &middot; tap an hour to step duty 0 &rarr; &frac14; &rarr; &frac12; &rarr; &frac34; &rarr; full &rarr; 0</th><th class="qr"></th><th></th></tr>';
+  h+='<tr class="hrow'+(DEVGRP.some(g=>open.has(g.name))?'':' hth-hide')+'"><th></th><th>Gen</th><th>Qty</th><th>Watts</th><th>Hrs</th><th>When &middot; tap an hour to step duty 0 &rarr; &frac14; &rarr; &frac12; &rarr; &frac34; &rarr; full &rarr; 0</th><th class="qr"></th><th></th></tr>';
   DEVGRP.forEach((g,gi)=>{
     const op=open.has(g.name);
     h+='<tr class="dgrp" data-g="'+gi+'"><td colspan="8">'+(op?'\u25be ':'\u25b8 ')+g.name+'</td></tr>';

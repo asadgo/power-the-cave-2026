@@ -124,7 +124,7 @@ summary.flagrow2{display:flex;flex-wrap:wrap;row-gap:6px;align-items:center}
 .gcell{text-align:center}
 .gtag{background:transparent}
 .gtag.gdim{opacity:.45;filter:grayscale(.6);cursor:default}
-#devtable tr.hrow.hth-hide th{visibility:hidden}
+#devtable tr.hrow.hth-hide{display:none}
 #devtable tr.hrow th{text-align:center}
 #devtable tr.hrow th:first-child{text-align:left}
 #devtable tr.hrow th.qr{text-align:right}
@@ -263,7 +263,15 @@ html,body{overflow-x:hidden;max-width:100%}
 .st .s{font-size:11px;color:var(--muted)}
 .gph{font-size:11.5px;color:var(--muted);margin:8px 2px 0}
 .fgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-@media(min-width:720px){.fgrid{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:720px){.fgrid{grid-template-columns:repeat(3,1fr)}}
+.fsec{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px 12px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}
+.fsec-h{grid-column:1/-1;font:700 11px var(--mono);letter-spacing:.9px;text-transform:uppercase;color:var(--muted);margin:-2px 0 0}
+.fsec-s{font-weight:500;letter-spacing:.3px;text-transform:none;color:var(--muted2);margin-left:8px}
+.fsec.g1s{border-color:var(--gen1)}.fsec.g1s .fsec-h{color:var(--gen1)}
+.fsec.g2s{border-color:var(--gen2)}.fsec.g2s .fsec-h{color:var(--gen2)}
+.fsec.drs{border-color:var(--rline)}.fsec.drs .fsec-h{color:var(--rline)}
+.fsec.dls{grid-template-columns:1fr}
+@media(min-width:720px){.fsec.g1s,.fsec.g2s{grid-column:span 1;grid-template-columns:1fr}.fsec.drs{grid-column:span 1;grid-template-columns:1fr}.fsec.dls{grid-column:1/-1;grid-template-columns:repeat(3,1fr)}.fsec.dls label{grid-column:span 1}}
 .fgrid label{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted);letter-spacing:.4px}
 .fgrid input,.fgrid textarea{background:var(--deep);border:1px solid var(--line);border-radius:8px;color:var(--bone);padding:10px;font:16px/1.3 inherit;min-height:44px;box-sizing:border-box}
 .fgrid .wide{grid-column:1/-1}
@@ -326,6 +334,7 @@ html,body{overflow-x:hidden;max-width:100%}
   .st .s{font-size:10.5px}
   #daybar{font-size:11px;margin-bottom:8px}
   .fgrid{gap:10px;grid-template-columns:1fr}
+  .fsec{grid-template-columns:1fr}
   .fgrid label{font-size:11px}
   .fgrid label.wide{grid-column:1/-1}
   .chbox{height:300px}
@@ -368,13 +377,17 @@ html,body{overflow-x:hidden;max-width:100%}
   <label>Your name<input id="f_name" autocomplete="name"></label>
   <label>Date<input id="f_date" type="date"></label>
   <label>Time<input id="f_time" type="time"></label>
-  <label class="g1c">Fuel into gen 1 (gal)<input id="f_a1" inputmode="decimal"></label>
-  <label class="g1c">Gen 1 meter (hours)<input id="f_g1" inputmode="decimal"></label>
-  <label class="g2c">Fuel into gen 2 (gal)<input id="f_a2" inputmode="decimal"></label>
-  <label class="g2c">Gen 2 meter (hours)<input id="f_g2" inputmode="decimal"></label>
-  <label class="drc">Fuel left in drum 1 (gal)<input id="f_d1" inputmode="decimal"></label>
-  <label class="drc">Fuel left in drum 2 (gal)<input id="f_d2" inputmode="decimal"></label>
-  <label>Delivery received (gal)<input id="f_del" inputmode="decimal"></label>
+  <div class="fsec g1s"><div class="fsec-h">Gen 1</div>
+    <label class="g1c">Fuel into gen 1 (gal)<input id="f_a1" inputmode="decimal"></label>
+    <label class="g1c">Gen 1 meter (hours)<input id="f_g1" inputmode="decimal"></label></div>
+  <div class="fsec g2s"><div class="fsec-h">Gen 2</div>
+    <label class="g2c">Fuel into gen 2 (gal)<input id="f_a2" inputmode="decimal"></label>
+    <label class="g2c">Gen 2 meter (hours)<input id="f_g2" inputmode="decimal"></label></div>
+  <div class="fsec drs"><div class="fsec-h">Drums</div>
+    <label class="drc">Fuel left in drum 1 (gal)<input id="f_d1" inputmode="decimal"></label>
+    <label class="drc">Fuel left in drum 2 (gal)<input id="f_d2" inputmode="decimal"></label></div>
+  <div class="fsec dls"><div class="fsec-h">Delivery <span class="fsec-s">rare — only when drums arrive</span></div>
+    <label>Delivery received (gal)<input id="f_del" inputmode="decimal"></label></div>
   <label class="wide">Notes<input id="f_notes"></label>
 </div>
 <button type="button" id="fsub">Commit to the fuel log</button>
