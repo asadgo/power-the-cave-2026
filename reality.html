@@ -255,7 +255,6 @@ html,body{overflow-x:hidden;max-width:100%;-webkit-text-size-adjust:100%;text-si
   #egtog,#deltog{padding:4px 8px}
 }
 </style>
-</head>
 <style>
 /* ---- reality.html additions ---- */
 .hd .hbtn.navlink{text-decoration:none;font-size:11px;letter-spacing:.8px;display:inline-flex;align-items:center;padding:0 12px;font-weight:600}
@@ -339,7 +338,6 @@ html,body{overflow-x:hidden;max-width:100%;-webkit-text-size-adjust:100%;text-si
   .fsec{grid-template-columns:1fr}
   .fgrid label{font-size:11px}
   .fgrid label.wide{grid-column:1/-1}
-  .chbox{height:300px}
   #fsub{position:sticky;bottom:8px;z-index:5;box-shadow:0 6px 18px rgba(0,0,0,.25);min-height:50px}
   .chbox{height:260px}
   .cap{font-size:11px}
@@ -351,6 +349,7 @@ html,body{overflow-x:hidden;max-width:100%;-webkit-text-size-adjust:100%;text-si
   .toast{bottom:74px}
 }
 </style>
+</head>
 <body>
 <script>try{if(JSON.parse(localStorage.getItem("cave_theme"))==="light"){document.documentElement.classList.add("light");document.body.classList.add("light");}}catch(e){}</script>
 <div class="wrap">
@@ -686,7 +685,7 @@ function renderStatus(){
   const hrs=last?(NOW-last)/3600e3:null;
   $('st_last').textContent=last?(hrs<0?(last.toLocaleDateString('en-US',{month:'numeric',day:'numeric'})+' '+last.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})):(hrs<1?f(hrs*60,0)+' min ago':f(hrs,0)+' h ago')):'—';
   $('st_last').style.color=hrs!=null&&hrs>26?'var(--warn)':'';
-  $('st_last_sub').textContent=last?('by '+EV[EV.length-1].name):'journal is empty';
+  $('st_last_sub').textContent=last?('by '+EV[EV.length-1].name):'fuel log is empty';
 }
 
 /* ---------- render: charts ---------- */
@@ -754,7 +753,7 @@ function collect(){
     gal_delivered:g('f_del'),drum1_gal:g('f_d1'),drum2_gal:g('f_d2'),notes:g('f_notes')};
 }
 function validate(r){
-  if(!r.logged_by)return 'Name is required — it\u2019s how the journal attributes entries.';
+  if(!r.logged_by)return 'Name is required — it\u2019s how the fuel log attributes entries.';
   if(!/^\d{4}-\d{2}-\d{2}$/.test(r.date))return 'Date looks off.';
   const nums=['gen1_hours','gen2_hours','gal_gen1','gal_gen2','gal_delivered','drum1_gal','drum2_gal'];
   const caps={gal_gen1:9,gal_gen2:9,gal_delivered:200,drum1_gal:50,drum2_gal:50,gen1_hours:20000,gen2_hours:20000};
@@ -799,8 +798,8 @@ async function submit(){
     msg.textContent='Committed \u2713 \u2014 saved to the repo. It stays on this phone; everyone else sees it within ~1\u20135 min.';
     msg.className='good';
     localEcho(r);
-    ['f_a1','f_a2','f_del','f_d1','f_d2','f_notes'].forEach(id=>$(id).value='');
-    stampNow();
+    ['f_a1','f_a2','f_del','f_d1','f_d2','f_g1','f_g2','f_notes'].forEach(id=>$(id).value='');
+    stampNow();meterHints();
     if(RETRACT_MODE){RETRACT_MODE=false;msg.textContent='Retracted \u2713 \u2014 struck from the log; the original stays visible with your name and reason.';}
   }catch(e){msg.textContent='Not committed \u2014 '+e.message+' (Starlink down? Use the paper sheet, backfill later.)';msg.className='bad';}
   btn.disabled=false;
@@ -816,6 +815,12 @@ const storeLS=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 function applyTheme(m){document.body.classList.toggle('light',m==='light');document.documentElement.classList.toggle('light',m==='light');$('themebtn').textContent=m==='light'?MOONI:SUNI;storeLS('cave_theme',m);renderCharts();}
 let _tt=null;function toast(m,err){const t=$('toast');t.textContent=m;t.className='toast show'+(err?' err':'');clearTimeout(_tt);_tt=setTimeout(()=>t.className='toast',2600);}
 function renderAll(){NOW=new Date();renderDaybar();renderStatus();renderCharts();renderLedger();}
+function loadVersion(){fetch('data/log.csv',{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const rows=t.trim().split('\n'),v=rows[rows.length-1].split(',')[0];if(v&&!isNaN(+v))$('ver').textContent='v'+v;}).catch(()=>{});}
+/* meter fields stay blank between entries; the last known reading shows as the placeholder (a prefilled stale meter would be committed as a fresh reading) */
+function meterHints(){const lgp=k=>{const v=EV.map(e=>e[k]).filter(x=>x!=null);return v.length?v[v.length-1]:null;};
+  const p1=lgp('g1'),p2=lgp('g2');
+  $('f_g1').placeholder=p1!=null?('last '+f(p1,1)):'';
+  $('f_g2').placeholder=p2!=null?('last '+f(p2,1)):'';}
 function stampNow(){const n=new Date();
   $('f_date').value=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');
   $('f_time').value=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');}
@@ -823,22 +828,19 @@ async function boot(){
   try{
     await loadPlan();
     await loadReality();
-    fetch('data/log.csv',{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const rows=t.trim().split('\n'),v=rows[rows.length-1].split(',')[0];if(v&&!isNaN(+v))$('ver').textContent='v'+v;}).catch(()=>{});
+    loadVersion();
     stampNow();
-    const lgp=k=>{const v=EV.map(e=>e[k]).filter(x=>x!=null);return v.length?v[v.length-1]:null;};
-    const p1=lgp('g1'),p2=lgp('g2');
-    $('f_g1').placeholder=p1!=null?('last '+f(p1,1)):'';
-    $('f_g2').placeholder=p2!=null?('last '+f(p2,1)):'';
+    meterHints();
     $('fsub').onclick=submit;
     $('reloadbtn').onclick=async()=>{const b=$('reloadbtn');b.classList.add('spin');
-      try{await loadPlan();await loadReality();renderAll();toast('Synced \u2713 plan + fuel log \u00b7 '+EV.length+' entr'+(EV.length===1?'y':'ies'));}
+      try{await loadPlan();await loadReality();loadVersion();meterHints();renderAll();toast('Synced \u2713 plan + fuel log \u00b7 '+EV.length+' entr'+(EV.length===1?'y':'ies'));}
       catch(e){toast('Reload failed \u2014 '+e.message,true);}
       b.classList.remove('spin');};
     $('themebtn').onclick=()=>applyTheme(document.body.classList.contains('light')?'dark':'light');
     applyTheme(loadLS('cave_theme')==='light'?'light':'dark');
     $('loader').style.display='none';$('app').style.display='block';
     renderAll();
-  }catch(e){$('loadmsg').innerHTML='Could not load: '+esc(e.message)+(location.protocol==='file:'?'<br><br>This is the bare repo file \u2014 it holds no data. For a local look, open <b>preview-reality.html</b> instead; the real page lives at the GitHub Pages URL once uploaded.':'');}
+  }catch(e){$('loadmsg').innerHTML='Could not load: '+esc(e.message)+(location.protocol==='file:'?'<br><br>This is the bare repo file opened from disk \u2014 it cannot read data/*.csv this way. Open the live page instead: <b>powerthecave.com/reality</b>.':'');}
 }
 boot();
 

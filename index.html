@@ -162,7 +162,7 @@ summary.flagrow2{display:flex;flex-wrap:wrap;row-gap:6px;align-items:center}
 .qn .twrap{overflow-x:auto}
 .band.kwrow td:not(.rowlab){font-size:15px}
 .dline{display:block}
-#devtable .dbig,.dbig{font-weight:700 !important;font-size:15px;color:var(--fg)}
+#devtable .dbig,.dbig{font-weight:700 !important;font-size:15px;color:var(--bone)}
 #devtable .dhead,.dhead{font:600 12.5px var(--mono) !important;color:var(--muted2);letter-spacing:.03em}
 .qn table{border-collapse:collapse;width:100%}
 .qn th{font:600 11px var(--mono);color:var(--muted);text-align:left;padding:0 8px 4px 0;letter-spacing:.08em;text-transform:uppercase}
@@ -288,11 +288,6 @@ html,body{overflow-x:hidden;max-width:100%;-webkit-text-size-adjust:100%;text-si
   <div class="chartbox capbox" id="capbody"><canvas id="capchart" role="img" aria-label="Hourly camp load vs the safe and absolute limits for the selected day"></canvas></div></details>
 <details class="panel info qn chartwide" id="runbox2"><summary class="flag flagrow2"><span class="flagtxt" id="runflag">—</span><label class="floorlab" id="eglab">By Gen <button type="button" id="egtog">ON</button></label> <label class="floorlab" id="dellab">Delivery <button type="button" id="deltog">AM</button></label> <label class="floorlab">Fuel floor <input type="number" id="floor" min="0"> gal</label></summary>
   <div class="chartbox runbox" id="runbody"><canvas id="runchart" role="img" aria-label="Fuel on hand day by day under the plan"></canvas></div></details>
-
-
-
-
-
 
 <details class="panel info qn" id="notebox"><summary class="flag">Notes <span id="notecue" class="devday"></span></summary>
 <textarea id="notes" rows="6" placeholder="notes, questions, ideas are saved along with your simulation"></textarea>
@@ -638,13 +633,13 @@ function buildPlan(){
   h+='<tr class="band kwrow"><td class="rowlab" title="tank at the 5a dawn — after the truck in AM mode, before it in PM mode">Start of day · gal</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'" data-sod="'+i+'"></td>';
   h+='</tr>';
-  h+='<tr class="band kwrow"><td class="rowlab" title="Fuel for the devices assigned to generator 1. Add its 2.0 gal overhead below for the tank total.">Gen 1 devices · gal</td>';
+  h+='<tr class="band kwrow"><td class="rowlab" title="Fuel for the devices assigned to generator 1. Add its '+f(IDLE2,1)+' gal overhead below for the tank total.">Gen 1 devices · gal</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'" data-fg1="'+i+'"></td>';
   h+='</tr>';
-  h+='<tr class="band kwrow"><td class="rowlab" title="Fuel for the devices assigned to generator 2. Add its 2.0 gal overhead below for the tank total.">Gen 2 devices · gal</td>';
+  h+='<tr class="band kwrow"><td class="rowlab" title="Fuel for the devices assigned to generator 2. Add its '+f(IDLE2,1)+' gal overhead below for the tank total.">Gen 2 devices · gal</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'" data-fg2="'+i+'"></td>';
   h+='</tr>';
-  h+='<tr class="band kwrow"><td class="rowlab" title="2 gal per running generator per day: the fuel each engine drinks just to be running, on top of the device fuel above. Device rows + this row = Fuel spent.">Gen overhead · gal</td>';
+  h+='<tr class="band kwrow"><td class="rowlab" title="'+f(IDLE2,1)+' gal per running generator per day: the fuel each engine drinks just to be running, on top of the device fuel above. Device rows + this row = Fuel spent.">Gen overhead · gal</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'" data-goh="'+i+'"></td>';
   h+='</tr>';
   h+='<tr class="band kwrow"><td class="rowlab">Fuel spent · gal</td>';
@@ -704,7 +699,7 @@ function updateDayCells(){
     if(g1El&&g2El){const gg=genGal(i),ng=PLAN.g[i]||1;
       const fsR=+f(burn(i),1),ovR=+f(IDLE2*ng,1);
       const ti=gg.length===1?'single-generator day \u00b7 device fuel on the running generator'
-        :'device fuel only \u00b7 add this generator\u2019s 2.0 gal overhead for its tank total';
+        :'device fuel only \u00b7 add this generator\u2019s '+f(IDLE2,1)+' gal overhead for its tank total';
       if(gg.length===1){g1El.textContent=f(fsR-ovR,1);g2El.textContent='\u2014';g2El.title='not running';}
       else{const e1=+f(gg[0]-IDLE2,1),e2=+(fsR-ovR-e1).toFixed(1);
         g1El.textContent=f(e1,1);g2El.textContent=f(e2,1);g2El.title=ti;}
@@ -783,7 +778,6 @@ function refresh(rebuild){
   for(let i=asof;i<NDAYS;i++){
     const del=arriveGal(i);
     if(DELTIME==='pm'&&i>0){
-      if(i>asof)/* pool already ended yesterday without today's delivery */;
       pts.push({x:i,y:+pool.toFixed(1)});
       pool-=burn(i)/2;
       pts.push({x:i+0.5,y:+pool.toFixed(1)});
@@ -951,7 +945,7 @@ function buildDev(){
   });
   T.innerHTML=h;
   T.querySelectorAll('.pgrp').forEach(el=>el.addEventListener('click',()=>{
-    PERSOPEN=!PERSOPEN;store('cavecsv_persopen',PERSOPEN);
+    PERSOPEN=!PERSOPEN;
     buildDev();devPaint();
   }));
   T.querySelectorAll('.dgrp').forEach(el=>el.addEventListener('click',()=>{
@@ -1168,7 +1162,6 @@ function uiDialog(o){return new Promise(res=>{
 });}
 const uiAlert=(msg,title)=>uiDialog({msg,title,cancel:false});
 const uiConfirm=(msg,title)=>uiDialog({msg,title}).then(v=>v===true);
-const uiPrompt=(msg,title,ph)=>uiDialog({msg,title,input:'',placeholder:ph||'',required:true,ok:'Save'});
 
 /* ---------- scenarios: save / load / apply (browser-only until uploaded) ---------- */
 const scnHash=s=>{let x=5381;for(let i=0;i<s.length;i++)x=((x<<5)+x+s.charCodeAt(i))>>>0;return x.toString(16);};
@@ -1213,11 +1206,11 @@ function scnApplyBuild(day){
   for(let i=0;i<NDAYS;i++)cal+=[iso(i),DTYPE[i]||'',PLAN.p[i],PLAN.a[i],PLAN.e[i],PLAN.s[i],PLAN.g[i],FUEL.del[i]||0].join(',')+'\n';
   const raw={};(RAWD||[]).forEach(r=>{raw[r.device]=r;});
   const esc=v=>{v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
-  let dev='device,area,category,product,qty,running_w_each,surge_w_each,volts,bus,priority,notes,gen\n';
+  let dev='device,area,category,product,qty,running_w_each,surge_w_each,volts,bus,priority,notes,scaling,gen\n';
   let sch='device,'+HOURS.map(x=>'h_'+x).join(',')+'\n';
   DEVD[day].forEach(r=>{
     const o=raw[r.n]||{};
-    dev+=[esc(r.n),esc(r.area||o.area||'Custom'),esc(r.cat||o.category||'Custom'),esc(o.product),r.q,r.w,esc(o.surge_w_each),esc(o.volts),esc(r.bus||o.bus||'Pool'),esc(r.pr||o.priority||'Cut if needed'),esc(o.notes),(r.gen==='2'?'2':'1')].join(',')+'\n';
+    dev+=[esc(r.n),esc(r.area||o.area||'Custom'),esc(r.cat||o.category||'Custom'),esc(o.product),r.q,r.w,esc(o.surge_w_each),esc(o.volts),esc(r.bus||o.bus||'Pool'),esc(r.pr||o.priority||'Cut if needed'),esc(o.notes),(r.sc==='people'?'people':''),(r.gen==='2'?'2':'1')].join(',')+'\n';
     sch+=esc(r.n)+','+r.du.join(',')+'\n';
   });
   let kit='item,watts,'+HOURS.map(x=>'h_'+x).join(',')+'\n';
@@ -1227,6 +1220,7 @@ function scnApplyBuild(day){
 async function scnApply(){
   const day=ASOF();
   const wd=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date(START.getTime()+day*DAY).getDay()];
+  if(/^off$/i.test(String(DTYPE[day]||''))){await uiAlert(wd+' '+dLab(day)+' is an Off day \u2014 every device quantity is zero there, so it cannot be the committed device setup. Select a Build, Burn or Strike day in the calendar, then try again.','Make this the official plan');return;}
   const nm=load('cavecsv_scn');
   let pc=0;['p','a','e','s','g'].forEach(k=>{for(let i=0;i<NDAYS;i++)if(PLAN[k][i]!==SEEDPLAN[k][i])pc++;});
   for(let i=0;i<NDAYS;i++)if((FUEL.del[i]||0)!==(SEEDFUEL.del[i]||0))pc++;
@@ -1241,7 +1235,7 @@ async function scnApply(){
     +'devices.csv + schedule.csv \u2014 '+wd+' '+dLab(day)+"'s setup \u00b7 "+dc+' device row'+(dc===1?'':'s')+' differ'+(dc===1?'s':'')+'\n'
     +'personal_items.csv \u2014 per-camper items\n'+'log.csv \u2014 new version row'+(NOTES.trim()?'\nnotes.txt \u2014 your notes':'')
     +(nm?'\nsim: '+String(nm).slice(0,40):'')
-    +'\n\nUnzip it, upload all 4 files to the repo data/ folder, then press Reset (circular arrow, top right).',
+    +'\n\nUnzip it, upload the 5 CSV files to the repo data/ folder (notes.txt is for you), then press Reset (circular arrow, top right).',
     'Make this the official plan');
   if(!ok)return;
   const files=scnApplyBuild(day);
@@ -1258,18 +1252,6 @@ async function scnApply(){
   });
 }
 
-/* ---------- export current plan as calendar_plan.csv ---------- */
-function exportCSV(){
-  const iso=i=>{const d=new Date(START.getTime()+i*DAY);
-    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
-  let t='date,day_type,people,acs,ebikes,sound_on,generators,delivered_gal\n';
-  for(let i=0;i<NDAYS;i++)
-    t+=[iso(i),DTYPE[i]||'',PLAN.p[i],PLAN.a[i],PLAN.e[i],PLAN.s[i],PLAN.g[i],FUEL.del[i]||0].join(',')+'\n';
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));
-  a.download='calendar_plan.csv';a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
-}
 function resetToCSV(){
   ['cavecsv_plan','cavecsv_fuel','cavecsv_kit','cavecsv_floor','cavecsv_dev','cavecsv_scn','cavecsv_notes'].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});
   PLAN=structuredClone(SEEDPLAN);FUEL=structuredClone(SEEDFUEL);
@@ -1286,7 +1268,7 @@ function resetToCSV(){
 
 /* ---------- boot ---------- */
 function boot(D){
-  store('cavecsv_devopen',{});store('cavecsv_persopen',false);store('cavecsv_chartopen2',{});store('cavecsv_genmode','g1');
+  store('cavecsv_devopen',{});
   buildModel(D);
   const lp=load('cavecsv_plan');PLAN=normPlan(okPlan(lp)?lp:structuredClone(SEEDPLAN));
   syncACFromPlan();
@@ -1307,7 +1289,7 @@ function boot(D){
   $('asof').addEventListener('input',()=>refresh(true));
   $('floor').value=FLOOR;
   $('floor').addEventListener('input',()=>{FLOOR=+$('floor').value||0;store('cavecsv_floor',FLOOR);refresh(false);});
-  $('src').textContent='source: data/*.csv · '+NDEV+' devices · sound rig '+f(SOUND,1)+' kWh · safe '+f(redFor(2),1)+' kW pooled · edits stay in this browser · the official plan lives on GitHub';
+  $('src').textContent='source: data/*.csv · '+NDEV+' devices · sound rig '+f(Math.max(0,...DER.map(d=>d.SOUND)),1)+' kWh/day · safe '+f(redFor(2),1)+' kW pooled · edits stay in this browser · the official plan lives on GitHub';
   kitCalc();
   buildDev();devCalc();
   $('devadd').addEventListener('click',()=>{
@@ -1326,8 +1308,7 @@ function boot(D){
     const el=$(id);
     el.open=!!chOp[k];
     el.addEventListener('toggle',()=>{
-      chOp[k]=el.open;store('cavecsv_chartopen2',chOp);
-      if(el.open){try{capChart&&capChart.resize();runChart&&runChart.resize();}catch(err){}}
+      if(el.open){try{cap&&cap.resize();run&&run.resize();}catch(err){}}
     });
   });
   document.querySelectorAll('#runbox2 .floorlab').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();e.preventDefault();
@@ -1349,7 +1330,6 @@ function boot(D){
     e.stopPropagation();
     if(b.classList.contains('gmoff'))return;
     GENMODE=b.dataset.gm;
-    store('cavecsv_genmode',GENMODE);
     gmSync();
     $('genmenu').classList.remove('on');
     refresh(false);
@@ -1359,7 +1339,7 @@ function boot(D){
   });
   document.addEventListener('keydown',e=>{if(e.key==='Escape')$('genmenu').classList.remove('on');});
   document.querySelector('#capbox2 #genlab').addEventListener('click',e=>{e.stopPropagation();});
-    FUELGENS=load('cavecsv_fuelgens')!==false;
+  FUELGENS=load('cavecsv_fuelgens')!==false;
   $('egtog').textContent=FUELGENS?'ON':'OFF';
   $('egtog').addEventListener('click',e=>{e.stopPropagation();e.preventDefault();
     FUELGENS=!FUELGENS;store('cavecsv_fuelgens',FUELGENS);
