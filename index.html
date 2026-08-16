@@ -203,13 +203,22 @@ summary.flagrow2{display:flex;flex-wrap:wrap;row-gap:6px;align-items:center}
 #daypin.on{display:block}
 .uimask{position:fixed;inset:0;background:rgba(10,14,17,.55);display:none;align-items:center;justify-content:center;z-index:999}
 .uimask.on{display:flex}
-.uibox{background:var(--panel);border:1px solid var(--line);color:var(--dw);max-width:460px;width:92%;border-radius:12px;padding:18px 20px;font:500 13px var(--mono);box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.uibox{background:var(--panel);border:1px solid var(--line);color:var(--dw);max-width:520px;width:92%;max-height:88vh;overflow:auto;border-radius:12px;padding:18px 20px;font:500 13px var(--mono);box-shadow:0 18px 50px rgba(0,0,0,.5)}
 .uibox h3{margin:0 0 10px;font:700 14px var(--mono);color:var(--bone);letter-spacing:.04em}
-body.light .uibox h3{color:var(--ink)}
 .uibox .uimsg{white-space:pre-wrap;line-height:1.5;color:var(--muted)}
+.uibox .uimsg.html{white-space:normal}
+.uimsg p{margin:0 0 9px}
+.uimsg ul,.uimsg ol{margin:0 0 9px 18px;padding:0}
+.uimsg li{margin:0 0 6px}
+.uimsg .fn{color:var(--bone);font-weight:700}
+.uimsg .n{font-weight:700;padding:0 4px;border-radius:4px;white-space:nowrap}
+.uimsg .n-ch{color:var(--warn);background:var(--warn-bg)}
+.uimsg .n-ok{color:var(--muted2);background:var(--panel2)}
+.uimsg .callout{border:1px solid var(--warn);border-radius:8px;padding:8px 10px;color:var(--warn);margin:0 0 9px}
 .uibox input{width:100%;margin-top:12px;box-sizing:border-box}
 .uibox .uierr{font-size:11px;color:var(--danger);margin-top:6px;min-height:14px}
 .uibox .uibtns{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+.uibox .uimsg.html~.uibtns{position:sticky;bottom:-18px;background:var(--panel);padding:10px 20px 12px;margin:6px -20px -18px;border-top:1px solid var(--line)}
 .uibox .uibtns button{width:auto;padding:8px 18px}
 .ptabs{display:flex;gap:6px;margin:2px 0 10px}
 .ptabs a{flex:1;text-align:center;padding:9px 0;border:1px solid var(--line);border-radius:9px;color:var(--muted);text-decoration:none;font-size:11.5px;letter-spacing:1.2px;font-weight:600}
@@ -630,7 +639,7 @@ function buildPlan(){
   h+='<tr class="band kwrow"><td class="rowlab">Delivered · gal</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'"><input data-del="'+i+'" type="number" min="0" value="'+(FUEL.del[i]||0)+'"></td>';
   h+='</tr>';
-  h+='<tr class="band kwrow"><td class="rowlab" title="tank at the 5a dawn — after the truck in AM mode, before it in PM mode">Start of day · gal</td>';
+  h+='<tr class="band kwrow"><td class="rowlab" title="tank at the 5a dawn: after the truck in AM mode, before it in PM mode">Start of day · gal</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'" data-sod="'+i+'"></td>';
   h+='</tr>';
   h+='<tr class="band kwrow"><td class="rowlab" title="Fuel for the devices assigned to generator 1. Add its '+f(IDLE2,1)+' gal overhead below for the tank total.">Gen 1 devices · gal</td>';
@@ -645,7 +654,7 @@ function buildPlan(){
   h+='<tr class="band kwrow"><td class="rowlab">Fuel spent · gal</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'" data-fs="'+i+'"></td>';
   h+='</tr>';
-  h+='<tr class="band kwrow"><td class="rowlab" title="tank when the day ends — the model day runs 5a to 4a, so this is the level at the next 5a dawn">Fuel left · gal</td>';
+  h+='<tr class="band kwrow"><td class="rowlab" title="tank when the day ends: the model day runs 5a to 4a, so this is the level at the next 5a dawn">Fuel left · gal</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'"><span class="fl" data-fl="'+i+'"></span></td>';
   h+='</tr>';
   T.innerHTML=cg+h;
@@ -757,15 +766,15 @@ function refresh(rebuild){
   let capState=peak>=HARD?'danger':peak>RED?'warn':'safe';
   const capMsg=SG>=0
     ?('Power · '+dName(asof)+' · Gen '+(SG+1)+((PLAN.g[asof]<2)?' · every load on the one generator · ':' only (other generator off) · ')
-      +(capState==='danger'?'over the absolute limit — trips the breaker · peak '+f(peak,1)+' kW at '+pkH+' vs '+f(HARD,1)+' kW'
+      +(capState==='danger'?'over the absolute limit, trips the breaker · peak '+f(peak,1)+' kW at '+pkH+' vs '+f(HARD,1)+' kW'
        :capState==='warn'?'over the safe line at '+pkH+' · peak '+f(peak,1)+' (safe '+f(RED,1)+' · absolute '+f(HARD,1)+')'
        :'peak '+f(peak,1)+' of safe '+f(RED,1)+' kW · '+f(RED-peak,1)+' kW to spare'))
     :SPL
     ?('Power · '+dName(asof)+' · both gen · Gen 1 peak '+f(peaks[0],1)+' · Gen 2 peak '+f(peaks[1],1)+' of safe '+f(RED,1)+' kW each'
-      +(capState==='danger'?' · Gen '+(wi?'2':'1')+' over the absolute limit — trips its breaker'
+      +(capState==='danger'?' · Gen '+(wi?'2':'1')+' over the absolute limit, trips its breaker'
        :capState==='warn'?' · Gen '+(wi?'2':'1')+' over the safe line at '+pkH
        :' · tightest Gen '+(wi?'2':'1')+' · '+f(RED-peak,1)+' kW to spare'))
-    :(capState==='danger'?'Power · '+dName(asof)+' · over the absolute limit — this trips the breaker · peak '+f(peak,1)+' kW at '+pkH+' vs '+f(HARD,1)+' kW absolute'
+    :(capState==='danger'?'Power · '+dName(asof)+' · over the absolute limit, this trips the breaker · peak '+f(peak,1)+' kW at '+pkH+' vs '+f(HARD,1)+' kW absolute'
     :capState==='warn'?'Power · '+dName(asof)+' · over the safe line, under the absolute limit · peak '+f(peak,1)+' kW at '+pkH+' (safe '+f(RED,1)+' · absolute '+f(HARD,1)+') · no room for surges'
     :'Power · '+dName(asof)+' · peak '+f(peak,1)+' of safe '+f(RED,1)+' kW · '+f(RED-peak,1)+' kW to spare'
       +((GENMODE==='split'&&PLAN.g[asof]<2)?' · single generator today':''));
@@ -1139,7 +1148,7 @@ const dlBlob=(name,blob)=>{const a=document.createElement('a');
 function uiDialog(o){return new Promise(res=>{
   const m=$('uimask'),inp=$('uiinput'),err=$('uierr');
   $('uititle').textContent=o.title||'The Cave \u00b7 Power';
-  $('uimsg').textContent=o.msg||'';
+  if(o.html){$('uimsg').innerHTML=o.msg||'';$('uimsg').classList.add('html');}else{$('uimsg').textContent=o.msg||'';$('uimsg').classList.remove('html');}
   err.textContent='';
   inp.style.display=o.input!==undefined?'':'none';
   if(o.input!==undefined){inp.value=o.input;inp.placeholder=o.placeholder||'';}
@@ -1220,8 +1229,10 @@ function scnApplyBuild(day){
 async function scnApply(){
   const day=ASOF();
   const wd=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date(START.getTime()+day*DAY).getDay()];
-  if(/^off$/i.test(String(DTYPE[day]||''))){await uiAlert(wd+' '+dLab(day)+' is an Off day \u2014 every device quantity is zero there, so it cannot be the committed device setup. Select a Build, Burn or Strike day in the calendar, then try again.','Make this the official plan');return;}
+  const dayName=wd+' '+dLab(day);
+  if(/^off$/i.test(String(DTYPE[day]||''))){await uiAlert(dayName+' is an Off day. Every device quantity is zero there, so it cannot become the official device setup. Select a Build, Burn or Strike day in the calendar, then try again.','Make this the official plan');return;}
   const nm=load('cavecsv_scn');
+  /* what differs from the committed CSVs */
   let pc=0;['p','a','e','s','g'].forEach(k=>{for(let i=0;i<NDAYS;i++)if(PLAN[k][i]!==SEEDPLAN[k][i])pc++;});
   for(let i=0;i<NDAYS;i++)if((FUEL.del[i]||0)!==(SEEDFUEL.del[i]||0))pc++;
   const rows=DEVD[day],base=structuredClone(DEVSEED);
@@ -1229,27 +1240,41 @@ async function scnApply(){
   const bEB=base.find(x=>/e-bike charging/i.test(x.n));if(bEB&&PLAN)bEB.q=PLAN.e[day];
   let dc=0;
   rows.forEach((r,i)=>{if(!base[i]||JSON.stringify(r)!==JSON.stringify(base[i]))dc++;});
-  const ok=await uiConfirm(
-    'This downloads one zip \u2014 a folder holding the repo files:\n\n'
-    +'calendar_plan.csv \u2014 all 14 days \u00b7 '+pc+' cell'+(pc===1?'':'s')+' differ'+(pc===1?'s':'')+' from committed\n'
-    +'devices.csv + schedule.csv \u2014 '+wd+' '+dLab(day)+"'s setup \u00b7 "+dc+' device row'+(dc===1?'':'s')+' differ'+(dc===1?'s':'')+'\n'
-    +'personal_items.csv \u2014 per-camper items\n'+'log.csv \u2014 new version row'+(NOTES.trim()?'\nnotes.txt \u2014 your notes':'')
-    +(nm?'\nsim: '+String(nm).slice(0,40):'')
-    +'\n\nUnzip it, upload the 5 CSV files to the repo data/ folder (notes.txt is for you), then press Reset (circular arrow, top right).',
-    'Make this the official plan');
-  if(!ok)return;
+  const kc=JSON.stringify(KITC)!==JSON.stringify(KITSEED);
+  /* read the log now so the dialog can name the exact next version */
+  let logTxt='';try{const r=await fetch('data/log.csv',{cache:'no-store'});if(r.ok)logTxt=await r.text();}catch(e){}
+  const lines=logTxt.split('\n').filter(x=>x.trim());
+  const last=parseFloat((lines[lines.length-1]||'0').split(',')[0])||0;
+  const nv=(Math.round(last*10)+1)/10;
+  const cur='v'+last.toFixed(1),nxt='v'+nv.toFixed(1);
+  const num=(n,unit)=>'<span class="n '+(n?'n-ch':'n-ok')+'">'+n+' '+unit+(n===1?'':'s')+'</span>';
+  const tag=ch=>'<span class="n '+(ch?'n-ch':'n-ok')+'">'+(ch?'changed':'unchanged')+'</span>';
+  const hasNotes=!!NOTES.trim();
+  const msg=
+    '<p>Downloads one zip. Inside it, a <b>data</b> folder holds 5 CSV files rewritten from what is on screen right now. Uploading them into the repo\u2019s <b>data</b> folder makes this the official plan for everyone.'+(nm?' (Loaded simulation: '+String(nm).replace(/</g,'&lt;').slice(0,60)+')':'')+'</p>'
+    +'<p>What each file will contain:</p><ul>'
+    +'<li><span class="fn">calendar_plan.csv</span>: the whole calendar, all '+NDAYS+' days (people, ACs, e-bikes, sound, gens, deliveries). '+num(pc,'cell')+' differ from the official plan.</li>'
+    +'<li><span class="fn">devices.csv</span> + <span class="fn">schedule.csv</span>: the device list and hourly duty from <b>one day only</b>, the day selected in the calendar: <b>'+dayName+'</b>. '+num(dc,'device row')+' differ from the official plan. Device edits made on any other day are not included.</li>'
+    +'<li><span class="fn">personal_items.csv</span>: the per-camper items table. '+tag(kc)+'.</li>'
+    +'<li><span class="fn">log.csv</span>: the version history plus one new line at the bottom describing this change. After upload the header reads <b>'+nxt+'</b> (now '+cur+').</li>'
+    +(hasNotes?'<li><span class="fn">notes.txt</span> (outside the data folder): a copy of your Notes box, for your own records. Not a repo file. Do not upload it.</li>':'')
+    +'</ul>'
+    +((!pc&&!dc&&!kc)?'<div class="callout">Nothing on screen differs from the official plan. This zip would change nothing except adding a log line.</div>':'')
+    +'<p>After the download:</p><ol>'
+    +'<li>Unzip it.</li>'
+    +'<li>GitHub: open the repo\u2019s <b>data</b> folder, then Add file, Upload files. Drop in all 5 CSV files (they replace the old ones). Commit.</li>'
+    +'<li>Wait about 1 minute for GitHub to publish, then press Reset (circular arrow, top right) here. The header reads <b>'+nxt+'</b> once it has landed; if it still reads '+cur+', wait and press Reset again.</li>'
+    +'</ol>';
+  const ok=await uiDialog({html:true,msg,title:'Make this the official plan',ok:'Download zip'});
+  if(ok!==true)return;
   const files=scnApplyBuild(day);
-  fetch('data/log.csv',{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
-    const lines=t.split('\n').filter(x=>x.trim());
-    const last=parseFloat((lines[lines.length-1]||'0').split(',')[0])||0;
-    const nv=(Math.round(last*10)+1)/10;
-    const iso=new Date().toISOString();
-    const id='cavepower_apply_'+iso.slice(0,10)+'_'+iso.slice(11,19).replace(/:/g,'')+'Z';
-    const row=nv.toFixed(1)+','+iso.slice(0,10)+',"Applied '+(nm?String(nm).replace(/"/g,"'"):'current console state')+' to reality from the console: full calendar promoted; committed device setup taken from '+wd+' '+dLab(day)+'."\n';
-    files['log.csv']=(t&&!t.endsWith('\n')?t+'\n':t)+row;
-    if(NOTES.trim())files['notes.txt']=NOTES;
-    dlBlob(id+'.zip',makeZip(Object.keys(files).map(n=>({name:id+'/'+n,text:files[n]}))));
-  });
+  const iso=new Date().toISOString();
+  const id='cavepower_official-plan_'+iso.slice(0,10)+'_'+iso.slice(11,19).replace(/:/g,'')+'Z';
+  const row=nv.toFixed(1)+','+iso.slice(0,10)+',"Official plan updated from the console'+(nm?' (simulation: '+String(nm).replace(/"/g,"'")+')':'')+': calendar for all '+NDAYS+' days; device setup and hourly duty taken from '+dayName+'; personal items."\n';
+  files['log.csv']=(logTxt&&!logTxt.endsWith('\n')?logTxt+'\n':logTxt)+row;
+  const entries=Object.keys(files).map(n=>({name:id+'/data/'+n,text:files[n]}));
+  if(hasNotes)entries.push({name:id+'/notes.txt',text:NOTES});
+  dlBlob(id+'.zip',makeZip(entries));
 }
 
 function resetToCSV(){
@@ -1357,7 +1382,7 @@ function boot(D){
   });
   $('scnsave').addEventListener('click',async()=>{
     const prev=load('cavecsv_author')||'';
-    const t=await uiDialog({msg:'Enter your name \u2014 it leads the filename so everyone knows whose simulation this is.',
+    const t=await uiDialog({msg:'Enter your name. It leads the filename so everyone knows whose simulation this is.',
       title:'Save simulation',input:prev,placeholder:'your name',required:true,ok:'Save'});
     if(t==null)return;
     const nm=t;store('cavecsv_author',nm);
@@ -1379,7 +1404,7 @@ function boot(D){
     e.target.value='';
   });
   $('scnapply').addEventListener('click',scnApply);
-  $('scnnote').innerHTML='A simulation is a snapshot of the entire console above \u2014 calendar, fuel, devices and their duty, plus your Notes. Save one and send it anywhere; loading it fills anyone\u2019s console for collaboration. Nothing touches GitHub until \u201cMake this the official plan\u201d downloads a timestamped, push-ready zip of the repo files, which you then upload to git. The Reset button (top right) always returns everything to the latest committed state.';
+  $('scnnote').innerHTML='A simulation is a snapshot of everything on this page: calendar, fuel, devices and their hourly duty, plus your Notes. Save simulation downloads it as a file you can send to anyone; Load simulation opens one here. Nothing reaches GitHub until Make this the official plan downloads a zip of CSV files for you to upload into the repo\u2019s data folder. Reset (circular arrow, top right) returns this browser to the latest official plan.';
   scnBanner();
   const pinCheck=()=>{
     const t=$('plantable'),dp=$('daypin');

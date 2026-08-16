@@ -393,13 +393,13 @@ html,body{overflow-x:hidden;max-width:100%;-webkit-text-size-adjust:100%;text-si
 <button type="button" id="fsub">Commit to the fuel log</button>
 <p id="fmsg"></p>
 <div id="prevbox"><div style="font-size:10.5px;color:var(--warn);letter-spacing:.5px;margin-bottom:4px">CSV ROW (tap to select)</div><div id="prevrow"></div></div>
-<details class="hint"><summary>How to log</summary><p>Made a mistake? Tap <b>retract</b> on the row — it stays visible, struck through, with your name and reason. A refuel = name + gallons into that gen + its hour meter. The drum check = name + both drum levels (0 for an empty drum). Blank fields are fine. Fill tanks to full each pour — then the pour size is exactly the fuel burned since the last fill. Meter = the run-hours odometer on the gen screen; copy it as-is. Every entry is a git commit — typo fixes happen via the GitHub pencil.</p></details></details>
+<details class="hint"><summary>How to log</summary><p>Made a mistake? Tap <b>retract</b> on the row: it stays visible, struck through, with your name and reason. A refuel = name + gallons into that gen + its hour meter. The drum check = name + both drum levels (0 for an empty drum). Blank fields are fine. Fill tanks to full each pour, so the pour size is exactly the fuel burned since the last fill. Meter = the run-hours odometer on the gen screen; copy it as-is. Every entry is a git commit; typo fixes happen via the GitHub pencil.</p></details></details>
 
-<details class="panel info chartwide" open><summary class="flag">Fuel on hand — plan vs reality</summary>
+<details class="panel info chartwide" open><summary class="flag">Fuel on hand: plan vs reality</summary>
   <div class="chbox"><canvas id="chartA"></canvas></div>
   <details class="hint"><summary>How to read this chart</summary><p>Teal line = running estimate (deliveries in, pours out). Diamonds = the hand-counted drum levels that re-anchor it. Dashed = if the current measured burn continues and planned deliveries land, fuel on hand through 9/7. Red segments = below zero.</p></details></details>
 
-<details class="panel info chartwide" open><summary class="flag">Fuel poured per day — plan vs reality</summary>
+<details class="panel info chartwide" open><summary class="flag">Fuel poured per day: plan vs reality</summary>
   <div class="chbox"><canvas id="chartB"></canvas></div>
   <div id="daynotes"></div>
   <details class="hint"><summary>How to read this chart</summary><p>Each bar = gallons poured into the generators that calendar day. Plan = what the model expects them to drink; gen 1 + gen 2 stack to the real total. Tap a bar for that day&rsquo;s notes.</p></details></details>
@@ -698,8 +698,8 @@ function renderCharts(){
   const yt={ticks:{color:t.tick,font:{family:FONT,size:10}},grid:{color:t.grid},title:{display:true,text:'gallons',color:t.tick,font:{family:FONT,size:10}}};
   const dsA=[
     {label:'Plan',data:P.pts,borderColor:cssv('--planl'),borderWidth:2,pointRadius:0,tension:0},
-    {label:'Reality — running estimate',data:A.line,borderColor:cssv('--rline'),borderWidth:2.5,pointRadius:0,tension:0},
-    {label:'Drum counts — measured',data:A.dips,showLine:false,pointRadius:5,pointStyle:'rectRot',backgroundColor:cssv('--rline')},
+    {label:'Reality: running estimate',data:A.line,borderColor:cssv('--rline'),borderWidth:2.5,pointRadius:0,tension:0},
+    {label:'Drum counts (measured)',data:A.dips,showLine:false,pointRadius:5,pointStyle:'rectRot',backgroundColor:cssv('--rline')},
     {label:'If current burn continues',data:F.pts,borderColor:cssv('--warn'),borderDash:[6,4],borderWidth:2,pointRadius:0,tension:0,segment:{borderColor:c=>((c.p0.parsed.y<0||c.p1.parsed.y<0)?cssv('--danger'):undefined)}},
     {label:'Fuel floor',data:[{x:0,y:FLOOR},{x:NDAYS,y:FLOOR}],borderColor:cssv('--danger'),borderDash:[3,4],borderWidth:1.5,pointRadius:0}];
   if(chA)chA.destroy();
@@ -710,9 +710,9 @@ function renderCharts(){
   const labs=Array.from({length:NDAYS},(_,i)=>dLab(i));
   if(chB)chB.destroy();
   chB=new Chart($('chartB'),{type:'bar',data:{labels:labs,datasets:[
-    {label:'Plan — total gal that day',stack:'plan',data:Array.from({length:NDAYS},(_,i)=>+burn(i).toFixed(1)),backgroundColor:cssv('--planl')+'66',borderColor:cssv('--planl'),borderWidth:1},
-    {label:'Poured — gen 1',stack:'real',data:add1.map(v=>+v.toFixed(1)),backgroundColor:cssv('--gen1')+'aa',borderColor:cssv('--gen1'),borderWidth:1},
-    {label:'Poured — gen 2',stack:'real',data:add2.map(v=>+v.toFixed(1)),backgroundColor:cssv('--gen2')+'aa',borderColor:cssv('--gen2'),borderWidth:1}]},
+    {label:'Plan: total gal that day',stack:'plan',data:Array.from({length:NDAYS},(_,i)=>+burn(i).toFixed(1)),backgroundColor:cssv('--planl')+'66',borderColor:cssv('--planl'),borderWidth:1},
+    {label:'Poured: gen 1',stack:'real',data:add1.map(v=>+v.toFixed(1)),backgroundColor:cssv('--gen1')+'aa',borderColor:cssv('--gen1'),borderWidth:1},
+    {label:'Poured: gen 2',stack:'real',data:add2.map(v=>+v.toFixed(1)),backgroundColor:cssv('--gen2')+'aa',borderColor:cssv('--gen2'),borderWidth:1}]},
     options:{responsive:true,maintainAspectRatio:false,animation:false,
       plugins:{legend:legendOpts(t)},
       scales:{x:{stacked:true,ticks:{color:t.tick,font:{family:FONT,size:9}},grid:{display:false}},y:{...yt,stacked:true,title:{display:true,text:'gallons poured that day',color:t.tick,font:{family:FONT,size:10}}}},
@@ -720,7 +720,7 @@ function renderCharts(){
 }
 function showNotes(d){
   const rows=EV.filter(e=>Math.floor(e.day)===d&&e.notes);
-  $('daynotes').innerHTML='<b>'+dName(d)+'</b> — '+(rows.length?rows.map(e=>esc(e.name)+': '+esc(e.notes)).join(' · '):'no notes that day');
+  $('daynotes').innerHTML='<b>'+dName(d)+'</b>: '+(rows.length?rows.map(e=>esc(e.name)+': '+esc(e.notes)).join(' · '):'no notes that day');
 }
 
 /* ---------- render: ledger ---------- */
@@ -739,8 +739,8 @@ function renderLedger(){
    (rows.length?rows.map(({e,d1,d2})=>'<tr class="'+(e.local?'loc ':'')+(e.retracted?'ret':'')+'"><td>'+e.ts.toLocaleDateString('en-US',{weekday:'short'})+' '+e.ts.toLocaleDateString('en-US',{month:'numeric',day:'numeric'})+' '+e.ts.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</td><td>'+esc(e.name)+(e.local?' <span class="badge">just logged</span>':'')+'</td>'+
     '<td class="c1">'+(e.g1!=null?f(e.g1,1)+(d1!=null?' <span class="dlt"'+(d1<0?' style="color:var(--danger)"':'')+'>'+(d1>=0?'+':'')+f(d1,1)+'</span>':''):'')+'</td>'+
     '<td class="c2">'+(e.g2!=null?f(e.g2,1)+(d2!=null?' <span class="dlt"'+(d2<0?' style="color:var(--danger)"':'')+'>'+(d2>=0?'+':'')+f(d2,1)+'</span>':''):'')+'</td>'+
-    '<td class="c1">'+(e.a1!=null?f(e.a1,1):'')+'</td><td class="c2">'+(e.a2!=null?f(e.a2,1):'')+'</td><td>'+(e.del!=null?f(e.del,0):'')+'</td><td class="cd">'+(e.d1!=null?f(e.d1,0):'')+'</td><td class="cd">'+(e.d2!=null?f(e.d2,0):'')+'</td><td class="nt">'+esc(e.notes)+(e.retracted?'<div class="retby">retracted by '+esc(e.retracted.by)+' \u2014 '+esc(e.retracted.reason)+'</div>':(e.row&&!e.local?'<button type="button" class="retbtn" data-row="'+e.row+'" title="Mark this entry as a mistake">retract</button>':''))+'</td></tr>').join('')
-   :'<tr><td colspan="10" class="nt">Fuel log is empty — first entry lands here.</td></tr>');
+    '<td class="c1">'+(e.a1!=null?f(e.a1,1):'')+'</td><td class="c2">'+(e.a2!=null?f(e.a2,1):'')+'</td><td>'+(e.del!=null?f(e.del,0):'')+'</td><td class="cd">'+(e.d1!=null?f(e.d1,0):'')+'</td><td class="cd">'+(e.d2!=null?f(e.d2,0):'')+'</td><td class="nt">'+esc(e.notes)+(e.retracted?'<div class="retby">retracted by '+esc(e.retracted.by)+': '+esc(e.retracted.reason)+'</div>':(e.row&&!e.local?'<button type="button" class="retbtn" data-row="'+e.row+'" title="Mark this entry as a mistake">retract</button>':''))+'</td></tr>').join('')
+   :'<tr><td colspan="10" class="nt">Fuel log is empty. The first entry lands here.</td></tr>');
   $('ledger').querySelectorAll('.retbtn').forEach(bn=>{bn.onclick=()=>openRetract(+bn.dataset.row);});
 }
 
@@ -753,18 +753,18 @@ function collect(){
     gal_delivered:g('f_del'),drum1_gal:g('f_d1'),drum2_gal:g('f_d2'),notes:g('f_notes')};
 }
 function validate(r){
-  if(!r.logged_by)return 'Name is required — it\u2019s how the fuel log attributes entries.';
+  if(!r.logged_by)return 'Name is required. It is how the fuel log attributes entries.';
   if(!/^\d{4}-\d{2}-\d{2}$/.test(r.date))return 'Date looks off.';
   const nums=['gen1_hours','gen2_hours','gal_gen1','gal_gen2','gal_delivered','drum1_gal','drum2_gal'];
   const caps={gal_gen1:9,gal_gen2:9,gal_delivered:200,drum1_gal:50,drum2_gal:50,gen1_hours:20000,gen2_hours:20000};
   for(const k of nums){if(r[k]!==''&&(isNaN(+r[k])||+r[k]<0))return k.replace(/_/g,' ')+' must be a number \u2265 0.';
-    if(r[k]!==''&&+r[k]>caps[k])return (k.startsWith('gal_gen')?'The gen tank holds 7.9 gal \u2014 ':'')+k.replace(/_/g,' ')+' looks too high (max '+caps[k]+').';}
+    if(r[k]!==''&&+r[k]>caps[k])return (k.startsWith('gal_gen')?'The gen tank holds 7.9 gal, so ':'')+k.replace(/_/g,' ')+' looks too high (max '+caps[k]+').';}
   if(!nums.some(k=>r[k]!=='')&&!/^RETRACT#\d+:/.test(r.notes))return 'Log at least one number (fuel, meter, delivery, or drum level).';
-  if((r.drum1_gal!=='')!==(r.drum2_gal!==''))return 'Log both drums \u2014 enter 0 for an empty drum.';
+  if((r.drum1_gal!=='')!==(r.drum2_gal!==''))return 'Log both drums. Enter 0 for an empty drum.';
   const lg=k=>{const v=EV.map(e=>e[k]).filter(x=>x!=null);return v.length?v[v.length-1]:null;};
   const l1=lg('g1'),l2=lg('g2');
-  if(r.gen1_hours!==''&&l1!=null&&+r.gen1_hours<l1-0.05)return 'Gen 1 meter reads '+r.gen1_hours+' but the last entry was '+f(l1,1)+' \u2014 meters only count up. (Gen actually swapped? Log that row via the GitHub pencil.)';
-  if(r.gen2_hours!==''&&l2!=null&&+r.gen2_hours<l2-0.05)return 'Gen 2 meter reads '+r.gen2_hours+' but the last entry was '+f(l2,1)+' \u2014 meters only count up. (Gen actually swapped? Log that row via the GitHub pencil.)';
+  if(r.gen1_hours!==''&&l1!=null&&+r.gen1_hours<l1-0.05)return 'Gen 1 meter reads '+r.gen1_hours+' but the last entry was '+f(l1,1)+'. Meters only count up. (Gen actually swapped? Log that row via the GitHub pencil.)';
+  if(r.gen2_hours!==''&&l2!=null&&+r.gen2_hours<l2-0.05)return 'Gen 2 meter reads '+r.gen2_hours+' but the last entry was '+f(l2,1)+'. Meters only count up. (Gen actually swapped? Log that row via the GitHub pencil.)';
   return null;
 }
 let RETRACT_MODE=false;
@@ -786,7 +786,7 @@ async function submit(){
     const line=['date','time','logged_by','gen1_hours','gen2_hours','gal_gen1','gal_gen2','gal_delivered','drum1_gal','drum2_gal','notes'].map(k=>csvCell(r[k])).join(',');
     $('prevrow').textContent=line;
     $('prevbox').style.display='block';
-    msg.textContent='Preview mode — Worker not connected. Row shown below; append it to data/reality.csv via the GitHub pencil if needed.';
+    msg.textContent='Preview mode: Worker not connected. Row shown below; append it to data/reality.csv via the GitHub pencil if needed.';
     msg.className='warn';
     localEcho(r);return;
   }
@@ -795,13 +795,13 @@ async function submit(){
     const res=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r)});
     const t=await res.text();
     if(!res.ok)throw new Error(t||('HTTP '+res.status));
-    msg.textContent='Committed \u2713 \u2014 saved to the repo. It stays on this phone; everyone else sees it within ~1\u20135 min.';
+    msg.textContent='Committed \u2713 Saved to the repo. It stays on this phone; everyone else sees it within 1 to 5 min.';
     msg.className='good';
     localEcho(r);
     ['f_a1','f_a2','f_del','f_d1','f_d2','f_g1','f_g2','f_notes'].forEach(id=>$(id).value='');
     stampNow();meterHints();
-    if(RETRACT_MODE){RETRACT_MODE=false;msg.textContent='Retracted \u2713 \u2014 struck from the log; the original stays visible with your name and reason.';}
-  }catch(e){msg.textContent='Not committed \u2014 '+e.message+' (Starlink down? Use the paper sheet, backfill later.)';msg.className='bad';}
+    if(RETRACT_MODE){RETRACT_MODE=false;msg.textContent='Retracted \u2713 Struck from the log. The original stays visible with your name and reason.';}
+  }catch(e){msg.textContent='Not committed: '+e.message+' (Starlink down? Use the paper sheet, backfill later.)';msg.className='bad';}
   btn.disabled=false;
 }
 function localEcho(r){
@@ -834,13 +834,13 @@ async function boot(){
     $('fsub').onclick=submit;
     $('reloadbtn').onclick=async()=>{const b=$('reloadbtn');b.classList.add('spin');
       try{await loadPlan();await loadReality();loadVersion();meterHints();renderAll();toast('Synced \u2713 plan + fuel log \u00b7 '+EV.length+' entr'+(EV.length===1?'y':'ies'));}
-      catch(e){toast('Reload failed \u2014 '+e.message,true);}
+      catch(e){toast('Reload failed: '+e.message,true);}
       b.classList.remove('spin');};
     $('themebtn').onclick=()=>applyTheme(document.body.classList.contains('light')?'dark':'light');
     applyTheme(loadLS('cave_theme')==='light'?'light':'dark');
     $('loader').style.display='none';$('app').style.display='block';
     renderAll();
-  }catch(e){$('loadmsg').innerHTML='Could not load: '+esc(e.message)+(location.protocol==='file:'?'<br><br>This is the bare repo file opened from disk \u2014 it cannot read data/*.csv this way. Open the live page instead: <b>powerthecave.com/reality</b>.':'');}
+  }catch(e){$('loadmsg').innerHTML='Could not load: '+esc(e.message)+(location.protocol==='file:'?'<br><br>This is the bare repo file opened from disk, so it cannot read data/*.csv this way. Open the live page instead: <b>powerthecave.com/reality</b>.':'');}
 }
 boot();
 
