@@ -23,9 +23,10 @@ asadgo.github.io URL redirects). Pages: `/` = PROJECTED console, `/reality` = fu
 
 ## Layout
 
-- `index.html` — PROJECTED console. Reads `settings, devices, schedule, calendar_plan,
-  personal_items` (+ optional `device_days` = per-day differences, + `log` for the version).
-  “Make this the official plan” writes all six data CSVs from the screen (calendar + all 14 days).
+- `index.html` — PROJECTED console. Reads `settings, devices, schedule, calendar_plan`
+  (+ optional `device_days` = per-day differences, + `log` for the version). Camper gear (personal
+  items) are device rows with `category=Personal`; `personal_items.csv` is retired.
+  “Make this the official plan” writes the five data CSVs from the screen (calendar + all 14 days).
 - `reality.html` — REALITY fuel log. Carries a ported copy of the console model (block marked
   “MODEL ported from index.html” — re-port if the console model changes). Reads
   `data/reality.csv` from raw.githubusercontent.com first (fresh), Pages copy as fallback.

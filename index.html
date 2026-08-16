@@ -96,13 +96,11 @@ summary.flagrow2{display:flex;align-items:center;gap:16px;flex-wrap:nowrap}
 summary.flagrow2 .flagtxt{flex:1 1 auto;min-width:0;padding-right:8px}
 summary.flagrow2 #dellab,summary.flagrow2 #genlab{margin-left:auto;flex:0 0 auto;white-space:nowrap}
 summary.flagrow2 #genlab+*,summary.flagrow2 .floorlab{flex:0 0 auto;white-space:nowrap}
-#kadd{width:auto;font-size:12px;padding:7px 12px}
 #devtable td:first-child,#devtable th:first-child{width:192px;max-width:192px;overflow-wrap:break-word}
 #devbox,#devbox .twrap{overflow-anchor:none}
 #devbox.panel{padding-right:10px}
 #devtable input:not(.kitname){width:52px;font-size:12px;padding:6px 5px}
 #devtable input[data-f="q"],#devtable input[data-kf="q"]{width:40px}
-#devtable #psq{text-align:center;color:var(--muted)}
 #devtable input[data-f="w"],#devtable input[data-kf="w"]{width:58px}
 #devtable input::-webkit-outer-spin-button,#devtable input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 #devtable input[type=number]{-moz-appearance:textfield;appearance:textfield}
@@ -138,7 +136,7 @@ summary.flagrow2{display:flex;flex-wrap:wrap;row-gap:6px;align-items:center}
 #devtable tr.hrow th.qr{text-align:right}
 #devtable td:nth-child(3),#devtable td:nth-child(4){text-align:center}
 #devtable .hdc{width:56px;min-width:56px;max-width:56px;box-sizing:border-box;text-align:center;font-variant-numeric:tabular-nums}
-#devadd,#devcopy,#devfwd,#devview,#devcol,#scnsave,#scnload,#scnapply{width:auto;font-size:13px;padding:8px 14px;margin-top:8px;margin-right:8px}
+#devadd,#devaddp,#devcopy,#devfwd,#devview,#devcol,#scnsave,#scnload,#scnapply{width:auto;font-size:13px;padding:8px 14px;margin-top:8px;margin-right:8px}
 #scnapply{font-weight:700;color:var(--edit);border-color:var(--edit);background:var(--edit-bg)}
 #offbox .note{margin-top:2px}
 #devtable .dsub td{font:600 11px var(--mono);color:var(--muted2);border-top:1px solid var(--deep);padding:4px 3px 10px}
@@ -308,6 +306,7 @@ html,body{overflow-x:hidden;max-width:100%;-webkit-text-size-adjust:100%;text-si
 <button type="button" id="devview">View: by Category &#8644;</button>
 <button type="button" id="devcol">Expand all</button>
 <div class="twrap"><table id="devtable"></table></div>
+<button type="button" id="devaddp">+ Add personal item</button>
 <button type="button" id="devadd">+ Add custom item</button>
 <button type="button" id="devcopy">Copy edits to all days</button>
 <button type="button" id="devfwd">Copy edits to rest of event</button>
@@ -384,7 +383,7 @@ function parseCSV(text){
 }
 
 /* ---------- data loading: fetch data/*.csv, else local file picker ---------- */
-const FILES=['settings','devices','schedule','calendar_plan','personal_items'];
+const FILES=['settings','devices','schedule','calendar_plan'];
 const OPTIONAL=['device_days']; /* per-day device differences; a missing or header-only file means none */
 async function fetchAll(){
   const out={};
@@ -421,31 +420,29 @@ function pickerFallback(err){
 
 /* ---------- model from CSVs ---------- */
 let S={},NDAYS=14,START=null,DAY=86400000;
-let BOOTED=false,LASTDEVDAY=-1,RAWD=null,DEVFP='',NOTES='',DELTIME='am',GENMODE='g1',PGEN='2',FUELGENS=true,BOB=[],ALICE=[],PCW=[],CATS=[],DEVSEED=[],DEVC=[],DEVD=[],DER=[],SOUND=0,BASE=0,PP=0,ACW=0,ACHRS=0,EBK=0,BUDG=0,KPG=6.5,IDLE2=0,WARNM=15;
+let BOOTED=false,LASTDEVDAY=-1,RAWD=null,DEVFP='',NOTES='',DELTIME='am',GENMODE='g1',FUELGENS=true,BOB=[],ALICE=[],CATS=[],DEVSEED=[],DEVC=[],DEVD=[],DER=[],SOUND=0,ACW=0,KPG=6.5,IDLE2=0,WARNM=15;
 let aliceRef=1,fansKw=0,bobKw=9,aliceKw=9,DERATE=.88,CEIL=.8;
-let SEEDPLAN=null,SEEDFUEL=null,DTYPE=[],KITSEED=[];
-let PLAN=null,FUEL=null,FLOOR=5,KITC=null,EXP=false,cap,run,NDEV=0;
+let SEEDPLAN=null,SEEDFUEL=null,DTYPE=[];
+let PLAN=null,FUEL=null,FLOOR=5,EXP=false,cap,run,NDEV=0;
 
 function buildModel(D){
   D.settings.forEach(r=>{S[r.key]=(r.value!==''&&!isNaN(+r.value))?+r.value:r.value;});
   NDAYS=S.event_days||14;
   START=new Date(S.event_start+'T12:00:00');
   DERATE=S.playa_derate;CEIL=S.load_ceiling;KPG=S.kwh_per_gallon;
-  BASE=S.camp_base_kwh;PP=S.per_person_shared_kwh;BUDG=S.camper_budget_kwh;
-  ACW=S.ac_unit_kwh_per_hour;ACHRS=S.ac_hours_per_day;EBK=S.ebike_kwh_per_day;
+  ACW=S.ac_unit_kwh_per_hour;
   IDLE2=(S.gen_overhead_gal_each!=null?S.gen_overhead_gal_each:(S.second_gen_idle_gal||0));WARNM=S.fuel_warn_margin_gal;
   bobKw=S.gen_bob_watts/1000;aliceKw=S.gen_alice_watts/1000;
-  PCW=[...Array(24).keys()].map(j=>j>=12&&j<=19?S.camper_w_evening:(j>=2&&j<=11?S.camper_w_day:S.camper_w_night));
 
   DEVSEED=D.devices.map(r=>{const s=D.schedule.find(x=>x.device===r.device);
     let q=+r.qty||0,w=+r.running_w_each||0;
     if(/e-bike charging/i.test(r.device)&&q===1&&w>500){q=10;w=Math.round(w/10);}
-    return {n:r.device,area:r.area,cat:r.category,bus:r.bus,pr:r.priority,q,w,sc:(r.scaling==='people')?'people':'full',
+    return {n:r.device,area:r.area,cat:r.category,bus:r.bus,pr:r.priority,q,w,sc:(r.scaling==='people')?'people':(r.scaling==='perperson'?'perperson':'full'),
       gen:(r.gen==='1'||r.gen==='2')?r.gen:(r.gen==='A'?'2':(r.gen==='B'?'1':autoGen(r.device))),
       du:HOURS.map(hh=>s?(+s['h_'+hh]||0):0)};});
   DTYPE=D.calendar_plan.map(r=>r.day_type);
   const HK=new Set(HOURS.map(h=>'h_'+h));
-  OVR=(D.device_days||[]).filter(o=>o&&/^\d{4}-\d{2}-\d{2}$/.test(o.date||'')&&o.device&&(o.field==='qty'||o.field==='watts'||o.field==='gen'||HK.has(o.field)))
+  OVR=(D.device_days||[]).filter(o=>o&&/^\d{4}-\d{2}-\d{2}$/.test(o.date||'')&&o.device&&(o.field==='qty'||o.field==='watts'||o.field==='gen'||o.field==='scaling'||HK.has(o.field)))
     .map(o=>({date:o.date,device:o.device,field:o.field,value:String(o.value==null?'':o.value).trim()}));
   const dfp=JSON.stringify(DEVSEED)+'|'+JSON.stringify(OVR),nd_=D.calendar_plan.length;
   DEVFP=dfp;RAWD=D.devices;
@@ -461,8 +458,6 @@ function buildModel(D){
             s:D.calendar_plan.map(r=>+r.sound_on||0),
             g:D.calendar_plan.map(r=>+r.generators||1)};
   SEEDFUEL={del:D.calendar_plan.map(r=>+r.delivered_gal||0)};
-  KITSEED=D.personal_items.map(r=>({n:r.item,w:+r.watts||0,q:(r.qty==null||String(r.qty).trim()==='')?null:(+r.qty||0),
-    hs:HOURS.map((h,j)=>+r['h_'+h]?j:-1).filter(j=>j>=0)}));
 }
 
 const SRCSET=new Set(['The Source Computer','The Source Projector','Object motor','DMX Controller']);
@@ -472,6 +467,7 @@ function groupOf(d){
   if(/air condition/i.test(d.n))return 'ACs';
   if(/e-bike charging/i.test(d.n))return 'E-bikes';
   if(d.cat==='Sound')return 'Sound';
+  if(d.cat==='Personal')return 'Personal items';
   return 'Camp lights & misc';
 }
 const autoGen=n=>/air condition|fan|e-bike charging/i.test(n)?'2':'1';
@@ -491,10 +487,12 @@ function wireDay(rows){
   const AC1=acD?+(dayK(acD)/(acD.q||1)).toFixed(3):0;
   const EBT=ebD?+dayK(ebD).toFixed(3):0;
   const POOLK=+dev.filter(d=>d.bus==='Pool').reduce((a,d)=>a+dayK(d),0).toFixed(3);
-  const LMP=+dev.filter(d=>d.bus==='Pool'&&d.sc==='people'&&d.cat!=='Sound'&&!SRCSET.has(d.n)&&d!==acD&&d!==ebD).reduce((a,d)=>a+dayK(d),0).toFixed(3);
+  const isPer=d=>d.cat==='Personal';
+  const PERK=+dev.filter(d=>d.bus!=='Battery'&&isPer(d)).reduce((a,d)=>a+dayK(d),0).toFixed(3);
+  const LMP=+dev.filter(d=>d.bus==='Pool'&&d.sc==='people'&&d.cat!=='Sound'&&!isPer(d)&&!SRCSET.has(d.n)&&d!==acD&&d!==ebD).reduce((a,d)=>a+dayK(d),0).toFixed(3);
   return {BOB:B,ALICE:A,aliceRef:Math.max(...A)||1,fansKw:(fanD&&fanD.gen==='2')?fanD.tot/1000:0,acInB:!!(acD&&acD.gen==='2'),
-    ACW:acD&&acD.w?acD.w/1000:S.ac_unit_kwh_per_hour,SOUND:SN,CRITK,SRCK,AC1,EBT,LMP,
-    LMISCK:+(POOLK-SN-SRCK-(acD?dayK(acD):0)-(ebD?dayK(ebD):0)-LMP).toFixed(3)};
+    ACW:acD&&acD.w?acD.w/1000:S.ac_unit_kwh_per_hour,SOUND:SN,CRITK,SRCK,AC1,EBT,LMP,PERK,
+    LMISCK:+(POOLK-SN-SRCK-(acD?dayK(acD):0)-(ebD?dayK(ebD):0)-LMP-PERK).toFixed(3)};
 }
 function syncACFromPlan(){
   if(!PLAN||!DEVD.length)return;
@@ -504,8 +502,10 @@ function syncACFromPlan(){
     if(a&&a.q!==PLAN.a[i]){a.q=PLAN.a[i];ch=true;}
     const e=rows.find(x=>/e-bike charging/i.test(x.n));
     if(e&&e.q!==PLAN.e[i]){e.q=PLAN.e[i];ch=true;}
+    rows.forEach(r=>{if(r.sc==='perperson'&&r.q!==PLAN.p[i]){r.q=PLAN.p[i];ch=true;}});
   });
   if(ch){store('cavecsv_dev',DEVD);wireDevices();}
+  if(DEVC&&PLAN){DEVC.forEach((r,idx)=>{if(r.sc!=='perperson')return;const qi=document.querySelector('#devtable input[data-f="q"][data-vr="'+idx+'"]');if(qi&&document.activeElement!==qi&&+qi.value!==r.q)qi.value=r.q;});}
   if(DEVC&&PLAN){
     [['air condition','a'],['e-bike charging','e']].forEach(pk=>{
       const idx=DEVC.findIndex(x=>new RegExp(pk[0],'i').test(x.n));
@@ -527,7 +527,7 @@ function wireDevices(){
    ['Camp lights &amp; misc<span class="rl2">(fans, charging, coffee)</span>',i=>DER[i].LMISCK+DER[i].LMP*cf(i)],
    ['ACs',i=>DER[i].AC1*PLAN.a[i]],
    ['E-bikes',i=>DER[i].EBT],
-   ['Personal items<span class="rl2" id="pplab">(per-camper items \u00d7 people that day; items with a set qty use it)</span>',i=>kitKwh(i)]];
+   ['Personal items<span class="rl2" id="pplab">(camper gear: one per person unless a fixed count is set)</span>',i=>DER[i].PERK]];
   window.__CAVE={S,DER,DEVD,SOUND,CRITK:d0.CRITK,SRCK:d0.SRCK,LMISCK:d0.LMISCK,AC1:d0.AC1,EBT:d0.EBT};
 }
 
@@ -537,8 +537,10 @@ function rowMod(r,i){
   if(!r)return 0;
   if(r.cat==='Sound')return PLAN.s[i]?1:0;
   if(r.bus==='Battery'||SRCSET.has(r.n)||/air condition|e-bike charging/i.test(r.n))return 1;
-  return (r.sc==='people')?cf(i):1;
+  return (r.sc==='people'&&r.cat!=='Personal')?cf(i):1;
 }
+/* rows whose quantity the calendar sets each day: ACs, e-bikes, and one-per-person camper gear (scaling=perperson) */
+const calOwned=r=>!!r&&(/air condition|e-bike charging/i.test(r.n)||r.sc==='perperson');
 function rowKwh(r,i){return r.q*r.w*r.du.reduce((a,x)=>a+x,0)/1000*rowMod(r,i);}
 /* hourly kW per generator on day i, straight from the day's rows with rowMod; summing the 24 hours gives exactly the day's kWh */
 function hourlyByGen(i){
@@ -552,10 +554,7 @@ function calGroups(){
   const order=['Kitchen','Structure','Events','Shade City','Ebikes'];
   DEVD.forEach(rows=>rows.forEach(r=>{const a=r.area||'Custom';if(!order.includes(a))order.push(a);}));
   const present=order.filter(a=>DEVD.some(rows=>rows.some(r=>(r.area||'Custom')===a)));
-  const shade=present.find(a=>/shade city/i.test(a));
-  const gs=present.map(a=>[hesc(a)+(a===shade?'<span class="rl2">(incl. personal items)</span>':''),i=>DEVD[i].filter(r=>(r.area||'Custom')===a).reduce((s,r)=>s+rowKwh(r,i),0)+(a===shade?PP*pCount(i):0)]);
-  if(!shade)gs.push(['Personal items<span class="rl2">('+f(PP,2)+' kWh per camper \u00d7 people)</span>',i=>PP*pCount(i)]);
-  return gs;
+  return present.map(a=>[hesc(a),i=>DEVD[i].filter(r=>(r.area||'Custom')===a).reduce((s,r)=>s+rowKwh(r,i),0)]);
 }
 const redFor=g=>(+g===1?bobKw:bobKw+aliceKw)*DERATE*CEIL;
 const hardFor=g=>(+g===1?bobKw:bobKw+aliceKw)*DERATE;
@@ -563,14 +562,11 @@ const cf=i=>Math.min(1,Math.max(S.infra_floor_frac,S.infra_floor_frac+(1-S.infra
 
 const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'null');}catch(e){return null;}};
 const store=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}};
-const save=()=>{store('cavecsv_plan',PLAN);store('cavecsv_fuel',FUEL);store('cavecsv_kit',KITC);};
+const save=()=>{store('cavecsv_plan',PLAN);store('cavecsv_fuel',FUEL);};
 const okPlan=p=>p&&['p','a','e','s','g'].every(k=>Array.isArray(p[k])&&p[k].length===NDAYS);
 const normPlan=pl=>{if(pl&&(!Array.isArray(pl.pi)||pl.pi.length!==NDAYS))pl.pi=Array(NDAYS).fill(null);return pl;};
-const pCount=d=>PLAN?PLAN.p[d]:0; /* one per person = the day's People count; per-item fixed quantities live in personal_items.csv */
-/* personal items: each item counts the day's People (blank qty) or its own fixed number */
-const kitQty=(r,d)=>(r.q==null?pCount(d):(+r.q||0));
-const kitKwh=d=>(KITC||[]).reduce((a,r)=>a+kitQty(r,d)*(+r.w||0)*r.hs.length/1000,0);
-const kitKwAt=(d,j)=>(KITC||[]).reduce((a,r)=>a+(r.hs.includes(j)?kitQty(r,d)*(+r.w||0):0),0)/1000;
+const pCount=d=>PLAN?PLAN.p[d]:0;
+
 
 const kwhDay=i=>CATS.reduce((a,c)=>a+c[1](i),0);
 const burn=i=>kwhDay(i)/KPG+IDLE2*(PLAN.g[i]||1);
@@ -605,20 +601,19 @@ function poolPattern(){
   }catch(e){POOLPAT='#8985D3';}
   return POOLPAT;
 }
-/* Power curves: the day's rows, hour by hour, with rowMod, plus the personal items on the generator chosen for them (PGEN).
+/* Power curves: the day's rows, hour by hour, with rowMod (camper gear rows are ordinary rows on their own generator tag).
    Earlier builds scaled the whole gen 1 curve by cf and capped sound-off evenings, and rescaled gen 2 by the AC count: the hourly
    picture then disagreed with the energy model on build days (up to 20% low) and hid loads that dominated gen 2. */
 function curvesFor(i){
   const {g1,g2}=hourlyByGen(i);
-  const camp=g1.map((x,j)=>+(x+g2[j]+kitKwAt(i,j)).toFixed(2));
+  const camp=g1.map((x,j)=>+(x+g2[j]).toFixed(2));
   const pooled=PLAN.g[i]>=2;
   return[{label:pooled?'Camp load \u00b7 pooled 1+2':'Camp load \u00b7 1 generator',data:camp,color:pooled?poolPattern():'#2A8FEF'}];
 }
 function curvesAB(i){
   const {g1:h1,g2:h2}=hourlyByGen(i);
-  const camper=j=>kitKwAt(i,j);
-  const g1=h1.map((x,j)=>+(x+(PGEN==='1'?camper(j):0)).toFixed(2));
-  const g2=h2.map((x,j)=>+(x+(PGEN==='2'?camper(j):0)).toFixed(2));
+  const g1=h1.map(x=>+x.toFixed(2));
+  const g2=h2.map(x=>+x.toFixed(2));
   return[{label:'Gen 1',data:g1,color:'#2A8FEF'},
          {label:'Gen 2',data:g2,color:'#E97BB6'}];
 }
@@ -818,7 +813,7 @@ function paintOfficial(){
   const d=localDiff();
   const vtag=(()=>{const vv=($('ver').textContent||'').trim();if(!vv)return '';const md=OFFMETA&&OFFMETA.date?new Date(OFFMETA.date+'T12:00:00'):null;const when=md&&!isNaN(md)?md.toLocaleDateString('en-US',{month:'numeric',day:'numeric'}):'';return ' ('+vv+(OFFMETA&&OFFMETA.by?', published '+when+' by '+OFFMETA.by:(when?', updated '+when:''))+')';})();
   const v=vtag;
-  const parts=[];if(d.pc)parts.push(d.pc+' changed calendar cell'+(d.pc===1?'':'s'));if(d.simDays)parts.push(d.simDays+' changed device day'+(d.simDays===1?'':'s'));if(d.kc)parts.push('personal items changed');
+  const parts=[];if(d.pc)parts.push(d.pc+' changed calendar cell'+(d.pc===1?'':'s'));if(d.simDays)parts.push(d.simDays+' changed device day'+(d.simDays===1?'':'s'));
   if(!parts.length){st.textContent='\u00b7 this browser matches it';st.classList.remove('differs');nt.textContent='This browser matches the official plan'+v+'. Nothing to publish.';}
   else{st.textContent='\u00b7 this browser differs';st.classList.add('differs');nt.textContent='This browser differs from the official plan'+v+': '+parts.join(' \u00b7 ')+'. Press the button to publish everything on this page as the new official plan.';}
 }
@@ -956,31 +951,19 @@ function applyTheme(mode,persist){
 
 
 /* ---------- personal items calculator ---------- */
-function kitCalc(){
-  PCW=[...Array(24).keys()].map(j=>KITC.reduce((a,r)=>a+(r.hs.includes(j)?(+r.w||0):0),0));
-  let tk=0;KITC.forEach(r=>{tk+=(+r.w||0)*r.hs.length/1000;});
-  PP=+tk.toFixed(3);
-  save();
-  if(BOOTED){devPaint();if(PLAN){try{refresh(false);}catch(e){}}}
-}
 
 /* ---------- devices panel: whiteboard over devices.csv + schedule.csv ---------- */
-const DGROUPS=['Critical','Sound','The Source','Camp lights & misc','ACs','E-bikes'];
+const DGROUPS=['Critical','Sound','The Source','Camp lights & misc','ACs','E-bikes','Personal items'];
 const ASOF=()=>Math.min(NDAYS-1,Math.max(0,+$('asof').value||0));
 let DEVVIEW=load('cavecsv_devview')||'category';
-let PERSOPEN=false;
 let DEVGRP=[];
 function groupsFor(view){
   if(view==='area'){
     const order=['Kitchen','Structure','Events','Shade City','Ebikes'];
     DEVC.forEach(r=>{const a=r.area||'Custom';if(!order.includes(a))order.push(a);});
-    const gs=order.map(a=>({name:a,idxs:DEVC.map((r,i)=>((r.area||'Custom')===a)?i:-1).filter(i=>i>=0)})).filter(g=>g.idxs.length);
-    const k=gs.findIndex(g=>/shade city/i.test(g.name));
-    if(k>=0)gs[k].syn=1;else gs.push({name:'Personal items',idxs:[],syn:1});
-    return gs;
+    return order.map(a=>({name:a,idxs:DEVC.map((r,i)=>((r.area||'Custom')===a)?i:-1).filter(i=>i>=0)})).filter(g=>g.idxs.length);
   }
-  return DGROUPS.map(g=>({name:g,idxs:DEVC.map((r,i)=>groupOf(r)===g?i:-1).filter(i=>i>=0)})).filter(g=>g.idxs.length)
-    .concat([{name:'Personal items',idxs:[],syn:1}]);
+  return DGROUPS.map(g=>({name:g,idxs:DEVC.map((r,i)=>groupOf(r)===g?i:-1).filter(i=>i>=0)})).filter(g=>g.idxs.length);
 }
 /* ---------- per-day device differences (data/device_days.csv) ----------
    Every day starts as a copy of devices.csv + schedule.csv (the baseline). Off days are zeroed.
@@ -1003,6 +986,7 @@ function applyOverridesTo(rows,i){
     if(o.field==='qty')r.q=+o.value||0;
     else if(o.field==='watts')r.w=+o.value||0;
     else if(o.field==='gen')r.gen=(o.value==='2'?'2':'1');
+    else if(o.field==='scaling')r.sc=(o.value==='people')?'people':(o.value==='perperson'?'perperson':'full');
     else{const j=HOURS.indexOf(o.field.slice(2));if(j>=0)r.du[j]=Math.max(0,Math.min(1,+o.value||0));}
   });
   return rows;
@@ -1013,7 +997,8 @@ function seedDays(n){return Array.from({length:n},(_,i)=>seedDay(i));}
 function expectedDay(i){
   const t=seedDay(i);
   if(PLAN){const a=t.find(x=>/air condition/i.test(x.n));if(a)a.q=PLAN.a[i];
-    const e=t.find(x=>/e-bike charging/i.test(x.n));if(e)e.q=PLAN.e[i];}
+    const e=t.find(x=>/e-bike charging/i.test(x.n));if(e)e.q=PLAN.e[i];
+    t.forEach(r=>{if(r.sc==='perperson')r.q=PLAN.p[i];});}
   return t;
 }
 /* rows for device_days.csv: what every day other than the baseline day changes vs that baseline */
@@ -1024,15 +1009,16 @@ function overrideRowsFor(day){
     if(d===day)continue;
     const iso=isoDay(d),off=isOff(d);
     const exp=structuredClone(base).map(r=>({...r,q:off?0:r.q}));
-    exp.forEach(r=>{if(acN(r.n))r.q=PLAN.a[d];else if(ebN(r.n))r.q=PLAN.e[d];});
+    exp.forEach(r=>{if(acN(r.n))r.q=PLAN.a[d];else if(ebN(r.n))r.q=PLAN.e[d];else if(r.sc==='perperson')r.q=PLAN.p[d];});
     const act=DEVD[d]||[];
     const names=[...new Set([...exp.map(r=>r.n),...act.map(r=>r.n)])];
     names.forEach(n=>{
       const e=exp.find(r=>r.n===n),a=act.find(r=>r.n===n);
       const push=(f,v)=>out.push({date:iso,device:n,field:f,value:String(v)});
       if(e&&!a){if(e.q!==0)push('qty',0);return;}
-      if(a&&!e){push('qty',a.q);push('watts',a.w);push('gen',a.gen||'1');a.du.forEach((v,j)=>{if(v)push(HKEYS[j],v);});return;}
-      if(a.q!==e.q&&!acN(n)&&!ebN(n))push('qty',a.q);
+      if(a&&!e){push('qty',a.q);push('watts',a.w);push('gen',a.gen||'1');if(a.sc&&a.sc!=='full')push('scaling',a.sc);a.du.forEach((v,j)=>{if(v)push(HKEYS[j],v);});return;}
+      if((a.sc||'full')!==(e.sc||'full'))push('scaling',a.sc==='full'?'':a.sc);
+      if(a.q!==e.q&&!acN(n)&&!ebN(n)&&!(a.sc==='perperson'&&e.sc==='perperson'))push('qty',a.q);
       if(a.w!==e.w)push('watts',a.w);
       if((a.gen||'1')!==(e.gen||'1'))push('gen',a.gen||'1');
       for(let j=0;j<24;j++)if(a.du[j]!==e.du[j])push(HKEYS[j],a.du[j]);
@@ -1058,8 +1044,8 @@ function buildDev(){
       strip+='</div>';
       h+='<tr class="grow'+(op?'':' ghide')+'">'+(r.cu
           ?'<td><input class="kitname" data-vr="'+i+'" data-f="n" type="text" value="'+String(r.n).replace(/"/g,'&quot;')+'"></td><td class="gcell"><button type="button" class="gtag '+((PLAN&&PLAN.g[ASOF()]<2)?'g1 gdim':'g'+(r.gen||'1'))+'" data-gt="'+i+'" title="'+((PLAN&&PLAN.g[ASOF()]<2)?'single-generator day · all loads run on the one generator · tag still sets wiring for 2-gen days':'generator assignment · click: every day · shift-click: from this day on')+'">'+((PLAN&&PLAN.g[ASOF()]<2)?'1':(r.gen||'1'))+'</button></td>'
-          :'<td class="dname" title="'+(r.pr||'')+'">'+r.n+(/e-bike charging/i.test(r.n)?'<span class="devsm">watts per bike \u00b7 Qty = the calendar\u2019s E-bikes</span>':'')+'</td><td class="gcell"><button type="button" class="gtag '+((PLAN&&PLAN.g[ASOF()]<2)?'g1 gdim':'g'+(r.gen||'1'))+'" data-gt="'+i+'" title="'+((PLAN&&PLAN.g[ASOF()]<2)?'single-generator day · all loads run on the one generator · tag still sets wiring for 2-gen days':'generator assignment · click: every day · shift-click: from this day on')+'">'+((PLAN&&PLAN.g[ASOF()]<2)?'1':(r.gen||'1'))+'</button></td>')
-        +'<td><input data-vr="'+i+'" data-f="q" type="number" min="0" value="'+r.q+'"></td>'
+          :'<td class="dname" title="'+(r.pr||'')+'">'+r.n+(/e-bike charging/i.test(r.n)?'<span class="devsm">watts per bike \u00b7 Qty = the calendar\u2019s E-bikes</span>':(r.sc==='perperson'?'<span class="devsm">one per person \u00b7 Qty = the day\u2019s People</span>':''))+'</td><td class="gcell"><button type="button" class="gtag '+((PLAN&&PLAN.g[ASOF()]<2)?'g1 gdim':'g'+(r.gen||'1'))+'" data-gt="'+i+'" title="'+((PLAN&&PLAN.g[ASOF()]<2)?'single-generator day · all loads run on the one generator · tag still sets wiring for 2-gen days':'generator assignment · click: every day · shift-click: from this day on')+'">'+((PLAN&&PLAN.g[ASOF()]<2)?'1':(r.gen||'1'))+'</button></td>')
+        +'<td><input data-vr="'+i+'" data-f="q" type="number" min="0" value="'+r.q+'"'+(r.sc==='perperson'?' title="One per person: follows the day&#39;s People count. Type a number to fix this item&#39;s count on this day; clear the box to go back to one per person."':(r.cat==='Personal'?' title="Fixed count on this day. Clear the box to make it one per person (follows the People count)."':''))+'></td>'
         +'<td><input data-vr="'+i+'" data-f="w" type="number" min="0" value="'+r.w+'"></td>'
         +'<td class="hdc" id="dh'+i+'">&mdash;</td>'
         +'<td>'+strip+'</td>'
@@ -1067,33 +1053,9 @@ function buildDev(){
         +(r.cu?'<td><button type="button" class="kdel" data-dd="'+i+'" title="Delete item">&times;</button></td>':'<td></td>')
         +'</tr>';
     });
-    if(g.syn&&op){
-      h+='<tr class="grow psyn"><td class="dname pgrp" style="cursor:pointer" title="Personal items are camp-wide: one list, the same on every day. Blank qty = one per person, so it follows each day\u2019s People count; a number = that many every day. Click to show or hide the item lines.">'+(PERSOPEN?'\u25be ':'\u25b8 ')+'Personal items<span class="devsm">same list every day</span></td>'
-        +'<td class="gcell"><button type="button" class="gtag pgt '+((PLAN&&PLAN.g[ASOF()]<2)?'g1 gdim':'g'+PGEN)+'" title="'+((PLAN&&PLAN.g[ASOF()]<2)?'single-generator day · all loads run on the one generator':'which generator carries camper loads in split view')+'">'+((PLAN&&PLAN.g[ASOF()]<2)?'1':PGEN)+'</button></td>'
-        +'<td id="psq" title="The day&#39;s People count: items with a blank qty count one per person">\u2014</td><td id="psw">\u2014</td><td class="hdc" id="psh">\u2014</td>'
-        +'<td id="pstrip"></td><td class="qr" id="dkP">\u2014</td><td></td></tr>';
-      if(PERSOPEN)KITC.forEach((r,ki)=>{
-        let ks='<div class="hstrip">';
-        for(let j=0;j<24;j++)ks+='<div class="hcol"><div class="hc'+(r.hs.includes(j)?' on':'')+'" data-khr="'+ki+'" data-j="'+j+'"></div><div class="hlb'+((j===7||j===19)?' maj':'')+'">'+HOURS[j]+'</div></div>';
-        ks+='</div>';
-        h+='<tr class="grow"><td><input class="kitname" data-khr="'+ki+'" data-kf="n" type="text" value="'+String(r.n).replace(/"/g,'&quot;')+'" title="'+String(r.n).replace(/"/g,'&quot;')+'"></td>'
-          +'<td></td>'
-          +'<td><input data-khr="'+ki+'" data-kf="q" type="number" min="0" value="'+kitQty(r,ASOF())+'" title="How many of this item today. Shown = one per person unless you type a number, which then holds for every day. Clear the box to go back to one per person."></td>'
-          +'<td><input data-khr="'+ki+'" data-kf="w" type="number" min="0" value="'+r.w+'"></td>'
-          +'<td class="hdc" id="khd'+ki+'">\u2014</td>'
-          +'<td>'+ks+'</td>'
-          +'<td class="qr" id="kdr'+ki+'">\u2014</td>'
-          +'<td><button type="button" class="kdel" data-khr="'+ki+'" title="Delete item">\u00d7</button></td></tr>';
-      });
-      if(PERSOPEN)h+='<tr class="grow"><td colspan="8"><button type="button" id="kadd">+ Add personal item</button></td></tr>';
-    }
     h+='<tr class="dsub"><td class="ktlab">'+(({'Camp lights & misc':'Lights & misc'})[g.name]||g.name)+' subtotal</td><td></td><td></td><td></td><td></td><td></td><td class="qr" id="dg'+gi+'">&mdash;</td><td></td></tr>';
   });
   T.innerHTML=h;
-  T.querySelectorAll('.pgrp').forEach(el=>el.addEventListener('click',()=>{
-    PERSOPEN=!PERSOPEN;
-    buildDev();devPaint();
-  }));
   T.querySelectorAll('.dgrp').forEach(el=>el.addEventListener('click',()=>{
     const nm=DEVGRP[+el.dataset.g].name;
     const st=load('cavecsv_devopen')||{};
@@ -1105,13 +1067,6 @@ function buildDev(){
   $('devday').textContent='\u00b7 editing '+['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date(START.getTime()+ASOF()*DAY).getDay()]+' '+dLab(ASOF())+' only';
   $('devview').textContent='View: by '+(DEVVIEW==='area'?'Area':'Category')+' \u21c4';
   $('devcol').textContent=DEVGRP.some(g=>open.has(g.name))?'Collapse all':'Expand all';
-  T.querySelectorAll('.gtag.pgt').forEach(el=>el.addEventListener('click',()=>{
-    if(PLAN&&PLAN.g[ASOF()]<2)return;
-    PGEN=PGEN==='2'?'1':'2';
-    store('cavecsv_pgen',PGEN);
-    el.textContent=PGEN;el.className='gtag pgt g'+PGEN;
-    refresh(false);
-  }));
   T.querySelectorAll('.gtag[data-gt]').forEach(el=>el.addEventListener('click',ev=>{
     if(PLAN&&PLAN.g[ASOF()]<2)return;
     const i=+el.dataset.gt,nm=DEVC[i]&&DEVC[i].n;
@@ -1123,38 +1078,17 @@ function buildDev(){
     el.textContent=nv;el.className='gtag g'+nv;
     devCalc();
   }));
-  T.querySelectorAll('input[data-khr][data-kf="q"]').forEach(el=>el.addEventListener('blur',()=>{const r=KITC[+el.dataset.khr];if(r&&r.q==null)el.value=String(kitQty(r,ASOF()));}));
-  T.querySelectorAll('input[data-khr]').forEach(el=>el.addEventListener('input',()=>{
-    const r=KITC[+el.dataset.khr],fld=el.dataset.kf;
-    if(!r)return;
-    if(fld==='q')r.q=el.value.trim()===''?null:Math.max(0,+el.value||0);
-    else r[fld]=fld==='n'?el.value:(+el.value||0);
-    if(fld==='n')el.title=el.value;
-    kitCalc();
-  }));
-  T.querySelectorAll('.hc[data-khr]').forEach(el=>el.addEventListener('click',()=>{
-    const r=KITC[+el.dataset.khr],j=+el.dataset.j;
-    if(!r)return;
-    const ix=r.hs.indexOf(j);
-    if(ix>=0)r.hs.splice(ix,1);else r.hs.push(j);
-    el.classList.toggle('on');
-    kitCalc();
-  }));
-  T.querySelectorAll('.kdel[data-khr]').forEach(el=>el.addEventListener('click',()=>{
-    KITC.splice(+el.dataset.khr,1);
-    buildDev();devPaint();kitCalc();
-  }));
-  {const ka=$('kadd');if(ka)ka.addEventListener('click',()=>{
-    KITC.push({n:'New item',w:0,hs:[],q:null});
-    buildDev();devPaint();
-    const nn=$('devtable').querySelectorAll('input[data-khr][data-kf="n"]');
-    if(nn.length){nn[nn.length-1].focus();nn[nn.length-1].select();}
-    kitCalc();
-  });}
   T.querySelectorAll('input[data-vr]').forEach(el=>el.addEventListener('input',()=>{
     const r=+el.dataset.vr,fld=el.dataset.f;
     const v=fld==='n'?el.value:(+el.value||0);
     const oldName=DEVC[r].n;
+    if(fld==='q'&&DEVC[r].cat==='Personal'){
+      /* camper gear: blank = one per person (follows People), a number = fixed on this day */
+      if(el.value.trim()===''){DEVC[r].sc='perperson';DEVC[r].q=PLAN?PLAN.p[ASOF()]:0;}
+      else{DEVC[r].sc='full';DEVC[r].q=Math.max(0,v);}
+      touch(ASOF(),DEVC[r].n,'q');touch(ASOF(),DEVC[r].n,'sc');
+      devCalc();return;
+    }
     DEVC[r][fld]=v;
     if(fld==='n')touchRename(ASOF(),oldName,v);else touch(ASOF(),DEVC[r].n,fld);
     if(fld==='q'&&PLAN){
@@ -1165,6 +1099,7 @@ function buildDev(){
     }
     devCalc();
   }));
+  T.querySelectorAll('input[data-vr][data-f="q"]').forEach(el=>el.addEventListener('blur',()=>{const r=DEVC[+el.dataset.vr];if(r&&r.cat==='Personal')el.value=r.q;}));
   T.querySelectorAll('.hc').forEach(el=>el.addEventListener('click',()=>{
     const r=DEVC[+el.dataset.vr],j=+el.dataset.j;
     r.du[j]=r.du[j]>=1?0:Math.min(1,+(r.du[j]+0.25).toFixed(2));
@@ -1193,46 +1128,20 @@ function devPaint(){
   const gRow=(r,d)=>r?r.q*r.w*duS(r)/1000*gFac(r,d):0;
   const rowKw=(d,idx)=>gRow(DEVD[d]&&DEVD[d][idx],d);
   const rowEF=idx=>{let ev=0,fr=0;for(let d=0;d<NDAYS;d++){const k=rowKw(d,idx);ev+=k;if(d>=ASOF())fr+=k;}return[ev,fr];};
-  const kitEF=()=>{let ev=0,fr=0;for(let d=0;d<NDAYS;d++){const k=kitKwh(d);ev+=k;if(d>=ASOF())fr+=k;}return[ev,fr];};
-  const itemEF=r=>{let ev=0,fr=0;for(let d=0;d<NDAYS;d++){const k=kitQty(r,d)*(+r.w||0)*r.hs.length/1000;ev+=k;if(d>=ASOF())fr+=k;}return[ev,fr];};
   let tk=0;
   DEVC.forEach((r,i)=>{
     const hrs=r.du.reduce((a,x)=>a+x,0),k=gRow(r,ASOF());tk+=k;
     const eh=$('dh'+i);if(eh)eh.textContent=hrs.toFixed(2);
-    const ek=$('dk'+i);if(ek){const[ev,fr]=rowEF(i);const cfd=(r.sc==='people'&&PLAN)?cf(ASOF()):1;const tag=cfd<0.995?'<span class="devsm">\u00d7 '+cfd.toFixed(2)+' \u00b7 scales with headcount ('+pCount(ASOF())+' of '+(S.infra_full_people||40)+')</span>':'';ek.innerHTML=f(k,2)+' kWh/day &middot; '+f(k/KPG,2)+' gal/day'+tag+efSub(ev,fr);}
+    const ek=$('dk'+i);if(ek){const[ev,fr]=rowEF(i);const cfd=(r.sc==='people'&&r.cat!=='Personal'&&PLAN)?cf(ASOF()):1;const tag=cfd<0.995?'<span class="devsm">\u00d7 '+cfd.toFixed(2)+' \u00b7 scales with headcount ('+pCount(ASOF())+' of '+(S.infra_full_people||40)+')</span>':(r.cat==='Personal'?'<span class="devsm">'+(r.sc==='perperson'?'one per person \u00b7 '+r.q+' today':'fixed '+r.q+' on this day')+' \u00b7 '+f(r.w*duS(r)/1000,2)+' kWh each</span>':'');ek.innerHTML=f(k,2)+' kWh/day &middot; '+f(k/KPG,2)+' gal/day'+tag+efSub(ev,fr);}
   });
-  const pNow=pCount(ASOF()),kwP=kitKwh(ASOF());
   DEVGRP.forEach((g,gi)=>{
-    const gk=(g.syn?kwP:0)+g.idxs.reduce((a,i)=>{const r=DEVC[i];return a+gRow(r,ASOF());},0);
+    const gk=g.idxs.reduce((a,i)=>{const r=DEVC[i];return a+gRow(r,ASOF());},0);
     let gev=0,gfr=0;
     g.idxs.forEach(i=>{const[e2,f2]=rowEF(i);gev+=e2;gfr+=f2;});
-    if(g.syn){const[pe,pf]=kitEF();gev+=pe;gfr+=pf;}
     const eg=$('dg'+gi);if(eg)eg.innerHTML=f(gk,2)+' kWh/day &middot; '+f(gk/KPG,2)+' gal/day'+efSub(gev,gfr);
   });
-  if($('psq')){
-    const maxW=Math.max(...PCW,1);
-    $('psq').textContent=pNow;
-    $('psw').innerHTML=f(PP,2)+'<span class="devsm">kWh/ea</span>';
-    $('psh').textContent='\u2014';
-    let sh='<div class="hstrip" title="hours when any camper item draws">';
-    for(let j=0;j<24;j++){const du=PCW[j]/maxW;
-      sh+='<div class="hcol"><div class="hc'+(du>0?' on':'')+'"></div><div class="hlb'+((j===7||j===19)?' maj':'')+'">'+HOURS[j]+'</div></div>';}
-    $('pstrip').innerHTML=sh+'</div>';
-    const ep=$('dkP');if(ep){const[ev,fr]=kitEF();ep.innerHTML=f(kwP,2)+' kWh/day &middot; '+f(kwP/KPG,2)+' gal/day'+efSub(ev,fr);}
-    KITC.forEach((r,ki)=>{
-      const eh=$('khd'+ki);if(!eh)return;
-      eh.textContent=r.hs.length;
-      const kw=(+r.w||0)*r.hs.length/1000,qn=kitQty(r,ASOF());
-      const qi=document.querySelector('input[data-khr="'+ki+'"][data-kf="q"]');if(qi&&document.activeElement!==qi){qi.value=String(qn);}
-      $('kdr'+ki).innerHTML=f(kw*qn,2)+' kWh/day &middot; '+f(kw*qn/KPG,2)+' gal/day'
-        +'<span class="devsm">'+(r.q==null?'one per person \u00b7 '+qn+' today':'fixed '+qn+' every day')+' \u00b7 '+f(kw,2)+' kWh each</span>'
-        +(x=>efSub(x[0],x[1]))(itemEF(r));
-    });
-  }
-  tk+=kwP;
   let tev=0,tfr=0;
   DEVC.forEach((r,i)=>{const[e2,f2]=rowEF(i);tev+=e2;tfr+=f2;});
-  {const[e2,f2]=kitEF();tev+=e2;tfr+=f2;}
   const tt=$('dkT');if(tt){const ng=(PLAN&&PLAN.g[ASOF()])||1,goh=IDLE2*ng;
     const dn=new Date(START.getTime()+ASOF()*DAY).toLocaleDateString('en-US',{weekday:'short'});
     tt.innerHTML='<span class="dline dhead">On this day: '+dn+' '+dLab(ASOF())+'</span>'
@@ -1311,7 +1220,7 @@ const dlText=(name,text,type)=>{const a=document.createElement('a');
 function scnSerialize(title,seq,author){
   return {kind:'cave-scenario',v:1,title:title,author:author||null,dl_id:seq||null,created:new Date().toISOString(),
     base_dev:scnHash(DEVFP),base_plan:scnHash(JSON.stringify(SEEDPLAN)),
-    state:{plan:PLAN,fuel:FUEL,floor:FLOOR,devd:DEVD,notes:NOTES,kit:KITC,pgen:PGEN}};
+    state:{plan:PLAN,fuel:FUEL,floor:FLOOR,devd:DEVD,notes:NOTES}};
 }
 function scnBanner(){
   const n=load('cavecsv_scn');
@@ -1324,13 +1233,12 @@ function localDiff(){
   let pc=0;['p','a','e','s','g'].forEach(k=>{for(let i=0;i<NDAYS;i++)if(PLAN[k][i]!==SEEDPLAN[k][i])pc++;});
   for(let i=0;i<NDAYS;i++)if((FUEL.del[i]||0)!==(SEEDFUEL.del[i]||0))pc++;
   const simDays=DEVD.filter((dd,i)=>JSON.stringify(dd)!==JSON.stringify(expectedDay(i))).length;
-  const kc=JSON.stringify(KITC)!==JSON.stringify(KITSEED);
   const notes=!!NOTES.trim(),floorCh=FLOOR!==S.fuel_floor_gal;
-  return {pc,simDays,kc,notes,floorCh,any:!!(pc||simDays||kc||notes||floorCh)};
+  return {pc,simDays,kc:false,notes,floorCh,any:!!(pc||simDays||notes||floorCh)};
 }
 function diffText(d){
   const p=[];if(d.pc)p.push(d.pc+' changed calendar cell'+(d.pc===1?'':'s'));if(d.simDays)p.push(d.simDays+' changed device day'+(d.simDays===1?'':'s'));
-  if(d.kc)p.push('personal items');if(d.notes)p.push('notes');if(d.floorCh)p.push('fuel floor');return p.join(', ');
+  if(d.notes)p.push('notes');if(d.floorCh)p.push('fuel floor');return p.join(', ');
 }
 async function scnLoadObj(o){
   if(!o||o.kind!=='cave-scenario'||!o.state)throw new Error('This is not a simulation file from this console. Simulation files come from the Export simulation button and are named like name_cavepowersim_2026-08-16_….json. Nothing on the page changed.');
@@ -1342,7 +1250,7 @@ async function scnLoadObj(o){
   const d=localDiff();
   const when=o.created&&!isNaN(new Date(o.created))?new Date(o.created).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
   let msg='<p>Load <b>'+hesc(o.title||'this simulation')+'</b>'+(o.author?' by '+hesc(o.author):'')+(when?' (saved '+when+')':'')+'?</p>'
-    +'<p>Everything on this page is replaced by the file: calendar, fuel, all '+NDAYS+' days of devices, personal items, notes. Only this browser changes; nothing on GitHub changes.</p>'
+    +'<p>Everything on this page is replaced by the file: calendar, fuel, all '+NDAYS+' days of devices (camper gear included), notes. Only this browser changes; nothing on GitHub changes.</p>'
     +(d.any?'<p>Your current edits are lost unless you Cancel and press Export simulation first.</p><details><summary>See your current edits</summary>'+diffDetailHTML()+'</details>':'')
     +(stale?'<div class="callout">Saved against an older official plan: the calendar or device tables have changed since. The file loads exactly as it was saved; changes made to the official plan since then are not in it.</div>':'');
   if(await uiDialog({html:true,msg,title:'Import simulation',ok:'Import'})!==true)return false;
@@ -1353,9 +1261,6 @@ async function scnLoadObj(o){
   TOUCH={};store('cavecsv_touch',TOUCH);
   NOTES=typeof st.notes==='string'?st.notes:'';
   $('notes').value=NOTES;store('cavecsv_notes',NOTES);if(window.__noteCue)window.__noteCue();
-  PGEN=st.pgen==='1'?'1':'2';store('cavecsv_pgen',PGEN);
-  KITC=(Array.isArray(st.kit)&&st.kit.every(r=>r&&typeof r.n==='string'&&Array.isArray(r.hs)))?st.kit:structuredClone(KITSEED);
-  store('cavecsv_kit',KITC);kitCalc();
   save();store('cavecsv_dev',DEVD);store('cavecsv_scn',o.title||'unnamed simulation');
   syncACFromPlan();wireDevices();buildDev();devPaint();scnBanner();refresh(true);
   return true;
@@ -1371,14 +1276,12 @@ function scnApplyBuild(day){
   let sch='device,'+HOURS.map(x=>'h_'+x).join(',')+'\n';
   DEVD[day].forEach(r=>{
     const o=raw[r.n]||{};
-    dev+=[esc(r.n),esc(r.area||o.area||'Custom'),esc(r.cat||o.category||'Custom'),esc(o.product),r.q,r.w,esc(o.surge_w_each),esc(o.volts),esc(r.bus||o.bus||'Pool'),esc(r.pr||o.priority||'Cut if needed'),esc(o.notes),(r.sc==='people'?'people':''),(r.gen==='2'?'2':'1')].join(',')+'\n';
+    dev+=[esc(r.n),esc(r.area||o.area||'Custom'),esc(r.cat||o.category||'Custom'),esc(o.product),r.q,r.w,esc(o.surge_w_each),esc(o.volts),esc(r.bus||o.bus||'Pool'),esc(r.pr||o.priority||'Cut if needed'),esc(o.notes),(r.sc==='people'?'people':(r.sc==='perperson'?'perperson':'')),(r.gen==='2'?'2':'1')].join(',')+'\n';
     sch+=esc(r.n)+','+r.du.join(',')+'\n';
   });
-  let kit='item,watts,qty,'+HOURS.map(x=>'h_'+x).join(',')+'\n';
-  (KITC||[]).forEach(r=>{kit+=esc(r.n)+','+r.w+','+(r.q==null?'':r.q)+','+HOURS.map((_,j)=>r.hs.includes(j)?1:0).join(',')+'\n';});
   let dd='date,device,field,value\n';
   overrideRowsFor(day).forEach(o=>{dd+=[o.date,esc(o.device),o.field,esc(o.value)].join(',')+'\n';});
-  return {'calendar_plan.csv':cal,'devices.csv':dev,'schedule.csv':sch,'device_days.csv':dd,'personal_items.csv':kit};
+  return {'calendar_plan.csv':cal,'devices.csv':dev,'schedule.csv':sch,'device_days.csv':dd};
 }
 /* baseline for the export: the non-Off day whose setup the most other days share (fewest device_days rows); ties prefer a Burn day, then the earliest */
 function pickBaseline(){
@@ -1407,24 +1310,22 @@ async function scnApply(){
   const tag=ch=>'<span class="n '+(ch?'n-ch':'n-ok')+'">'+(ch?'changed':'unchanged')+'</span>';
   const hasNotes=!!NOTES.trim();
   const msg=
-    '<p>Downloads a zip of 6 CSV files: everything on this page (calendar, all '+NDAYS+' days of devices, personal items) exactly as on screen. Upload them into the repo\u2019s <b>data</b> folder and this becomes the official plan for everyone.'+(nm?' (Loaded simulation: '+String(nm).replace(/</g,'&lt;').slice(0,60)+')':'')+'</p>'
+    '<p>Downloads a zip of 5 CSV files: everything on this page (calendar, all '+NDAYS+' days of devices, camper gear included) exactly as on screen. Upload them into the repo\u2019s <b>data</b> folder and this becomes the official plan for everyone.'+(nm?' (Loaded simulation: '+String(nm).replace(/</g,'&lt;').slice(0,60)+')':'')+'</p>'
     +'<p>Your changes vs the current plan:</p><ul>'
     +'<li>Calendar: '+num(pc,'cell')+'</li>'
-    +'<li>Devices: '+num(simDays,'day')+' of '+NDAYS+'</li>'
-    +'<li>Personal items: '+tag(kc)+'</li></ul>'
-    +((pc||simDays||kc)?'<details><summary>See the changes</summary>'+diffDetailHTML()+'</details>':'')
-    +((!pc&&!simDays&&!kc)?'<div class="callout">Nothing on screen differs from the official plan. This zip would change nothing except adding a log line.</div>':'')
+    +'<li>Devices: '+num(simDays,'day')+' of '+NDAYS+'</li></ul>'
+    +((pc||simDays)?'<details><summary>See the changes</summary>'+diffDetailHTML()+'</details>':'')
+    +((!pc&&!simDays)?'<div class="callout">Nothing on screen differs from the official plan. This zip would change nothing except adding a log line.</div>':'')
     +'<details><summary>What is in the zip</summary><ul>'
     +'<li><span class="fn">calendar_plan.csv</span>: the calendar table for all '+NDAYS+' days (people, ACs, e-bikes, sound, gens, deliveries).</li>'
     +'<li><span class="fn">devices.csv</span> + <span class="fn">schedule.csv</span>: the device table of one typical day, currently <b>'+dayName+'</b>: quantities, watts, gen tags and hour strips. The console rebuilds every day from this table.</li>'
     +'<li><span class="fn">device_days.csv</span>: the exceptions: each cell that a specific day sets differently from that typical day. Right now '+ovr.length+' cell'+(ovr.length===1?'':'s')+' on '+ovrDays+' day'+(ovrDays===1?'':'s')+'.</li>'
-    +'<li><span class="fn">personal_items.csv</span>: the Personal items rows.</li>'
     +'<li><span class="fn">log.csv</span>: the version history plus one new line. The header will read <b>'+nxt+'</b> (now '+cur+').</li>'
     +(hasNotes?'<li><span class="fn">notes.txt</span>: a copy of your Notes box, outside the data folder. Do not upload it.</li>':'')
     +'</ul></details>'
     +'<p>After the download:</p><ol>'
     +'<li>Unzip it.</li>'
-    +'<li>GitHub: open the repo\u2019s <b>data</b> folder, Add file, Upload files, drop in all 6 CSV files, Commit.</li>'
+    +'<li>GitHub: open the repo\u2019s <b>data</b> folder, Add file, Upload files, drop in all 5 CSV files, Commit.</li>'
     +'<li>Wait about 1 minute, then press Reset (circular arrow, top right). The header reads <b>'+nxt+'</b> once it has landed; if it still reads '+cur+', wait and press Reset again.</li>'
     +'</ol>';
   const who=await uiDialog({html:true,msg:msg+'<p>Your name, for the version log (line '+nxt+' will read: Official plan updated by \u2026):</p>',title:'Make this the official plan',ok:'Download zip',input:load('cavecsv_author')||'',placeholder:'your name',required:true});
@@ -1433,7 +1334,7 @@ async function scnApply(){
   const files=scnApplyBuild(day);
   const iso=new Date().toISOString();
   const id='cavepower_official-plan_'+String(who).replace(/[^\w\- ]+/g,'').trim().replace(/\s+/g,'_')+'_'+iso.slice(0,10)+'_'+iso.slice(11,19).replace(/:/g,'')+'Z';
-  const row=nv.toFixed(1)+','+iso.slice(0,10)+',"Official plan updated by '+String(who).replace(/"/g,"'")+' from the console'+(nm?' (simulation: '+String(nm).replace(/"/g,"'")+')':'')+': calendar for all '+NDAYS+' days; baseline device setup and hourly duty from '+dayName+'; per-day differences for '+ovrDays+' other day'+(ovrDays===1?'':'s')+' ('+ovr.length+' cells in device_days.csv); personal items."\n';
+  const row=nv.toFixed(1)+','+iso.slice(0,10)+',"Official plan updated by '+String(who).replace(/"/g,"'")+' from the console'+(nm?' (simulation: '+String(nm).replace(/"/g,"'")+')':'')+': calendar for all '+NDAYS+' days; baseline device setup and hourly duty from '+dayName+'; per-day differences for '+ovrDays+' other day'+(ovrDays===1?'':'s')+' ('+ovr.length+' cells in device_days.csv)."\n';
   files['log.csv']=(logTxt&&!logTxt.endsWith('\n')?logTxt+'\n':logTxt)+row;
   const entries=Object.keys(files).map(n=>({name:id+'/data/'+n,text:files[n]}));
   if(hasNotes)entries.push({name:id+'/notes.txt',text:NOTES});
@@ -1444,13 +1345,11 @@ function resetToCSV(){
   ['cavecsv_plan','cavecsv_fuel','cavecsv_kit','cavecsv_floor','cavecsv_dev','cavecsv_scn','cavecsv_notes','cavecsv_touch'].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});
   TOUCH={};
   PLAN=structuredClone(SEEDPLAN);FUEL=structuredClone(SEEDFUEL);
-  KITC=structuredClone(KITSEED);
   DEVD=seedDays(NDAYS);DEVC=DEVD[ASOF()];wireDevices();syncACFromPlan();
   FLOOR=S.fuel_floor_gal;$('floor').value=FLOOR;
   BOOTED=false;
   NOTES='';$('notes').value='';if(window.__noteCue)window.__noteCue();
-  PGEN='2';store('cavecsv_pgen',PGEN);
-  kitCalc();buildDev();devCalc();scnBanner();
+  buildDev();devCalc();scnBanner();
   BOOTED=true;
   refresh(true);
 }
@@ -1475,14 +1374,15 @@ function devChanges(a){
     const r=act.find(x=>x.n===n),ex=exp.find(x=>x.n===n),f=tt[n];
     if(!r){if(f.remove||f.add)out.push({n,kind:'remove'});return;}
     if(!ex){out.push({n,kind:'add',row:structuredClone(r)});return;}
-    if(f.q&&!(acN(n)||ebN(n)))out.push({n,kind:'q',v:r.q,o:ex.q});
+    if(f.sc)out.push({n,kind:'sc',v:r.sc||'full',o:ex.sc||'full'});
+    if(f.q&&!(acN(n)||ebN(n))&&r.sc!=='perperson')out.push({n,kind:'q',v:r.q,o:ex.q});
     if(f.w)out.push({n,kind:'w',v:r.w,o:ex.w});
     if(f.gen)out.push({n,kind:'gen',v:r.gen||'1',o:ex.gen||'1'});
     Object.keys(f).forEach(k=>{if(/^h\d+$/.test(k)){const j=+k.slice(1);out.push({n,kind:'h',j,v:r.du[j],o:ex.du[j]});}});
   });
   return out;
 }
-const devChangeWords=c=>c.kind==='add'?'added':c.kind==='remove'?'removed':c.kind==='q'?'qty '+c.v:c.kind==='w'?c.v+' W':c.kind==='gen'?'gen '+c.v:HOURS[c.j]+' '+(FRAC[c.v]||c.v);
+const devChangeWords=c=>c.kind==='add'?'added':c.kind==='remove'?'removed':c.kind==='sc'?(c.v==='perperson'?'one per person':'fixed count'):c.kind==='q'?'qty '+c.v:c.kind==='w'?c.v+' W':c.kind==='gen'?'gen '+c.v:HOURS[c.j]+' '+(FRAC[c.v]||c.v);
 function devChangesLines(ch,cap){
   const by={};ch.forEach(c=>{(by[c.n]=by[c.n]||[]).push(c);});
   const lines=Object.keys(by).map(n=>hesc(n)+': '+by[n].map(devChangeWords).join(', '));
@@ -1492,10 +1392,10 @@ function devChangesLines(ch,cap){
 }
 function applyDevChangeTo(rows,c){
   const k=rows.findIndex(x=>x.n===c.n),r=k>=0?rows[k]:null;
-  if(c.kind==='add'){if(!r)rows.push(structuredClone(c.row));else{r.q=c.row.q;r.w=c.row.w;r.gen=c.row.gen;r.du=c.row.du.slice();}return;}
+  if(c.kind==='add'){if(!r)rows.push(structuredClone(c.row));else{r.q=c.row.q;r.w=c.row.w;r.gen=c.row.gen;r.sc=c.row.sc;r.du=c.row.du.slice();}return;}
   if(c.kind==='remove'){if(r){if(r.cu)rows.splice(k,1);else r.q=0;}return;}
   if(!r)return;
-  if(c.kind==='q')r.q=c.v;else if(c.kind==='w')r.w=c.v;else if(c.kind==='gen')r.gen=c.v;else if(c.kind==='h')r.du[c.j]=c.v;
+  if(c.kind==='sc')r.sc=c.v;else if(c.kind==='q')r.q=c.v;else if(c.kind==='w')r.w=c.v;else if(c.kind==='gen')r.gen=c.v;else if(c.kind==='h')r.du[c.j]=c.v;
 }
 /* every change on every day, whichever day is selected */
 function allChanges(){
@@ -1528,8 +1428,6 @@ function changesListHTML(all){
   return '<ul>'+runs.slice(0,10).map(r=>'<li><b>'+dLab(r.from)+(r.to>r.from?' to '+dLab(r.to):'')+'</b>: '+r.txt+'</li>').join('')+(runs.length>10?'<li>+ '+(runs.length-10)+' more</li>':'')+'</ul>';
 }
 async function noChangesMsg(){
-  const kc=JSON.stringify(KITC)!==JSON.stringify(KITSEED);
-  if(kc){await uiAlert('Nothing to copy. Personal items are camp-wide: one list, the same on every day, so the item you added or changed already counts on all 14 days (blank qty = one per person each day; a number = that many every day). Only calendar cells and device rows are per day, and none of those have been edited.','Copy edits');return;}
   await uiAlert('Nothing to copy: no cell has been edited on this page since it was loaded (or since the last Reset or Import simulation). Edit a calendar cell, an hour cell, a quantity, watts, a gen tag or a custom item on any day, then press again.','Copy edits');}
 async function applyAllDays(){
   const all=allChanges();
@@ -1576,13 +1474,6 @@ function diffDetailHTML(){
   dayLines.forEach(d=>{const last=runs[runs.length-1];if(last&&last.txt===d.txt&&last.to===d.i-1)last.to=d.i;else runs.push({from:d.i,to:d.i,txt:d.txt});});
   runs.slice(0,8).forEach(r=>li.push('<li><b>Devices '+dLab(r.from)+(r.to>r.from?' to '+dLab(r.to):'')+'</b>: '+r.txt+'</li>'));
   if(runs.length>8)li.push('<li><b>Devices</b>: + '+(runs.length-8)+' more</li>');
-  {const cur=KITC||[],seed=KITSEED||[],parts=[];
-   [...new Set([...seed.map(r=>r.n),...cur.map(r=>r.n)])].forEach(n=>{
-     const s=seed.find(r=>r.n===n),c=cur.find(r=>r.n===n);
-     if(c&&!s)parts.push(hesc(n)+' added');else if(s&&!c)parts.push(hesc(n)+' removed');
-     else{const w=c.w!==s.w,h=JSON.stringify([...c.hs].sort())!==JSON.stringify([...s.hs].sort()),q=(c.q==null?null:+c.q)!==(s.q==null?null:+s.q);if(w||h||q)parts.push(hesc(n)+(q?' qty '+(c.q==null?'per person':c.q):'')+(w?' '+c.w+' W':'')+(h?' hours':''));}
-   });
-   if(parts.length)li.push('<li><b>Personal items</b>: '+capJoin(parts,8)+'</li>');}
   if(NOTES.trim())li.push('<li><b>Notes</b>: has text</li>');
   if(FLOOR!==S.fuel_floor_gal)li.push('<li><b>Fuel floor</b>: '+S.fuel_floor_gal+'\u2192'+FLOOR+' gal</li>');
   return li.length?'<ul>'+li.join('')+'</ul>':'';
@@ -1595,9 +1486,6 @@ function boot(D){
   const lp=load('cavecsv_plan');PLAN=normPlan(okPlan(lp)?lp:structuredClone(SEEDPLAN));
   syncACFromPlan();
   const lf=load('cavecsv_fuel');FUEL=(lf&&Array.isArray(lf.del)&&lf.del.length===NDAYS)?lf:structuredClone(SEEDFUEL);
-  const kfp=JSON.stringify(KITSEED);
-  const lk=(load('cavecsv_kit_fp')===kfp)?load('cavecsv_kit'):null;KITC=Array.isArray(lk)&&lk.length?lk:structuredClone(KITSEED);store('cavecsv_kit_fp',kfp);
-  KITC.forEach(r=>{if(!r.hs)r.hs=[];});
   fetch('data/log.csv',{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
     const rows=t.trim().split('\n'),v=rows[rows.length-1].split(',')[0];
     if(v&&!isNaN(+v)){$('ver').textContent='v'+v;
@@ -1613,8 +1501,14 @@ function boot(D){
   $('asof').addEventListener('input',()=>refresh(true));
   $('floor').value=FLOOR;
   $('floor').addEventListener('input',()=>{FLOOR=+$('floor').value||0;store('cavecsv_floor',FLOOR);refresh(false);});
-  kitCalc();
   buildDev();devCalc();
+  /* + Add personal item: camper gear, one per person by default (qty follows the day's People), on gen 2 like the rest of the camper circuits */
+  $('devaddp').addEventListener('click',()=>{
+    DEVC.push({n:'New personal item',area:'Shade City',cat:'Personal',bus:'Pool',pr:'Cut first',q:PLAN?PLAN.p[ASOF()]:0,w:0,sc:'perperson',gen:'2',du:Array(24).fill(0),cu:1});
+    touch(ASOF(),'New personal item','add');
+    buildDev();devCalc();
+    const nn=$('devtable').querySelectorAll('input.kitname');if(nn.length){nn[nn.length-1].focus();nn[nn.length-1].select();}
+  });
   $('devadd').addEventListener('click',()=>{
     DEVC.push({n:'New device',area:'Custom',cat:'Custom',bus:'Pool',pr:'Cut if needed',q:1,w:0,du:Array(24).fill(0),cu:1});
     touch(ASOF(),'New device','add');
@@ -1637,7 +1531,6 @@ function boot(D){
   });
   document.querySelectorAll('#runbox2 .floorlab').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();e.preventDefault();
     if(el.id!=='dellab')$('floor').focus();}));
-  PGEN=load('cavecsv_pgen')==='1'?'1':'2';
   GENMODE='g1';
   const GLBL={pooled:'POOLED',split:'BOTH GEN',g1:'GEN 1 ONLY',g2:'GEN 2 ONLY'};
   const gmSync=()=>{
@@ -1734,7 +1627,7 @@ function boot(D){
   });
   $('devcopy').addEventListener('click',applyAllDays);
   $('devfwd').addEventListener('click',applyForward);
-  $('devnote').innerHTML='Tap an hour cell to step that hour&rsquo;s duty: off, &frac14;, &frac12;, &frac34;, full, off. Edits take effect on the selected day at once (in this browser only); nothing else needs pressing. The two buttons only copy your edits onto other days. Personal items are camp-wide: one list, the same on every day, so they never need copying. &#10227; (top right) returns every day to the official plan.';
+  $('devnote').innerHTML='Tap an hour cell to step that hour&rsquo;s duty: off, &frac14;, &frac12;, &frac34;, full, off. Edits take effect on the selected day at once (in this browser only); nothing else needs pressing. Personal items (camper gear, one per person by default) and custom items are per day like everything else: add one on the day it arrives, then use the two buttons to copy it onto other days. &#10227; (top right) returns every day to the official plan.';
   {const savedT=load('cave_theme_choice');applyTheme(savedT==='light'||savedT==='dark'?savedT:osTheme(),savedT==='light'||savedT==='dark');
    try{matchMedia('(prefers-color-scheme: light)').addEventListener('change',()=>{const s=load('cave_theme_choice');if(s!=='light'&&s!=='dark')applyTheme(osTheme(),false);});}catch(e){}}
   BOOTED=true;

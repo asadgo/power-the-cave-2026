@@ -467,7 +467,7 @@ function parseCSV(text){
 }
 const HOURS=['5a','6a','7a','8a','9a','10a','11a','12p','1p','2p','3p','4p','5p','6p','7p','8p','9p','10p','11p','12a','1a','2a','3a','4a'];
 let S={},NDAYS=14,START=null,DAY=86400000;
-let DTYPE=[],DEVSEED=[],DEVD=[],DER=[],CATS=[],PLAN=null,FUEL=null,FLOOR=5,KITSEED=[],PP=0,KPG=6.5,IDLE2=0,DERATE=.88,CEIL=.8,bobKw=9,aliceKw=9;
+let DTYPE=[],DEVSEED=[],DEVD=[],DER=[],CATS=[],PLAN=null,FUEL=null,FLOOR=5,KPG=6.5,IDLE2=0,DERATE=.88,CEIL=.8,bobKw=9,aliceKw=9;
 const DELTIME='am'; /* console default; committed plan has no am/pm column */
 const SRCSET=new Set(['The Source Computer','The Source Projector','Object motor','DMX Controller']);
 const autoGen=n=>/air condition|fan|e-bike charging/i.test(n)?'2':'1';
@@ -476,14 +476,13 @@ function buildModel(D){
   NDAYS=S.event_days||14;
   START=new Date(S.event_start+'T12:00:00');
   DERATE=S.playa_derate;CEIL=S.load_ceiling;KPG=S.kwh_per_gallon;
-  PP=S.per_person_shared_kwh;
   IDLE2=(S.gen_overhead_gal_each!=null?S.gen_overhead_gal_each:(S.second_gen_idle_gal||0));
   bobKw=S.gen_bob_watts/1000;aliceKw=S.gen_alice_watts/1000;
   FLOOR=S.fuel_floor_gal;
   DEVSEED=D.devices.map(r=>{const s=D.schedule.find(x=>x.device===r.device);
     let q=+r.qty||0,w=+r.running_w_each||0;
     if(/e-bike charging/i.test(r.device)&&q===1&&w>500){q=10;w=Math.round(w/10);}
-    return {n:r.device,area:r.area,cat:r.category,bus:r.bus,pr:r.priority,q,w,sc:(r.scaling==='people')?'people':'full',
+    return {n:r.device,area:r.area,cat:r.category,bus:r.bus,pr:r.priority,q,w,sc:(r.scaling==='people')?'people':(r.scaling==='perperson'?'perperson':'full'),
       gen:(r.gen==='1'||r.gen==='2')?r.gen:(r.gen==='A'?'2':(r.gen==='B'?'1':autoGen(r.device))),
       du:HOURS.map(hh=>s?(+s['h_'+hh]||0):0)};});
   DTYPE=D.calendar_plan.map(r=>r.day_type);
@@ -493,12 +492,9 @@ function buildModel(D){
         s:D.calendar_plan.map(r=>+r.sound_on||0),
         g:D.calendar_plan.map(r=>+r.generators||1)};
   FUEL={del:D.calendar_plan.map(r=>+r.delivered_gal||0)};
-  KITSEED=D.personal_items.map(r=>({n:r.item,w:+r.watts||0,q:(r.qty==null||String(r.qty).trim()==='')?null:(+r.qty||0),
-    hs:HOURS.map((h,j)=>+r['h_'+h]?j:-1).filter(j=>j>=0)}));
-  let tk=0;KITSEED.forEach(r=>{tk+=(+r.w||0)*r.hs.length/1000;});PP=+tk.toFixed(3); /* kitCalc, seed rows */
   /* same order as the console: baseline copy -> Off days zeroed -> device_days.csv cells -> calendar ACs / e-bikes */
   const HK=new Set(HOURS.map(h=>'h_'+h));
-  const OVR=(D.device_days||[]).filter(o=>o&&/^\d{4}-\d{2}-\d{2}$/.test(o.date||'')&&o.device&&(o.field==='qty'||o.field==='watts'||o.field==='gen'||HK.has(o.field)));
+  const OVR=(D.device_days||[]).filter(o=>o&&/^\d{4}-\d{2}-\d{2}$/.test(o.date||'')&&o.device&&(o.field==='qty'||o.field==='watts'||o.field==='gen'||o.field==='scaling'||HK.has(o.field)));
   const isoDay=i=>{const d=new Date(START.getTime()+i*DAY);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
   DEVD=Array.from({length:NDAYS},()=>structuredClone(DEVSEED));
   DEVD.forEach((dd,i)=>{if(/^off$/i.test(String(DTYPE[i]||'')))dd.forEach(r=>{r.q=0;});}); /* zeroOffDays */
@@ -507,11 +503,12 @@ function buildModel(D){
     let r=rows.find(x=>x.n===o.device);
     if(!r){r={n:o.device,area:'Custom',cat:'Custom',bus:'Pool',pr:'Cut if needed',q:1,w:0,du:Array(24).fill(0),cu:1};r.gen=autoGen(r.n);rows.push(r);}
     const v=String(o.value==null?'':o.value).trim();
-    if(o.field==='qty')r.q=+v||0;else if(o.field==='watts')r.w=+v||0;else if(o.field==='gen')r.gen=(v==='2'?'2':'1');
+    if(o.field==='qty')r.q=+v||0;else if(o.field==='watts')r.w=+v||0;else if(o.field==='gen')r.gen=(v==='2'?'2':'1');else if(o.field==='scaling')r.sc=(v==='people')?'people':(v==='perperson'?'perperson':'full');
     else{const j=HOURS.indexOf(o.field.slice(2));if(j>=0)r.du[j]=Math.max(0,Math.min(1,+v||0));}});});
   DEVD.forEach((rows,i)=>{ /* syncACFromPlan, seed path */
     const a=rows.find(x=>/air condition/i.test(x.n));if(a)a.q=PLAN.a[i];
-    const e=rows.find(x=>/e-bike charging/i.test(x.n));if(e)e.q=PLAN.e[i];});
+    const e=rows.find(x=>/e-bike charging/i.test(x.n));if(e)e.q=PLAN.e[i];
+    rows.forEach(r=>{if(r.sc==='perperson')r.q=PLAN.p[i];});});
   DER=DEVD.map(wireDay);
   CATS=[
    ['Critical',i=>DER[i].CRITK],
@@ -520,7 +517,7 @@ function buildModel(D){
    ['Camp lights & misc',i=>DER[i].LMISCK+DER[i].LMP*cf(i)],
    ['ACs',i=>DER[i].AC1*PLAN.a[i]],
    ['E-bikes',i=>DER[i].EBT],
-   ['Personal items',i=>KITSEED.reduce((a,r)=>a+(r.q==null?pCount(i):(+r.q||0))*(+r.w||0)*r.hs.length/1000,0)]];
+   ['Personal items',i=>DER[i].PERK]];
 }
 function wireDay(rows){
   const dev=rows.map(r=>({...r,tot:r.q*r.w}));
@@ -537,9 +534,11 @@ function wireDay(rows){
   const AC1=acD?+(dayK(acD)/(acD.q||1)).toFixed(3):0;
   const EBT=ebD?+dayK(ebD).toFixed(3):0;
   const POOLK=+dev.filter(d=>d.bus==='Pool').reduce((a,d)=>a+dayK(d),0).toFixed(3);
-  const LMP=+dev.filter(d=>d.bus==='Pool'&&d.sc==='people'&&d.cat!=='Sound'&&!SRCSET.has(d.n)&&d!==acD&&d!==ebD).reduce((a,d)=>a+dayK(d),0).toFixed(3);
+  const isPer=d=>d.cat==='Personal';
+  const PERK=+dev.filter(d=>d.bus!=='Battery'&&isPer(d)).reduce((a,d)=>a+dayK(d),0).toFixed(3);
+  const LMP=+dev.filter(d=>d.bus==='Pool'&&d.sc==='people'&&d.cat!=='Sound'&&!isPer(d)&&!SRCSET.has(d.n)&&d!==acD&&d!==ebD).reduce((a,d)=>a+dayK(d),0).toFixed(3);
   return {CRITK,SRCK,AC1,EBT,LMP,SOUND:SN,
-    LMISCK:+(POOLK-SN-SRCK-(acD?dayK(acD):0)-(ebD?dayK(ebD):0)-LMP).toFixed(3)};
+    LMISCK:+(POOLK-SN-SRCK-(acD?dayK(acD):0)-(ebD?dayK(ebD):0)-LMP-PERK).toFixed(3),PERK};
 }
 const cf=i=>Math.min(1,Math.max(S.infra_floor_frac,S.infra_floor_frac+(1-S.infra_floor_frac)*PLAN.p[i]/S.infra_full_people));
 const pCount=d=>PLAN.p[d];
@@ -591,7 +590,7 @@ const RNOW=()=>(EV.length&&EV[EV.length-1].ts>NOW)?EV[EV.length-1].ts:NOW;
 
 /* ---------- load ---------- */
 async function loadPlan(){
-  const FILES=['settings','devices','schedule','calendar_plan','personal_items'];
+  const FILES=['settings','devices','schedule','calendar_plan'];
   const D={};
   for(const n of FILES){
     const r=await fetch('data/'+n+'.csv',{cache:'no-store'});
