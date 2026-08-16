@@ -15,7 +15,8 @@ status checks each generator against its own limits (0, no parallel kit) or the 
 `device,area,category,product,qty,running_w_each,surge_w_each,volts,bus,priority,notes,scaling[,gen]`
 - `bus`: `Battery` (never-cut core → “Critical” group) or `Pool` (generator pool).
 - `priority`: `Never cut` / `Cut if needed` / `Cut first`.
-- `scaling`: `people` = the row scales with headcount (Coffee maker, Fans); blank = full load.
+- `scaling`: `people` = the row scales with the headcount fraction (Coffee maker, Fans); `perperson` = one per
+  person, qty follows each day's People count (camper gear such as Phone (personal)); blank = full load.
 - `gen` (optional, `1`|`2`): default generator assignment. Absent → auto (AC / fans / e-bikes → 2,
   everything else → 1). “Make this the official plan” writes both `scaling` and `gen`.
 - Derived columns (total W, start kick) are not stored; the console recomputes them.
@@ -28,10 +29,12 @@ Every row must name a device present in devices.csv. Hourly kW = Σ qty × runni
 
 ## device_days.csv — per-day differences from the baseline
 `date,device,field,value` — one row per single cell that a given day changes.
-- `field`: `qty`, `watts`, `gen` (`1`|`2`) or one hour's duty `h_5a … h_4a` (0, .25, .5, .75, 1).
+- `field`: `qty`, `watts`, `gen` (`1`|`2`), `scaling` (`perperson`, `people` or blank) or one hour's duty
+  `h_5a … h_4a` (0, .25, .5, .75, 1).
 - How a day is built: copy of devices.csv + schedule.csv → Off days set every qty to 0 →
   device_days.csv rows for that date overwrite single cells → the calendar's ACs / E-bikes columns
-  set those two quantities. (AC and e-bike quantities are therefore never taken from this file.)
+  set those two quantities and one-per-person rows take the day's People. (Those quantities are never taken
+  from this file.)
 - A `device` named here that is not in devices.csv is a custom item that exists on that day only
   (Custom / Pool / Cut if needed; qty, watts, gen and hours from its rows).
 - Header-only file = every day equals the baseline. “Make this the official plan” writes it from
@@ -45,10 +48,11 @@ Every row must name a device present in devices.csv. Hourly kW = Σ qty × runni
 says otherwise). `acs` and `ebikes` set the AC and e-bike quantities per day; `generators` (1|2) sets
 the red line and gen overhead. “Make this the official plan” exports this exact file.
 
-## personal_items.csv — per-camper items
-`item,watts,qty,h_5a … h_4a` (1 = on that hour). `qty` blank = one per person, so the item follows
-each day's People count; a number = that many every day (e.g. 2 CPAPs). Their kWh feeds the
-“Personal items” category (Shade City in the by-area view).
+## personal_items.csv — retired in v24.8
+Camper gear now lives in devices.csv as ordinary rows with `category=Personal` and
+`scaling=perperson` (one per person: qty follows each day's People count) or a fixed qty. That makes
+personal items per day like everything else: add one on the day it arrives, copy it onto other days
+with the Copy edits buttons. Delete this file; nothing reads it.
 
 ## log.csv — version history
 `version,date,change`. Append-only. The last row's version is what both page headers display.
