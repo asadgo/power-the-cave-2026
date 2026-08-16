@@ -133,6 +133,8 @@ summary.flagrow2{display:flex;flex-wrap:wrap;row-gap:6px;align-items:center}
 #devtable td:nth-child(3),#devtable td:nth-child(4){text-align:center}
 #devtable .hdc{width:56px;min-width:56px;max-width:56px;box-sizing:border-box;text-align:center;font-variant-numeric:tabular-nums}
 #devadd,#devcopy,#devfwd,#devview,#devcol,#scnsave,#scnload,#scnapply{width:auto;font-size:13px;padding:8px 14px;margin-top:8px;margin-right:8px}
+#scnapply{font-weight:700;color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+#offbox .note{margin-top:2px}
 #devtable .dsub td{font:600 11px var(--mono);color:var(--muted2);border-top:1px solid var(--deep);padding:4px 3px 10px}
 #devtable .ghide{display:none}
 #devtable .dgrp td{cursor:pointer;user-select:none}
@@ -143,6 +145,7 @@ summary.flagrow2{display:flex;flex-wrap:wrap;row-gap:6px;align-items:center}
 
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
 .flag{font:600 16px var(--mono);margin:0 0 8px}
+.flag.static{min-height:36px;display:flex;align-items:center;margin-bottom:0}
 .chartbox{position:relative}
 .flagrow{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
 .flagrow .flag{margin:0}
@@ -312,12 +315,17 @@ html,body{overflow-x:hidden;max-width:100%;-webkit-text-size-adjust:100%;text-si
 <textarea id="notes" rows="6" placeholder="notes, questions, ideas are saved along with your simulation"></textarea>
 <p class="note">Saved into every simulation file so others can read and address them; cleared by Reset button (top right)</p></details>
 
-<details class="panel info qn" id="scnbox"><summary class="flag">Simulations <span id="scnname" class="devday"></span></summary>
-<button type="button" id="scnsave">Save simulation</button>
-<button type="button" id="scnload">Load simulation</button>
-<button type="button" id="scnapply">Make this the official plan&hellip;</button>
+<div class="panel qn" id="scnbox"><div class="flag static">Simulations <span id="scnname" class="devday"></span></div>
+<button type="button" id="scnsave">Export Simulation</button>
+<button type="button" id="scnload">Import Simulation</button>
 <input type="file" id="scnfile" accept=".json,application/json" style="display:none">
-<details class="hint"><summary>How simulations work</summary><div id="scnnote"></div></details></details>
+<details class="hint"><summary>How simulations work</summary><div id="scnnote"></div></details></div>
+
+<div class="panel qn" id="offbox"><div class="flag static">Official plan <span id="offstate" class="devday"></span></div>
+<p class="note" id="offnote"></p>
+<button type="button" id="scnapply">Make this the official plan&hellip;</button>
+<details class="hint"><summary>What the official plan is</summary><p>The official plan is the plan saved in the GitHub repo. It is the plan the whole camp sees on this page and on Reality. Your edits stay in this browser only, until you make them official: press the button, upload the downloaded CSV files to GitHub, and the new plan replaces the old one for everyone.</p></details>
+</div>
 
 <div class="sum" id="sum">&mdash;</div>
 <p class="src" id="src"></p>
@@ -763,8 +771,16 @@ const TH=()=>document.body.classList.contains('light')
   ?{tick:'#5A6B75',leg:'#26313A',grid:'rgba(90,107,117,.22)',fuel:'#26313A',fuelFill:'rgba(38,49,58,.08)'}
   :{tick:'#8A99A2',leg:'#F2EEE3',grid:'rgba(138,153,162,.16)',fuel:'#F2EEE3',fuelFill:'rgba(242,238,227,.07)'};
 
+function paintOfficial(){
+  const st=$('offstate'),nt=$('offnote');if(!st||!nt||!PLAN)return;
+  const d=localDiff(),v=($('ver').textContent||'').trim();
+  const parts=[];if(d.pc)parts.push(d.pc+' changed calendar cell'+(d.pc===1?'':'s'));if(d.simDays)parts.push(d.simDays+' changed device day'+(d.simDays===1?'':'s'));if(d.kc)parts.push('personal items changed');
+  if(!parts.length){st.textContent='\u00b7 this browser matches it';st.style.color='';nt.textContent='This browser matches the official plan'+(v?' ('+v+')':'')+'. Nothing to publish.';}
+  else{st.textContent='\u00b7 this browser differs';st.style.color='#c9822f';nt.textContent='This browser differs from the official plan'+(v?' ('+v+')':'')+': '+parts.join(' \u00b7 ')+'. Press the button to publish everything on this page as the new official plan.';}
+}
 function refresh(rebuild){
   if(rebuild)buildPlan();
+  paintOfficial();
   updateDayCells();
   updateSummary();
   const asof=+$('asof').value;
@@ -1282,7 +1298,7 @@ function diffText(d){
   if(d.kc)p.push('personal items');if(d.notes)p.push('notes');if(d.floorCh)p.push('fuel floor');return p.join(', ');
 }
 async function scnLoadObj(o){
-  if(!o||o.kind!=='cave-scenario'||!o.state)throw new Error('This is not a simulation file from this console. Simulation files come from the Save simulation button and are named like name_cavepowersim_2026-08-16_….json. Nothing on the page changed.');
+  if(!o||o.kind!=='cave-scenario'||!o.state)throw new Error('This is not a simulation file from this console. Simulation files come from the Export simulation button and are named like name_cavepowersim_2026-08-16_….json. Nothing on the page changed.');
   const st=o.state;
   if(!okPlan(st.plan))throw new Error('This simulation was saved for a plan with a different number of days, so it cannot be loaded here. Nothing on the page changed.');
   const okD=Array.isArray(st.devd)&&st.devd.length===NDAYS&&st.devd.every(dd=>Array.isArray(dd)&&dd.every(r=>r&&typeof r.n==='string'&&Array.isArray(r.du)&&r.du.length===24));
@@ -1292,9 +1308,9 @@ async function scnLoadObj(o){
   const when=o.created&&!isNaN(new Date(o.created))?new Date(o.created).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
   let msg='<p>Load <b>'+hesc(o.title||'this simulation')+'</b>'+(o.author?' by '+hesc(o.author):'')+(when?' (saved '+when+')':'')+'?</p>'
     +'<p>Everything on this page is replaced by the file: calendar, fuel, all '+NDAYS+' days of devices, personal items, notes. Only this browser changes; nothing on GitHub changes.</p>'
-    +(d.any?'<p>Your current edits are lost unless you Cancel and press Save simulation first.</p><details><summary>See your current edits</summary>'+diffDetailHTML()+'</details>':'')
+    +(d.any?'<p>Your current edits are lost unless you Cancel and press Export simulation first.</p><details><summary>See your current edits</summary>'+diffDetailHTML()+'</details>':'')
     +(stale?'<div class="callout">Saved against an older official plan: the calendar or device tables have changed since. The file loads exactly as it was saved; changes made to the official plan since then are not in it.</div>':'');
-  if(await uiDialog({html:true,msg,title:'Load simulation',ok:'Load'})!==true)return false;
+  if(await uiDialog({html:true,msg,title:'Import simulation',ok:'Import'})!==true)return false;
   PLAN=normPlan(st.plan);
   if(st.fuel&&Array.isArray(st.fuel.del))FUEL=st.fuel;
   if(typeof st.floor==='number'){FLOOR=st.floor;$('floor').value=FLOOR;store('cavecsv_floor',FLOOR);}
@@ -1376,12 +1392,13 @@ async function scnApply(){
     +'<li>GitHub: open the repo\u2019s <b>data</b> folder, Add file, Upload files, drop in all 6 CSV files, Commit.</li>'
     +'<li>Wait about 1 minute, then press Reset (circular arrow, top right). The header reads <b>'+nxt+'</b> once it has landed; if it still reads '+cur+', wait and press Reset again.</li>'
     +'</ol>';
-  const ok=await uiDialog({html:true,msg,title:'Make this the official plan',ok:'Download zip'});
-  if(ok!==true)return;
+  const who=await uiDialog({html:true,msg:msg+'<p>Your name, for the version log (line '+nxt+' will read: Official plan updated by \u2026):</p>',title:'Make this the official plan',ok:'Download zip',input:load('cavecsv_author')||'',placeholder:'your name',required:true});
+  if(who==null)return;
+  store('cavecsv_author',who);
   const files=scnApplyBuild(day);
   const iso=new Date().toISOString();
   const id='cavepower_official-plan_'+iso.slice(0,10)+'_'+iso.slice(11,19).replace(/:/g,'')+'Z';
-  const row=nv.toFixed(1)+','+iso.slice(0,10)+',"Official plan updated from the console'+(nm?' (simulation: '+String(nm).replace(/"/g,"'")+')':'')+': calendar for all '+NDAYS+' days; baseline device setup and hourly duty from '+dayName+'; per-day differences for '+ovrDays+' other day'+(ovrDays===1?'':'s')+' ('+ovr.length+' cells in device_days.csv); personal items."\n';
+  const row=nv.toFixed(1)+','+iso.slice(0,10)+',"Official plan updated by '+String(who).replace(/"/g,"'")+' from the console'+(nm?' (simulation: '+String(nm).replace(/"/g,"'")+')':'')+': calendar for all '+NDAYS+' days; baseline device setup and hourly duty from '+dayName+'; per-day differences for '+ovrDays+' other day'+(ovrDays===1?'':'s')+' ('+ovr.length+' cells in device_days.csv); personal items."\n';
   files['log.csv']=(logTxt&&!logTxt.endsWith('\n')?logTxt+'\n':logTxt)+row;
   const entries=Object.keys(files).map(n=>({name:id+'/data/'+n,text:files[n]}));
   if(hasNotes)entries.push({name:id+'/notes.txt',text:NOTES});
@@ -1475,7 +1492,7 @@ function changesListHTML(all){
   all.forEach(d=>{const txt=dayTxt(d),last=runs[runs.length-1];if(last&&last.txt===txt&&last.to===d.i-1)last.to=d.i;else runs.push({from:d.i,to:d.i,txt});});
   return '<ul>'+runs.slice(0,10).map(r=>'<li><b>'+dLab(r.from)+(r.to>r.from?' to '+dLab(r.to):'')+'</b>: '+r.txt+'</li>').join('')+(runs.length>10?'<li>+ '+(runs.length-10)+' more</li>':'')+'</ul>';
 }
-async function noChangesMsg(){await uiAlert('Nothing to copy: no cell has been edited on this page since it was loaded (or since the last Reset or Load simulation). Edit a calendar cell, an hour cell, a quantity, watts, a gen tag or a custom item on any day, then press again.','Copy edits');}
+async function noChangesMsg(){await uiAlert('Nothing to copy: no cell has been edited on this page since it was loaded (or since the last Reset or Import simulation). Edit a calendar cell, an hour cell, a quantity, watts, a gen tag or a custom item on any day, then press again.','Copy edits');}
 async function applyAllDays(){
   const all=allChanges();
   if(!all.length)return noChangesMsg();
@@ -1545,7 +1562,7 @@ function boot(D){
   KITC.forEach(r=>{if(!r.hs)r.hs=[];});
   fetch('data/log.csv',{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
     const rows=t.trim().split('\n'),v=rows[rows.length-1].split(',')[0];
-    if(v&&!isNaN(+v))$('ver').textContent='v'+v;}).catch(()=>{});
+    if(v&&!isNaN(+v)){$('ver').textContent='v'+v;paintOfficial();}}).catch(()=>{});
   const lF=load('cavecsv_floor');FLOOR=(lF==null)?S.fuel_floor_gal:lF;
 
   $('loader').style.display='none';
@@ -1625,8 +1642,8 @@ function boot(D){
   });
   $('scnsave').addEventListener('click',async()=>{
     const prev=load('cavecsv_author')||'';
-    const t=await uiDialog({html:true,msg:'<p>Save simulation downloads one file holding everything on this page: calendar, fuel, all '+NDAYS+' days of devices, personal items, notes. Anyone can open it here with Load simulation. Nothing on GitHub changes.</p><p>Type your name. It goes first in the filename so everyone knows whose simulation it is.</p>',
-      title:'Save simulation',input:prev,placeholder:'your name',required:true,ok:'Save'});
+    const t=await uiDialog({html:true,msg:'<p>Export simulation downloads one file holding everything on this page: calendar, fuel, all '+NDAYS+' days of devices, personal items, notes. Anyone can open it here with Import simulation. Nothing on GitHub changes.</p><p>Type your name. It goes first in the filename so everyone knows whose simulation it is.</p>',
+      title:'Export simulation',input:prev,placeholder:'your name',required:true,ok:'Export'});
     if(t==null)return;
     const nm=t;store('cavecsv_author',nm);
     const iso=new Date().toISOString();
@@ -1644,17 +1661,17 @@ function boot(D){
     const fl=e.target.files&&e.target.files[0];
     if(!fl)return;
     fl.text().then(async tx=>{
-      let o;try{o=JSON.parse(tx);}catch(err){await uiAlert('This file could not be read as a simulation (it is not a valid simulation file). Nothing on the page changed.','Load simulation');return;}
-      try{await scnLoadObj(o);}catch(err){await uiAlert(err.message,'Load simulation');}});
+      let o;try{o=JSON.parse(tx);}catch(err){await uiAlert('This file could not be read as a simulation (it is not a valid simulation file). Nothing on the page changed.','Import simulation');return;}
+      try{await scnLoadObj(o);}catch(err){await uiAlert(err.message,'Import simulation');}});
     e.target.value='';
   });
   $('scnapply').addEventListener('click',scnApply);
   $('scnnote').innerHTML=
      '<p>A Simulation is a snapshot of everything on this page: calendar, fuel, devices, their hourly duty on each day, plus any Notes.</p>'
-    +'<p>\u201cSave simulation\u201d downloads the currently open plan onto your device (which can be sent to anyone)</p>'
-    +'<p>\u201cLoad simulation\u201d opens a plan on your device to view and edit</p>'
-    +'<p>\u201cMake this the official plan\u201d downloads a zip of CSV files (everything on this page, exactly as seen on screen) for you to upload into the github repo\u2019s data folder. Upload will become the new plan going forward</p>'
-    +'<p>Reset button (circular arrow top right) always returns this browser to the latest committed official plan from the git</p>';
+    +'<p>\u201cExport simulation\u201d downloads the currently open plan onto your device as a file (which can be sent to anyone)</p>'
+    +'<p>\u201cImport simulation\u201d opens a simulation file from your device to view and edit</p>'
+    +'<p>Simulations never touch GitHub. To publish what is on screen for everyone, use the Official plan panel at the bottom of the page.</p>'
+    +'<p>Reset button (circular arrow top right) always returns this browser to the latest official plan from the git</p>';
   scnBanner();
   const pinCheck=()=>{
     const t=$('plantable'),dp=$('daypin');
@@ -1690,7 +1707,7 @@ $('resetbtn').addEventListener('click',async()=>{
   const msg=d.any
     ?'<p>This browser holds edits that are not in the official plan:</p>'+diffDetailHTML()
       +'<p>Reset throws them away and reloads the page with the official plan (the CSV files in the repo). Nothing on GitHub changes.'+(sim?' It also closes the loaded simulation '+hesc(sim)+' (the file itself is untouched).':'')+'</p>'
-      +'<p>Want to keep them? Cancel and press Save simulation first.</p>'
+      +'<p>Want to keep them? Cancel and press Export simulation first.</p>'
     :'<p>This browser has no edits of its own. Reset just reloads the page with the official plan.'+(sim?' It also closes the loaded simulation '+hesc(sim)+'.':'')+'</p>';
   if(await uiDialog({html:true,msg,title:'Reset',ok:'Reset'})!==true)return;
   if(location.protocol==='file:'){resetToCSV();return;}
