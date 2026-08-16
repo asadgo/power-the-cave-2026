@@ -153,6 +153,11 @@ summary.flagrow2{display:flex;flex-wrap:wrap;row-gap:6px;align-items:center}
 .runbox{height:280px}
 
 .note{margin:0;font:500 13px var(--mono);color:var(--muted);line-height:1.55}
+details.hint{margin:10px 2px 0;border:1px dashed var(--line);border-radius:8px;padding:0 10px}
+.info details.hint summary,details.hint summary{min-height:0;margin:0;padding:8px 0;font:600 11px var(--mono);letter-spacing:.6px;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:6px;list-style:none;cursor:pointer}
+details.hint summary::-webkit-details-marker{display:none}
+.info details.hint summary::before,.info[open] details.hint summary::before,details.hint[open] summary::before,details.hint summary::before{content:"\24D8";font-size:13px;margin-right:0;color:var(--muted)}
+details.hint p{font:500 11.5px var(--mono);color:var(--muted);line-height:1.5;margin:0 0 10px}
 .info summary{cursor:pointer;list-style:none;margin-bottom:0}
 .info summary::-webkit-details-marker{display:none}
 .info summary::before{content:"\25B8";color:var(--muted);margin-right:9px}
@@ -310,7 +315,7 @@ html,body{overflow-x:hidden;max-width:100%;-webkit-text-size-adjust:100%;text-si
 <button type="button" id="scnload">Load simulation</button>
 <button type="button" id="scnapply">Make this the official plan&hellip;</button>
 <input type="file" id="scnfile" accept=".json,application/json" style="display:none">
-<p class="note" id="scnnote"></p></details>
+<details class="hint"><summary>How simulations work</summary><p id="scnnote"></p></details></details>
 
 <div class="sum" id="sum">&mdash;</div>
 <p class="src" id="src"></p>
@@ -1313,22 +1318,22 @@ async function scnApply(){
   const last=parseFloat((lines[lines.length-1]||'0').split(',')[0])||0;
   const nv=(Math.round(last*10)+1)/10;
   const cur='v'+last.toFixed(1),nxt='v'+nv.toFixed(1);
-  const num=(n,unit)=>'<span class="n '+(n?'n-ch':'n-ok')+'">'+n+' '+unit+(n===1?'':'s')+'</span>';
+  const num=(n,unit)=>'<span class="n '+(n?'n-ch':'n-ok')+'">'+n+' changed '+unit+(n===1?'':'s')+'</span>';
   const tag=ch=>'<span class="n '+(ch?'n-ch':'n-ok')+'">'+(ch?'changed':'unchanged')+'</span>';
   const hasNotes=!!NOTES.trim();
   const msg=
-    '<p>Downloads one zip: 6 CSV files holding everything on this page (calendar, all '+NDAYS+' days of device setups, personal items) exactly as on screen. Uploading them into the repo\u2019s <b>data</b> folder makes it the official plan for everyone.'+(nm?' (Loaded simulation: '+String(nm).replace(/</g,'&lt;').slice(0,60)+')':'')+'</p>'
-    +'<p>Changes vs the official plan:</p><ul>'
+    '<p>Downloads a zip of 6 CSV files: everything on this page (calendar, all '+NDAYS+' days of devices, personal items) exactly as on screen. Upload them into the repo\u2019s <b>data</b> folder and this becomes the official plan for everyone.'+(nm?' (Loaded simulation: '+String(nm).replace(/</g,'&lt;').slice(0,60)+')':'')+'</p>'
+    +'<p>Compared with the official plan:</p><ul>'
     +'<li>Calendar: '+num(pc,'cell')+'</li>'
-    +'<li>Devices: <span class="n '+(simDays?'n-ch':'n-ok')+'">'+simDays+' of '+NDAYS+' days</span></li>'
+    +'<li>Devices: '+num(simDays,'day')+' of '+NDAYS+'</li>'
     +'<li>Personal items: '+tag(kc)+'</li></ul>'
     +((!pc&&!simDays&&!kc)?'<div class="callout">Nothing on screen differs from the official plan. This zip would change nothing except adding a log line.</div>':'')
     +'<details><summary>What is in the zip</summary><ul>'
-    +'<li><span class="fn">calendar_plan.csv</span>: all '+NDAYS+' days (people, ACs, e-bikes, sound, gens, deliveries).</li>'
-    +'<li><span class="fn">devices.csv</span> + <span class="fn">schedule.csv</span>: the baseline device list and hourly duty (the setup most days share, currently '+dayName+'\u2019s).</li>'
-    +'<li><span class="fn">device_days.csv</span>: what each other day changes against that baseline: '+ovr.length+' cell'+(ovr.length===1?'':'s')+' across '+ovrDays+' day'+(ovrDays===1?'':'s')+'.</li>'
-    +'<li><span class="fn">personal_items.csv</span>: the per-camper items table.</li>'
-    +'<li><span class="fn">log.csv</span>: the version history plus one new line; the header will read <b>'+nxt+'</b> (now '+cur+').</li>'
+    +'<li><span class="fn">calendar_plan.csv</span>: the calendar table for all '+NDAYS+' days (people, ACs, e-bikes, sound, gens, deliveries).</li>'
+    +'<li><span class="fn">devices.csv</span> + <span class="fn">schedule.csv</span>: the device table of one typical day, currently <b>'+dayName+'</b>: quantities, watts, gen tags and hour strips. The console rebuilds every day from this table.</li>'
+    +'<li><span class="fn">device_days.csv</span>: the exceptions: each cell that a specific day sets differently from that typical day. Right now '+ovr.length+' cell'+(ovr.length===1?'':'s')+' on '+ovrDays+' day'+(ovrDays===1?'':'s')+'.</li>'
+    +'<li><span class="fn">personal_items.csv</span>: the Personal items rows.</li>'
+    +'<li><span class="fn">log.csv</span>: the version history plus one new line. The header will read <b>'+nxt+'</b> (now '+cur+').</li>'
     +(hasNotes?'<li><span class="fn">notes.txt</span>: a copy of your Notes box, outside the data folder. Do not upload it.</li>':'')
     +'</ul></details>'
     +'<p>After the download:</p><ol>'
@@ -1475,7 +1480,7 @@ function boot(D){
     e.target.value='';
   });
   $('scnapply').addEventListener('click',scnApply);
-  $('scnnote').innerHTML='A simulation is a snapshot of everything on this page: calendar, fuel, devices and their hourly duty, plus your Notes. Save simulation downloads it as a file you can send to anyone; Load simulation opens one here. Nothing reaches GitHub until Make this the official plan downloads a zip of CSV files (the calendar and all 14 days of device setups, exactly as on screen) for you to upload into the repo\u2019s data folder. Reset (circular arrow, top right) returns this browser to the latest official plan.';
+  $('scnnote').innerHTML='A simulation is a snapshot of everything on this page: calendar, fuel, devices and their hourly duty for all '+NDAYS+' days, plus your Notes. Save simulation downloads it as a file you can send to anyone; Load simulation opens one here. Nothing reaches GitHub until Make this the official plan downloads a zip of CSV files (everything on this page, exactly as on screen) for you to upload into the repo\u2019s data folder. Reset (circular arrow, top right) returns this browser to the latest official plan.';
   scnBanner();
   const pinCheck=()=>{
     const t=$('plantable'),dp=$('daypin');
