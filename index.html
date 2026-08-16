@@ -1324,7 +1324,7 @@ async function scnApply(){
   const hasNotes=!!NOTES.trim();
   const msg=
     '<p>Downloads a zip of 6 CSV files: everything on this page (calendar, all '+NDAYS+' days of devices, personal items) exactly as on screen. Upload them into the repo\u2019s <b>data</b> folder and this becomes the official plan for everyone.'+(nm?' (Loaded simulation: '+String(nm).replace(/</g,'&lt;').slice(0,60)+')':'')+'</p>'
-    +'<p>Your changes:</p><ul>'
+    +'<p>Your changes vs the current plan:</p><ul>'
     +'<li>Calendar: '+num(pc,'cell')+'</li>'
     +'<li>Devices: '+num(simDays,'day')+' of '+NDAYS+'</li>'
     +'<li>Personal items: '+tag(kc)+'</li></ul>'
@@ -1523,7 +1523,13 @@ function boot(D){
   BOOTED=true;
   refresh(true);
 }
-$('resetbtn').addEventListener('click',async()=>{if(PLAN&&await uiConfirm('Discard local edits and reload the committed CSV plan?','Reset'))resetToCSV();});
+$('resetbtn').addEventListener('click',async()=>{
+  if(!PLAN||!await uiConfirm('Discard the edits made in this browser and reload the official plan?','Reset'))return;
+  if(location.protocol==='file:'){resetToCSV();return;}
+  /* a real page reload also picks up a newer index.html; the in-page path kept an old page running while the header showed the new version */
+  ['cavecsv_plan','cavecsv_fuel','cavecsv_kit','cavecsv_floor','cavecsv_dev','cavecsv_scn','cavecsv_notes','cavecsv_pgen'].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});
+  location.reload();
+});
 $('themebtn').addEventListener('click',()=>applyTheme(document.body.classList.contains('light')?'dark':'light'));
 
 fetchAll().then(boot).catch(err=>{pickerFallback(err);});

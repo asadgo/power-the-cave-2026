@@ -844,10 +844,10 @@ async function boot(){
     stampNow();
     meterHints();
     $('fsub').onclick=submit;
-    $('reloadbtn').onclick=async()=>{const b=$('reloadbtn');b.classList.add('spin');
-      try{await loadPlan();await loadReality();loadVersion();meterHints();renderAll();toast('Synced \u2713 plan + fuel log \u00b7 '+EV.length+' entr'+(EV.length===1?'y':'ies'));}
-      catch(e){toast('Reload failed: '+e.message,true);}
-      b.classList.remove('spin');};
+    $('f_name').value=loadLS('reality_name')||'';
+    $('f_name').addEventListener('input',()=>storeLS('reality_name',$('f_name').value.trim()));
+    /* a real page reload: fresh fuel log, fresh plan, and a newer reality.html if one was uploaded */
+    $('reloadbtn').onclick=()=>{$('reloadbtn').classList.add('spin');location.reload();};
     $('themebtn').onclick=()=>applyTheme(document.body.classList.contains('light')?'dark':'light');
     applyTheme(loadLS('cave_theme')==='light'?'light':'dark');
     $('loader').style.display='none';$('app').style.display='block';
