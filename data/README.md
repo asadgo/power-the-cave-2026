@@ -34,8 +34,9 @@ Every row must name a device present in devices.csv. Hourly kW = Σ qty × runni
 - A `device` named here that is not in devices.csv is a custom item that exists on that day only
   (Custom / Pool / Cut if needed; qty, watts, gen and hours from its rows).
 - Header-only file = every day equals the baseline. “Make this the official plan” writes it from
-  the screen: the selected day becomes the baseline, every other day's differences land here, so all
-  14 days round-trip exactly. Both pages apply it (console and Reality).
+  the screen: the console picks the baseline itself (the non-Off day whose setup the most other days
+  share; ties prefer a Burn day), every other day's differences land here, so all 14 days round-trip
+  exactly. Both pages apply it (console and Reality).
 
 ## calendar_plan.csv — the 14-day plan
 `date,day_type,people,acs,ebikes,sound_on,generators,delivered_gal`
