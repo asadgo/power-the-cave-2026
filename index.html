@@ -75,6 +75,9 @@ button:hover{border-color:var(--bob)}
 .pk,.fl{font:600 15px var(--mono)}
 .gap td{padding:0;height:8px}
 .kwexp{cursor:pointer;user-select:none}
+.calview{display:block;width:auto;font:600 10px var(--mono);padding:2px 7px;margin-top:5px;letter-spacing:.02em}
+.plan td.fuelhdr{font:700 12px var(--mono);color:var(--dw);padding-top:8px}
+.g1c{color:#2A8FEF}.g2c{color:#E97BB6}
 .kwexp:hover{color:var(--bone)}
 .sub td{font:500 13px var(--mono);color:var(--muted);padding:6px 3px}
 .sub td.rowlab{padding-left:24px;font-size:10px;color:var(--muted2);white-space:normal;line-height:1.35}
@@ -520,10 +523,28 @@ function wireDevices(){
    ['Camp lights &amp; misc<span class="rl2">(fans, charging, coffee)</span>',i=>DER[i].LMISCK+DER[i].LMP*cf(i)],
    ['ACs',i=>DER[i].AC1*PLAN.a[i]],
    ['E-bikes',i=>DER[i].EBT],
-   ['Personal items<span class="rl2" id="pplab">('+f(PP,2)+' kWh/camper \u00b7 from Devices table)</span>',i=>PP*pCount(i)]];
+   ['Personal items<span class="rl2" id="pplab">('+f(PP,2)+' kWh per camper \u00d7 people that day)</span>',i=>PP*pCount(i)]];
   window.__CAVE={S,DER,DEVD,SOUND,CRITK:d0.CRITK,SRCK:d0.SRCK,LMISCK:d0.LMISCK,AC1:d0.AC1,EBT:d0.EBT};
 }
 
+/* one device row's kWh on day i, with the same modifiers the category breakdown uses (sound follows the Sound switch, headcount-scaled rows follow cf) */
+function rowKwh(r,i){
+  const k=r.q*r.w*r.du.reduce((a,x)=>a+x,0)/1000;
+  if(r.cat==='Sound')return k*PLAN.s[i];
+  if(r.bus==='Pool'&&r.sc==='people'&&!SRCSET.has(r.n)&&!/air condition|e-bike charging/i.test(r.n))return k*cf(i);
+  return k;
+}
+/* the calendar's energy breakdown rows: by category (the model's groups) or by area (same grouping as the Devices table) */
+function calGroups(){
+  if(DEVVIEW!=='area')return CATS;
+  const order=['Kitchen','Structure','Events','Shade City','Ebikes'];
+  DEVD.forEach(rows=>rows.forEach(r=>{const a=r.area||'Custom';if(!order.includes(a))order.push(a);}));
+  const present=order.filter(a=>DEVD.some(rows=>rows.some(r=>(r.area||'Custom')===a)));
+  const shade=present.find(a=>/shade city/i.test(a));
+  const gs=present.map(a=>[hesc(a)+(a===shade?'<span class="rl2">(incl. personal items)</span>':''),i=>DEVD[i].filter(r=>(r.area||'Custom')===a).reduce((s,r)=>s+rowKwh(r,i),0)+(a===shade?PP*pCount(i):0)]);
+  if(!shade)gs.push(['Personal items<span class="rl2">('+f(PP,2)+' kWh per camper \u00d7 people)</span>',i=>PP*pCount(i)]);
+  return gs;
+}
 const redFor=g=>(+g===1?bobKw:bobKw+aliceKw)*DERATE*CEIL;
 const hardFor=g=>(+g===1?bobKw:bobKw+aliceKw)*DERATE;
 const cf=i=>Math.min(1,Math.max(S.infra_floor_frac,S.infra_floor_frac+(1-S.infra_floor_frac)*PLAN.p[i]/S.infra_full_people));
@@ -653,36 +674,38 @@ function buildPlan(){
   h+='<tr class="gap"><td colspan="'+(NDAYS+1)+'"></td></tr>';
   h+='<tr class="band kwrow"><td class="rowlab">Peak kW</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'"><span class="pk" data-pk="'+i+'"></span></td>';
-  h+='</tr><tr class="band kwrow"><td class="rowlab kwexp" id="kwexp">'+(EXP?'▾':'▸')+' Energy · kWh</td>';
+  h+='</tr><tr class="band kwrow"><td class="rowlab kwexp" id="kwexp">'+(EXP?'▾':'▸')+' Energy · kWh'+(EXP?'<button type="button" class="calview" id="calview" title="Group the rows below by category or by area, same as the Devices table">by '+(DEVVIEW==='area'?'Area':'Category')+' \u21c4</button>':'')+'</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'" data-kwh="'+i+'"></td>';
   h+='</tr>';
-  if(EXP)CATS.forEach((c,ci)=>{h+='<tr class="band sub"><td class="rowlab">'+c[0]+'</td>';
+  if(EXP)calGroups().forEach((c,ci)=>{h+='<tr class="band sub"><td class="rowlab">'+c[0]+'</td>';
     for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'" data-cat="'+ci+'-'+i+'"></td>';
     h+='</tr>';});
   h+='<tr class="bandgap"><td colspan="'+(NDAYS+1)+'"></td></tr>';
-  h+='<tr class="band kwrow"><td class="rowlab">Delivered · gal</td>';
+  h+='<tr class="band kwrow"><td class="rowlab fuelhdr">Fuel · gallons</td><td colspan="'+NDAYS+'"></td></tr>';
+  h+='<tr class="band kwrow"><td class="rowlab">Delivered</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'"><input data-del="'+i+'" type="number" min="0" value="'+(FUEL.del[i]||0)+'"></td>';
   h+='</tr>';
-  h+='<tr class="band kwrow"><td class="rowlab" title="tank at the 5a dawn: after the truck in AM mode, before it in PM mode">Start of day · gal</td>';
+  h+='<tr class="band kwrow"><td class="rowlab" title="tank at the 5a dawn: after the truck in AM mode, before it in PM mode">Start of day</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'" data-sod="'+i+'"></td>';
   h+='</tr>';
-  h+='<tr class="band kwrow"><td class="rowlab" title="Fuel for the devices assigned to generator 1. Add its '+f(IDLE2,1)+' gal overhead below for the tank total.">Gen 1 devices · gal</td>';
+  h+='<tr class="band kwrow"><td class="rowlab" title="Fuel for the devices assigned to generator 1. Add its '+f(IDLE2,1)+' gal overhead below for the tank total."><span class="g1c">Gen 1</span> devices</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'" data-fg1="'+i+'"></td>';
   h+='</tr>';
-  h+='<tr class="band kwrow"><td class="rowlab" title="Fuel for the devices assigned to generator 2. Add its '+f(IDLE2,1)+' gal overhead below for the tank total.">Gen 2 devices · gal</td>';
+  h+='<tr class="band kwrow"><td class="rowlab" title="Fuel for the devices assigned to generator 2. Add its '+f(IDLE2,1)+' gal overhead below for the tank total."><span class="g2c">Gen 2</span> devices</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'" data-fg2="'+i+'"></td>';
   h+='</tr>';
-  h+='<tr class="band kwrow"><td class="rowlab" title="'+f(IDLE2,1)+' gal per running generator per day: the fuel each engine drinks just to be running, on top of the device fuel above. Device rows + this row = Fuel spent.">Gen overhead · gal</td>';
+  h+='<tr class="band kwrow"><td class="rowlab" title="'+f(IDLE2,1)+' gal per running generator per day: the fuel each engine drinks just to be running, on top of the device fuel above. Device rows + this row = Fuel spent.">Gen overhead</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'" data-goh="'+i+'"></td>';
   h+='</tr>';
-  h+='<tr class="band kwrow"><td class="rowlab">Fuel spent · gal</td>';
+  h+='<tr class="band kwrow"><td class="rowlab">Fuel spent</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'" data-fs="'+i+'"></td>';
   h+='</tr>';
-  h+='<tr class="band kwrow"><td class="rowlab" title="tank when the day ends: the model day runs 5a to 4a, so this is the level at the next 5a dawn">Fuel left · gal</td>';
+  h+='<tr class="band kwrow"><td class="rowlab" title="tank when the day ends: the model day runs 5a to 4a, so this is the level at the next 5a dawn">Fuel left</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'"><span class="fl" data-fl="'+i+'"></span></td>';
   h+='</tr>';
   T.innerHTML=cg+h;
   $('kwexp').addEventListener('click',()=>{EXP=!EXP;refresh(true);});
+  {const cv=$('calview');if(cv)cv.addEventListener('click',ev=>{ev.stopPropagation();DEVVIEW=DEVVIEW==='area'?'category':'area';store('cavecsv_devview',DEVVIEW);buildDev();devPaint();refresh(true);});}
   /* focusing or tapping any calendar cell selects that day: the Devices table (which shows one day) then follows the cell being edited */
   const selectDay=i=>{if(+$('asof').value===i)return false;$('asof').value=i;refresh(true);return true;};
   T.querySelectorAll('input[data-k]').forEach(el=>{
@@ -748,7 +771,8 @@ function updateDayCells(){
     fEl.textContent=f(fe,1);fEl.className='fl pk-'+(st.fu===2?'over':st.fu===1?'warn':'ok');
     const vEl=document.querySelector('[data-v="'+i+'"]');
     vEl.textContent=txt;vEl.className='vc vc-'+cls;
-    if(EXP)CATS.forEach((c,ci)=>{document.querySelector('[data-cat="'+ci+'-'+i+'"]').textContent=f(c[1](i),0);});
+    if(EXP){const G=calGroups();if(i===0&&document.querySelectorAll('#plantable tr.band.sub').length!==G.length)buildPlan();
+      G.forEach((c,ci)=>{const el=document.querySelector('[data-cat="'+ci+'-'+i+'"]');if(el)el.textContent=f(c[1](i),0);});}
     if(i===0){const pl=document.getElementById('pplab');if(pl)pl.textContent='('+f(PP,2)+' kWh/camper \u00b7 from Devices table)';}
   }
 }
@@ -1689,7 +1713,7 @@ function boot(D){
   $('devview').addEventListener('click',()=>{
     DEVVIEW=DEVVIEW==='category'?'area':'category';
     store('cavecsv_devview',DEVVIEW);
-    buildDev();devPaint();
+    buildDev();devPaint();refresh(true);
   });
   $('devcopy').addEventListener('click',applyAllDays);
   $('devfwd').addEventListener('click',applyForward);
