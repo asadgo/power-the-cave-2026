@@ -101,7 +101,8 @@ summary.flagrow2 #genlab+*,summary.flagrow2 .floorlab{flex:0 0 auto;white-space:
 #devbox,#devbox .twrap{overflow-anchor:none}
 #devbox.panel{padding-right:10px}
 #devtable input:not(.kitname){width:52px;font-size:12px;padding:6px 5px}
-#devtable input[data-f="q"],#devtable input[data-kf="q"],#devtable #psq{width:40px}
+#devtable input[data-f="q"],#devtable input[data-kf="q"]{width:40px}
+#devtable #psq{text-align:center;color:var(--muted)}
 #devtable input[data-f="w"],#devtable input[data-kf="w"]{width:58px}
 #devtable input::-webkit-outer-spin-button,#devtable input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 #devtable input[type=number]{-moz-appearance:textfield;appearance:textfield}
@@ -420,7 +421,7 @@ function pickerFallback(err){
 
 /* ---------- model from CSVs ---------- */
 let S={},NDAYS=14,START=null,DAY=86400000;
-let BOOTED=false,LASTDEVDAY=-1,RAWD=null,DEVFP='',NOTES='',DELTIME='am',GENMODE='g1',PGEN='2',FUELGENS=true,BOB=[],ALICE=[],PCW=[],CATS=[],DEVSEED=[],DEVC=[],DEVD=[],DER=[],SOUND=0,BASE=0,PP=0,ACW=0,ACHRS=0,EBK=0,BUDG=0,KPG=6.5,IDLE2=0,QCAP=3.7,WARNM=15;
+let BOOTED=false,LASTDEVDAY=-1,RAWD=null,DEVFP='',NOTES='',DELTIME='am',GENMODE='g1',PGEN='2',FUELGENS=true,BOB=[],ALICE=[],PCW=[],CATS=[],DEVSEED=[],DEVC=[],DEVD=[],DER=[],SOUND=0,BASE=0,PP=0,ACW=0,ACHRS=0,EBK=0,BUDG=0,KPG=6.5,IDLE2=0,WARNM=15;
 let aliceRef=1,fansKw=0,bobKw=9,aliceKw=9,DERATE=.88,CEIL=.8;
 let SEEDPLAN=null,SEEDFUEL=null,DTYPE=[],KITSEED=[];
 let PLAN=null,FUEL=null,FLOOR=5,KITC=null,EXP=false,cap,run,NDEV=0;
@@ -432,7 +433,7 @@ function buildModel(D){
   DERATE=S.playa_derate;CEIL=S.load_ceiling;KPG=S.kwh_per_gallon;
   BASE=S.camp_base_kwh;PP=S.per_person_shared_kwh;BUDG=S.camper_budget_kwh;
   ACW=S.ac_unit_kwh_per_hour;ACHRS=S.ac_hours_per_day;EBK=S.ebike_kwh_per_day;
-  IDLE2=(S.gen_overhead_gal_each!=null?S.gen_overhead_gal_each:(S.second_gen_idle_gal||0));QCAP=S.quiet_evening_cap_kw;WARNM=S.fuel_warn_margin_gal;
+  IDLE2=(S.gen_overhead_gal_each!=null?S.gen_overhead_gal_each:(S.second_gen_idle_gal||0));WARNM=S.fuel_warn_margin_gal;
   bobKw=S.gen_bob_watts/1000;aliceKw=S.gen_alice_watts/1000;
   PCW=[...Array(24).keys()].map(j=>j>=12&&j<=19?S.camper_w_evening:(j>=2&&j<=11?S.camper_w_day:S.camper_w_night));
 
@@ -530,12 +531,20 @@ function wireDevices(){
   window.__CAVE={S,DER,DEVD,SOUND,CRITK:d0.CRITK,SRCK:d0.SRCK,LMISCK:d0.LMISCK,AC1:d0.AC1,EBT:d0.EBT};
 }
 
-/* one device row's kWh on day i, with the same modifiers the category breakdown uses (sound follows the Sound switch, headcount-scaled rows follow cf) */
-function rowKwh(r,i){
-  const k=r.q*r.w*r.du.reduce((a,x)=>a+x,0)/1000;
-  if(r.cat==='Sound')return k*PLAN.s[i];
-  if(r.bus==='Pool'&&r.sc==='people'&&!SRCSET.has(r.n)&&!/air condition|e-bike charging/i.test(r.n))return k*cf(i);
-  return k;
+/* THE modifier for a device row on day i, used identically by the energy breakdown, the Devices table and the hourly power curves:
+   sound rows follow the Sound switch; headcount-scaled Pool rows (scaling=people, not Source / AC / e-bikes) follow cf; everything else counts in full. */
+function rowMod(r,i){
+  if(!r)return 0;
+  if(r.cat==='Sound')return PLAN.s[i]?1:0;
+  if(r.bus==='Battery'||SRCSET.has(r.n)||/air condition|e-bike charging/i.test(r.n))return 1;
+  return (r.sc==='people')?cf(i):1;
+}
+function rowKwh(r,i){return r.q*r.w*r.du.reduce((a,x)=>a+x,0)/1000*rowMod(r,i);}
+/* hourly kW per generator on day i, straight from the day's rows with rowMod; summing the 24 hours gives exactly the day's kWh */
+function hourlyByGen(i){
+  const g1=Array(24).fill(0),g2=Array(24).fill(0);
+  (DEVD[i]||[]).forEach(r=>{const m=rowMod(r,i);if(!m)return;const base=r.q*r.w/1000*m,tgt=(r.gen==='2')?g2:g1;for(let j=0;j<24;j++)if(r.du[j])tgt[j]+=base*r.du[j];});
+  return {g1,g2};
 }
 /* the calendar's energy breakdown rows: by category (the model's groups) or by area (same grouping as the Devices table) */
 function calGroups(){
@@ -557,7 +566,7 @@ const store=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}};
 const save=()=>{store('cavecsv_plan',PLAN);store('cavecsv_fuel',FUEL);store('cavecsv_kit',KITC);};
 const okPlan=p=>p&&['p','a','e','s','g'].every(k=>Array.isArray(p[k])&&p[k].length===NDAYS);
 const normPlan=pl=>{if(pl&&(!Array.isArray(pl.pi)||pl.pi.length!==NDAYS))pl.pi=Array(NDAYS).fill(null);return pl;};
-const pCount=d=>{const v=(PLAN&&PLAN.pi)?PLAN.pi[d]:null;return v==null?(PLAN?PLAN.p[d]:0):v;};
+const pCount=d=>PLAN?PLAN.p[d]:0; /* one per person = the day's People count; per-item fixed quantities live in personal_items.csv */
 /* personal items: each item counts the day's People (blank qty) or its own fixed number */
 const kitQty=(r,d)=>(r.q==null?pCount(d):(+r.q||0));
 const kitKwh=d=>(KITC||[]).reduce((a,r)=>a+kitQty(r,d)*(+r.w||0)*r.hs.length/1000,0);
@@ -582,10 +591,6 @@ function genGal(i){
 }
 const startFuel=i=>(DELTIME==='pm'&&i>0)?autoMorning(i)-arriveGal(i):autoMorning(i);
 
-/* Gen 2's hourly curve comes straight from the day's device rows (AC and e-bike counts are already synced from the calendar per day).
-   The old comfort rescale here (AC count x per-unit kW over the day's gen-2 peak) was a no-op at normal counts but hid any other gen-2 load
-   when it dominated the peak, e.g. many e-bikes; energy counted them, the power curve did not. */
-function scaleAFor(i){return 1;}
 let POOLPAT=null;
 function poolPattern(){
   if(POOLPAT)return POOLPAT;
@@ -600,21 +605,20 @@ function poolPattern(){
   }catch(e){POOLPAT='#8985D3';}
   return POOLPAT;
 }
+/* Power curves: the day's rows, hour by hour, with rowMod, plus the personal items on the generator chosen for them (PGEN).
+   Earlier builds scaled the whole gen 1 curve by cf and capped sound-off evenings, and rescaled gen 2 by the AC count: the hourly
+   picture then disagreed with the energy model on build days (up to 20% low) and hid loads that dominated gen 2. */
 function curvesFor(i){
-  const D8=DER[i],p=PLAN.p[i],s=PLAN.s[i],c=cf(i);
-  const scaleA=scaleAFor(i);
-  const bobBase=s?D8.BOB:D8.BOB.map((x,j)=>j>=12||j<3?Math.min(x,QCAP):x);
-  const camp=bobBase.map((x,j)=>+((x*c)+D8.ALICE[j]*scaleA+kitKwAt(i,j)).toFixed(2));
+  const {g1,g2}=hourlyByGen(i);
+  const camp=g1.map((x,j)=>+(x+g2[j]+kitKwAt(i,j)).toFixed(2));
   const pooled=PLAN.g[i]>=2;
   return[{label:pooled?'Camp load \u00b7 pooled 1+2':'Camp load \u00b7 1 generator',data:camp,color:pooled?poolPattern():'#2A8FEF'}];
 }
 function curvesAB(i){
-  const D8=DER[i],p=PLAN.p[i],s=PLAN.s[i],c=cf(i);
-  const scaleA=scaleAFor(i);
-  const bobBase=s?D8.BOB:D8.BOB.map((x,j)=>j>=12||j<3?Math.min(x,QCAP):x);
+  const {g1:h1,g2:h2}=hourlyByGen(i);
   const camper=j=>kitKwAt(i,j);
-  const g1=bobBase.map((x,j)=>+((x*c)+(PGEN==='1'?camper(j):0)).toFixed(2));
-  const g2=D8.ALICE.map((x,j)=>+((x*scaleA)+(PGEN==='2'?camper(j):0)).toFixed(2));
+  const g1=h1.map((x,j)=>+(x+(PGEN==='1'?camper(j):0)).toFixed(2));
+  const g2=h2.map((x,j)=>+(x+(PGEN==='2'?camper(j):0)).toFixed(2));
   return[{label:'Gen 1',data:g1,color:'#2A8FEF'},
          {label:'Gen 2',data:g2,color:'#E97BB6'}];
 }
@@ -632,9 +636,17 @@ function peakInfo(i){
   const cs=curvesAB(i);
   return{pk:Math.max(...cs[0].data,...cs[1].data),R:redFor(1),H:hardFor(1)};
 }
-const dayPeak=i=>peakInfo(i).pk;
+const dayPeak=i=>statusPeak(i).pk;
+/* Day status (the OK / POWER / FUEL chip) is independent of the Power panel's chart lens: on a 2-generator day each generator is
+   checked against its own limits unless settings.csv says gens_paralleled=1 (then the sum is checked against the pooled limit);
+   on a 1-generator day the whole camp is checked against the single-generator limits. */
+function statusPeak(i){
+  if((PLAN.g[i]||1)<2){return {pk:Math.max(...curvesFor(i)[0].data),R:redFor(1),H:hardFor(1)};}
+  if(+S.gens_paralleled===1){return {pk:Math.max(...curvesFor(i)[0].data),R:redFor(2),H:hardFor(2)};}
+  const cs=curvesAB(i);return {pk:Math.max(...cs[0].data,...cs[1].data),R:redFor(1),H:hardFor(1)};
+}
 function dayState(i){
-  const {pk,R,H}=peakInfo(i);
+  const {pk,R,H}=statusPeak(i);
   const pow=pk>=H?2:pk>R?1:0;
   const fe=endFuel(i);
   const fu=fe<=FLOOR?2:fe<=FLOOR+WARNM?1:0;
@@ -679,7 +691,7 @@ function buildPlan(){
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'"><button type="button" class="snd gen '+(PLAN.g[i]===2?'snd-on':'snd-off')+'" data-g="'+i+'">'+PLAN.g[i]+'</button></td>';
   h+='</tr>';
   h+='<tr class="gap"><td colspan="'+(NDAYS+1)+'"></td></tr>';
-  h+='<tr class="band kwrow"><td class="rowlab">Peak kW</td>';
+  h+='<tr class="band kwrow"><td class="rowlab" title="Highest hourly load on the busiest generator that day (each generator is checked against its own safe and absolute limits; the whole camp against one generator on 1-generator days). The Power panel below shows the hour-by-hour picture for the lens you pick there.">Peak kW</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'"><span class="pk" data-pk="'+i+'"></span></td>';
   h+='</tr><tr class="band kwrow"><td class="rowlab kwexp" id="kwexp">'+(EXP?'▾':'▸')+' Energy · kWh'+(EXP?'<button type="button" class="calview" id="calview" title="Group the rows below by category or by area, same as the Devices table">by '+(DEVVIEW==='area'?'Area':'Category')+' \u21c4</button>':'')+'</td>';
   for(let i=0;i<NDAYS;i++)h+='<td class="'+cc(i).trim()+'" data-kwh="'+i+'"></td>';
@@ -780,7 +792,6 @@ function updateDayCells(){
     vEl.textContent=txt;vEl.className='vc vc-'+cls;
     if(EXP){const G=calGroups();if(i===0&&document.querySelectorAll('#plantable tr.band.sub').length!==G.length)buildPlan();
       G.forEach((c,ci)=>{const el=document.querySelector('[data-cat="'+ci+'-'+i+'"]');if(el)el.textContent=f(c[1](i),0);});}
-    if(i===0){const pl=document.getElementById('pplab');if(pl)pl.textContent='('+f(PP,2)+' kWh/camper \u00b7 from Devices table)';}
   }
 }
 
@@ -1059,7 +1070,7 @@ function buildDev(){
     if(g.syn&&op){
       h+='<tr class="grow psyn"><td class="dname pgrp" style="cursor:pointer" title="click to show or hide personal item lines">'+(PERSOPEN?'\u25be ':'\u25b8 ')+'Personal items</td>'
         +'<td class="gcell"><button type="button" class="gtag pgt '+((PLAN&&PLAN.g[ASOF()]<2)?'g1 gdim':'g'+PGEN)+'" title="'+((PLAN&&PLAN.g[ASOF()]<2)?'single-generator day · all loads run on the one generator':'which generator carries camper loads in split view')+'">'+((PLAN&&PLAN.g[ASOF()]<2)?'1':PGEN)+'</button></td>'
-        +'<td><input id="psq" type="number" min="0" max="99" value="0" title="Defaults to the day&#39;s People count; edit to override just the personal-items count. Reset restores the default."></td><td id="psw">\u2014</td><td class="hdc" id="psh">\u2014</td>'
+        +'<td id="psq" title="The day&#39;s People count: items with a blank qty count one per person">\u2014</td><td id="psw">\u2014</td><td class="hdc" id="psh">\u2014</td>'
         +'<td id="pstrip"></td><td class="qr" id="dkP">\u2014</td><td></td></tr>';
       if(PERSOPEN)KITC.forEach((r,ki)=>{
         let ks='<div class="hstrip">';
@@ -1112,13 +1123,6 @@ function buildDev(){
     el.textContent=nv;el.className='gtag g'+nv;
     devCalc();
   }));
-  const pq=$('psq');
-  if(pq)pq.addEventListener('input',()=>{
-    if(!PLAN)return;
-    const v=+pq.value||0;
-    PLAN.pi[ASOF()]=v;save();
-    devPaint();refresh(false);
-  });
   T.querySelectorAll('input[data-khr][data-kf="q"]').forEach(el=>el.addEventListener('blur',()=>{const r=KITC[+el.dataset.khr];if(r&&r.q==null)el.value=String(kitQty(r,ASOF()));}));
   T.querySelectorAll('input[data-khr]').forEach(el=>el.addEventListener('input',()=>{
     const r=KITC[+el.dataset.khr],fld=el.dataset.kf;
@@ -1183,17 +1187,12 @@ function devPaint(){
   const dsub=k=>efSub(k*NDAYS,k*rem);
   const duS=r=>r.du.reduce((a,x)=>a+x,0);
   const gFac=(r,d)=>{
-    if(!r)return 0;
-    const n=r.n.toLowerCase();
-    if(r.bus==='Battery'||n.includes('air condition')||n.includes('e-bike charging'))return 1;
-    const sg=(r.cat==='Sound')?((PLAN&&PLAN.s&&!PLAN.s[d])?0:1):1;
-    const c=(r.sc==='people'&&PLAN)?cf(d):1;
-    return sg*c;
+    if(!r||!PLAN)return 0;
+    return rowMod(r,d);
   };
   const gRow=(r,d)=>r?r.q*r.w*duS(r)/1000*gFac(r,d):0;
   const rowKw=(d,idx)=>gRow(DEVD[d]&&DEVD[d][idx],d);
   const rowEF=idx=>{let ev=0,fr=0;for(let d=0;d<NDAYS;d++){const k=rowKw(d,idx);ev+=k;if(d>=ASOF())fr+=k;}return[ev,fr];};
-  const pEF=per=>{let ev=0,fr=0;for(let d=0;d<NDAYS;d++){const k=per*pCount(d);ev+=k;if(d>=ASOF())fr+=k;}return[ev,fr];};
   const kitEF=()=>{let ev=0,fr=0;for(let d=0;d<NDAYS;d++){const k=kitKwh(d);ev+=k;if(d>=ASOF())fr+=k;}return[ev,fr];};
   const itemEF=r=>{let ev=0,fr=0;for(let d=0;d<NDAYS;d++){const k=kitQty(r,d)*(+r.w||0)*r.hs.length/1000;ev+=k;if(d>=ASOF())fr+=k;}return[ev,fr];};
   let tk=0;
@@ -1212,7 +1211,7 @@ function devPaint(){
   });
   if($('psq')){
     const maxW=Math.max(...PCW,1);
-    if(document.activeElement!==$('psq'))$('psq').value=pNow;
+    $('psq').textContent=pNow;
     $('psw').innerHTML=f(PP,2)+'<span class="devsm">kWh/ea</span>';
     $('psh').textContent='\u2014';
     let sh='<div class="hstrip" title="hours when any camper item draws">';
