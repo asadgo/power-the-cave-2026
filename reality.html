@@ -351,7 +351,7 @@ html,body{overflow-x:hidden;max-width:100%;-webkit-text-size-adjust:100%;text-si
 </style>
 </head>
 <body>
-<script>try{if(JSON.parse(localStorage.getItem("cave_theme"))==="light"){document.documentElement.classList.add("light");document.body.classList.add("light");}}catch(e){}</script>
+<script>try{var t=JSON.parse(localStorage.getItem("cave_theme_choice")),light=t==="light"||(t!=="dark"&&window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches);if(light){document.documentElement.classList.add("light");document.body.classList.add("light");}}catch(e){}</script>
 <div class="wrap">
 <div class="hd"><h1>THE CAVE · REALITY<span id="ver"></span></h1>
   <div class="hbtns">
@@ -824,7 +824,8 @@ function localEcho(r){
 const SUNI='\u2600',MOONI='\u263E';
 const loadLS=k=>{try{return JSON.parse(localStorage.getItem(k)||'null');}catch(e){return null;}};
 const storeLS=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}};
-function applyTheme(m){document.body.classList.toggle('light',m==='light');document.documentElement.classList.toggle('light',m==='light');$('themebtn').textContent=m==='light'?MOONI:SUNI;storeLS('cave_theme',m);renderCharts();}
+const osTheme=()=>(window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark';
+function applyTheme(m,persist){document.body.classList.toggle('light',m==='light');document.documentElement.classList.toggle('light',m==='light');$('themebtn').textContent=m==='light'?MOONI:SUNI;if(persist!==false)storeLS('cave_theme_choice',m);renderCharts();}
 let _tt=null;function toast(m,err){const t=$('toast');t.textContent=m;t.className='toast show'+(err?' err':'');clearTimeout(_tt);_tt=setTimeout(()=>t.className='toast',2600);}
 function renderAll(){NOW=new Date();renderDaybar();renderStatus();renderCharts();renderLedger();}
 function loadVersion(){fetch('data/log.csv',{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const rows=t.trim().split('\n'),v=rows[rows.length-1].split(',')[0];if(v&&!isNaN(+v))$('ver').textContent='v'+v;}).catch(()=>{});}
@@ -849,7 +850,8 @@ async function boot(){
     /* a real page reload: fresh fuel log, fresh plan, and a newer reality.html if one was uploaded */
     $('reloadbtn').onclick=()=>{$('reloadbtn').classList.add('spin');location.reload();};
     $('themebtn').onclick=()=>applyTheme(document.body.classList.contains('light')?'dark':'light');
-    applyTheme(loadLS('cave_theme')==='light'?'light':'dark');
+    {const savedT=loadLS('cave_theme_choice');applyTheme(savedT==='light'||savedT==='dark'?savedT:osTheme(),savedT==='light'||savedT==='dark');
+     try{matchMedia('(prefers-color-scheme: light)').addEventListener('change',()=>{const s=loadLS('cave_theme_choice');if(s!=='light'&&s!=='dark')applyTheme(osTheme(),false);});}catch(e){}}
     $('loader').style.display='none';$('app').style.display='block';
     renderAll();
   }catch(e){$('loadmsg').innerHTML='Could not load: '+esc(e.message)+(location.protocol==='file:'?'<br><br>This is the bare repo file opened from disk, so it cannot read data/*.csv this way. Open the live page instead: <b>powerthecave.com/reality</b>.':'');}

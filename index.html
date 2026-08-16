@@ -274,7 +274,7 @@ html,body{overflow-x:hidden;max-width:100%;-webkit-text-size-adjust:100%;text-si
 </style>
 </head>
 <body>
-<script>try{if(JSON.parse(localStorage.getItem("cave_theme"))==="light"){document.body.classList.add("light");document.documentElement.classList.add("light");}}catch(e){}</script>
+<script>try{var t=JSON.parse(localStorage.getItem("cave_theme_choice")),light=t==="light"||(t!=="dark"&&window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches);if(light){document.body.classList.add("light");document.documentElement.classList.add("light");}}catch(e){}</script>
 <div class="wrap">
 <div class="hd"><h1>THE CAVE · POWER<span id="ver"></span></h1>
   <div class="hbtns">
@@ -877,11 +877,13 @@ function refresh(rebuild){
 /* ---------- theme ---------- */
 const SUNI='\u2600';
 const MOONI='\u263E';
-function applyTheme(mode){
+/* theme: follows the device setting until the person taps the sun / moon button, which stores an explicit choice */
+const osTheme=()=>(window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark';
+function applyTheme(mode,persist){
   document.body.classList.toggle('light',mode==='light');
   document.documentElement.classList.toggle('light',mode==='light');
   $('themebtn').innerHTML=mode==='light'?MOONI:SUNI;
-  store('cave_theme',mode);
+  if(persist!==false)store('cave_theme_choice',mode);
   if(cap){cap.destroy();cap=null;}
   if(run){run.destroy();run=null;}
   if(PLAN)refresh(false);
@@ -1603,7 +1605,8 @@ function boot(D){
     applyChanges(ch,Array.from({length:n},(_,k)=>a+1+k));
   });
   $('devnote').innerHTML='Tap an hour cell to step that hour&rsquo;s duty: off, &frac14;, &frac12;, &frac34;, full, off. Edits land on the selected day only; the two Apply buttons copy this day&rsquo;s changes onto other days. &#10227; (top right) returns every day to the official plan.';
-  applyTheme(load('cave_theme')||'dark');
+  {const savedT=load('cave_theme_choice');applyTheme(savedT==='light'||savedT==='dark'?savedT:osTheme(),savedT==='light'||savedT==='dark');
+   try{matchMedia('(prefers-color-scheme: light)').addEventListener('change',()=>{const s=load('cave_theme_choice');if(s!=='light'&&s!=='dark')applyTheme(osTheme(),false);});}catch(e){}}
   BOOTED=true;
   refresh(true);
 }
