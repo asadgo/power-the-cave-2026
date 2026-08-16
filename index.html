@@ -582,10 +582,10 @@ function genGal(i){
 }
 const startFuel=i=>(DELTIME==='pm'&&i>0)?autoMorning(i)-arriveGal(i):autoMorning(i);
 
-function scaleAFor(i){
-  const D8=DER[i],p=PLAN.p[i],a=PLAN.a[i];
-  return D8.acInB?((a*D8.ACW+(p>0?D8.fansKw:0))/D8.aliceRef):1;
-}
+/* Gen 2's hourly curve comes straight from the day's device rows (AC and e-bike counts are already synced from the calendar per day).
+   The old comfort rescale here (AC count x per-unit kW over the day's gen-2 peak) was a no-op at normal counts but hid any other gen-2 load
+   when it dominated the peak, e.g. many e-bikes; energy counted them, the power curve did not. */
+function scaleAFor(i){return 1;}
 let POOLPAT=null;
 function poolPattern(){
   if(POOLPAT)return POOLPAT;
