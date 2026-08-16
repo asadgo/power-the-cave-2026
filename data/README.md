@@ -45,8 +45,9 @@ says otherwise). `acs` and `ebikes` set the AC and e-bike quantities per day; `g
 the red line and gen overhead. “Make this the official plan” exports this exact file.
 
 ## personal_items.csv — per-camper items
-`item,watts,h_5a … h_4a` (1 = on that hour). Their kWh/camper × people feeds the
-“Personal items” category.
+`item,watts,qty,h_5a … h_4a` (1 = on that hour). `qty` blank = one per person, so the item follows
+each day's People count; a number = that many every day (e.g. 2 CPAPs). Their kWh feeds the
+“Personal items” category (Shade City in the by-area view).
 
 ## log.csv — version history
 `version,date,change`. Append-only. The last row's version is what both page headers display.
