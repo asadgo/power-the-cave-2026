@@ -320,7 +320,9 @@ details.hint summary{cursor:pointer;list-style:none;font-size:11px;letter-spacin
 details.hint summary::-webkit-details-marker{display:none}
 .info details.hint summary,details.hint summary{min-height:0;margin:0}
 .info details.hint summary::before,.info[open] details.hint summary::before,details.hint[open] summary::before,details.hint summary::before{content:"\24D8";font-size:13px;margin-right:0;color:var(--muted)}
-details.hint p{font-size:11.5px;color:var(--muted);line-height:1.5;margin:0 0 10px}
+details.hint p{font-size:11.5px;color:var(--muted);line-height:1.5;margin:0 0 8px}
+details.hint ol.hsteps{margin:0 0 10px 18px;padding:0;font-size:11.5px;color:var(--muted);line-height:1.5}
+details.hint ol.hsteps li{margin:0 0 6px}
 html,body{overflow-x:hidden;max-width:100%;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 #app>details.panel{margin:12px 0 0}
 #app>.stgrid{margin-bottom:2px}
@@ -393,16 +395,32 @@ html,body{overflow-x:hidden;max-width:100%;-webkit-text-size-adjust:100%;text-si
 <button type="button" id="fsub">Commit to the fuel log</button>
 <p id="fmsg"></p>
 <div id="prevbox"><div style="font-size:10.5px;color:var(--warn);letter-spacing:.5px;margin-bottom:4px">CSV ROW (tap to select)</div><div id="prevrow"></div></div>
-<details class="hint"><summary>How to log</summary><p>Made a mistake? Tap <b>retract</b> on the row: it stays visible, struck through, with your name and reason. A refuel = name + gallons into that gen + its hour meter. The drum check = name + both drum levels (0 for an empty drum). Blank fields are fine. Fill tanks to full each pour, so the pour size is exactly the fuel burned since the last fill. Meter = the run-hours odometer on the gen screen; copy it as-is. Every entry is a git commit; typo fixes happen via the GitHub pencil.</p></details></details>
+<details class="hint"><summary>Step by step instructions</summary>
+<ol class="hsteps">
+<li>Type your name.</li>
+<li>Refuel: fill the tank to full, then enter the gallons you poured into that gen. Filling to full each time makes the pour size exactly the fuel burned since the last fill.</li>
+<li>Meter: read the run-hours odometer on that gen&rsquo;s screen and copy it as-is.</li>
+<li>Drum check: enter both drum levels (0 for an empty drum). Blank fields are fine.</li>
+<li>Press <b>Commit to the fuel log</b>. Every entry is saved to the repo (a git commit).</li>
+</ol>
+<p>Made a mistake? Tap <b>retract</b> on the row: it stays visible, struck through, with your name and reason. Typo fixes happen via the GitHub pencil.</p></details></details>
 
 <details class="panel info chartwide" open><summary class="flag">Fuel on hand: plan vs reality</summary>
   <div class="chbox"><canvas id="chartA"></canvas></div>
-  <details class="hint"><summary>How to read this chart</summary><p>Teal line = running estimate (deliveries in, pours out). Diamonds = the hand-counted drum levels that re-anchor it. Dashed = if the current measured burn continues and planned deliveries land, fuel on hand through 9/7. Red segments = below zero.</p></details></details>
+  <details class="hint"><summary>How to read this chart</summary>
+<p>Gray line: the plan.</p>
+<p>Teal line: our best estimate of fuel on hand. It starts at the first drum check, goes up when a delivery is logged and down when fuel is poured into a generator.</p>
+<p>Teal diamonds: drum levels someone actually measured (each drum check entry). Each one resets the estimate to the measured level from that moment on. None yet = no drum check logged.</p>
+<p>Amber dashed line: if the current measured burn continues and planned deliveries land, this is the expected fuel on hand through 9/7. Red where it goes below zero.</p>
+<p>Red dotted line along the bottom: the fuel floor, the level we never want to go below.</p></details></details>
 
 <details class="panel info chartwide" open><summary class="flag">Fuel poured per day: plan vs reality</summary>
   <div class="chbox"><canvas id="chartB"></canvas></div>
   <div id="daynotes"></div>
-  <details class="hint"><summary>How to read this chart</summary><p>Each bar = gallons poured into the generators that calendar day. Plan = what the model expects them to drink; gen 1 + gen 2 stack to the real total. Tap a bar for that day&rsquo;s notes.</p></details></details>
+  <details class="hint"><summary>How to read this chart</summary>
+<p>Gray bar: what the plan expects the generators to need that day.</p>
+<p>Blue and pink bars: gallons actually poured into gen 1 and gen 2 that day. Stacked, they make the day&rsquo;s real total.</p>
+<p>Tap a bar for that day&rsquo;s notes.</p></details></details>
 
 <details class="panel info" open><summary class="flag">Fuel log</summary>
 <div class="twrapx" id="ledgerwrap"><table id="ledger"></table></div></details>
@@ -710,10 +728,10 @@ function renderCharts(){
   const yt={ticks:{color:t.tick,font:{family:FONT,size:10}},grid:{color:t.grid},title:{display:true,text:'gallons',color:t.tick,font:{family:FONT,size:10}}};
   const dsA=[
     {label:'Plan',data:P.pts,borderColor:cssv('--planl'),borderWidth:2,pointRadius:0,tension:0},
-    {label:'Reality: running estimate',data:A.line,borderColor:cssv('--rline'),borderWidth:2.5,pointRadius:0,tension:0},
-    {label:'Drum counts (measured)',data:A.dips,showLine:false,pointRadius:5,pointStyle:'rectRot',backgroundColor:cssv('--rline')},
-    {label:'If current burn continues',data:F.pts,borderColor:cssv('--warn'),borderDash:[6,4],borderWidth:2,pointRadius:0,tension:0,segment:{borderColor:c=>((c.p0.parsed.y<0||c.p1.parsed.y<0)?cssv('--danger'):undefined)}},
-    {label:'Fuel floor',data:[{x:0,y:FLOOR},{x:NDAYS,y:FLOOR}],borderColor:cssv('--danger'),borderDash:[3,4],borderWidth:1.5,pointRadius:0}];
+    {label:'Reality: estimated fuel on hand',data:A.line,borderColor:cssv('--rline'),borderWidth:2.5,pointRadius:0,tension:0},
+    {label:'Drum checks (measured)',data:A.dips,showLine:false,pointRadius:5,pointStyle:'rectRot',backgroundColor:cssv('--rline')},
+    {label:'Expected if current burn continues',data:F.pts,borderColor:cssv('--warn'),borderDash:[6,4],borderWidth:2,pointRadius:0,tension:0,segment:{borderColor:c=>((c.p0.parsed.y<0||c.p1.parsed.y<0)?cssv('--danger'):undefined)}},
+    {label:'Fuel floor',data:[{x:0,y:FLOOR},{x:NDAYS,y:FLOOR}],borderColor:cssv('--danger'),borderDash:[1,4],borderWidth:2,borderCapStyle:'round',pointRadius:0}];
   if(chA)chA.destroy();
   chA=new Chart($('chartA'),{type:'line',data:{datasets:dsA},options:{responsive:true,maintainAspectRatio:false,animation:false,
     plugins:{legend:legendOpts(t)},scales:{x:xt,y:yt}}});
