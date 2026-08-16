@@ -215,6 +215,9 @@ summary.flagrow2{display:flex;flex-wrap:wrap;row-gap:6px;align-items:center}
 .uimsg .n-ch{color:var(--warn);background:var(--warn-bg)}
 .uimsg .n-ok{color:var(--muted2);background:var(--panel2)}
 .uimsg .callout{border:1px solid var(--warn);border-radius:8px;padding:8px 10px;color:var(--warn);margin:0 0 9px}
+.uimsg details{margin:0 0 9px}
+.uimsg summary{cursor:pointer;color:var(--bone);font-weight:600;margin:0 0 6px}
+.uimsg details ul{margin-top:2px}
 .uibox input{width:100%;margin-top:12px;box-sizing:border-box}
 .uibox .uierr{font-size:11px;color:var(--danger);margin-top:6px;min-height:14px}
 .uibox .uibtns{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
@@ -1283,25 +1286,24 @@ function scnApplyBuild(day){
   overrideRowsFor(day).forEach(o=>{dd+=[o.date,esc(o.device),o.field,esc(o.value)].join(',')+'\n';});
   return {'calendar_plan.csv':cal,'devices.csv':dev,'schedule.csv':sch,'device_days.csv':dd,'personal_items.csv':kit};
 }
+/* baseline for the export: the non-Off day whose setup the most other days share (fewest device_days rows); ties prefer a Burn day, then the earliest */
+function pickBaseline(){
+  let best=-1,bestScore=Infinity;
+  for(let d=0;d<NDAYS;d++){
+    if(isOff(d))continue;
+    const score=overrideRowsFor(d).length*10+(/^burn$/i.test(String(DTYPE[d]||''))?0:1);
+    if(score<bestScore){bestScore=score;best=d;}
+  }
+  return best<0?0:best;
+}
 async function scnApply(){
-  const day=ASOF();
+  const day=pickBaseline();
   const wd=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date(START.getTime()+day*DAY).getDay()];
   const dayName=wd+' '+dLab(day);
-  if(isOff(day)){
-    await uiDialog({html:true,cancel:false,title:'Make this the official plan',msg:
-      '<p><b>Nothing was downloaded.</b></p>'
-      +'<p><b>'+dayName+'</b> is selected in the calendar, and '+dLab(day)+' is an <b>Off</b> day. On an Off day the console sets every device quantity to 0 (nobody is running anything yet).</p>'
-      +'<p>The selected day becomes the <b>baseline</b> device list and hourly duty (devices.csv + schedule.csv); every other day is stored as its differences from that baseline (device_days.csv). From '+dLab(day)+' the baseline would be a device list of <b>all zeros</b>, which makes devices.csv useless to read or hand-edit.</p>'
-      +'<p>Do this instead: click any Build, Burn or Strike day\u2019s header in the calendar, then press Make this the official plan again. All '+NDAYS+' days still ship exactly as they are on screen; only the baseline day changes.</p>'});
-    return;}
   const nm=load('cavecsv_scn');
   /* what differs from the committed CSVs */
   let pc=0;['p','a','e','s','g'].forEach(k=>{for(let i=0;i<NDAYS;i++)if(PLAN[k][i]!==SEEDPLAN[k][i])pc++;});
   for(let i=0;i<NDAYS;i++)if((FUEL.del[i]||0)!==(SEEDFUEL.del[i]||0))pc++;
-  const expB=expectedDay(day),rows=DEVD[day];
-  let dc=0;
-  rows.forEach(r=>{const b=expB.find(x=>x.n===r.n);if(!b||JSON.stringify(r)!==JSON.stringify(b))dc++;});
-  expB.forEach(b=>{if(!rows.find(r=>r.n===b.n))dc++;});
   const simDays=DEVD.filter((dd,i)=>JSON.stringify(dd)!==JSON.stringify(expectedDay(i))).length;
   const ovr=overrideRowsFor(day),ovrDays=new Set(ovr.map(o=>o.date)).size;
   const kc=JSON.stringify(KITC)!==JSON.stringify(KITSEED);
@@ -1315,21 +1317,24 @@ async function scnApply(){
   const tag=ch=>'<span class="n '+(ch?'n-ch':'n-ok')+'">'+(ch?'changed':'unchanged')+'</span>';
   const hasNotes=!!NOTES.trim();
   const msg=
-    '<p>Downloads one zip. Inside it, a <b>data</b> folder holds 6 CSV files rewritten from what is on screen right now: the whole calendar and all '+NDAYS+' days of device setups, exactly as they are on screen. Uploading them into the repo\u2019s <b>data</b> folder makes this the official plan for everyone.'+(nm?' (Loaded simulation: '+String(nm).replace(/</g,'&lt;').slice(0,60)+')':'')+'</p>'
-    +'<p>What each file will contain:</p><ul>'
-    +'<li><span class="fn">calendar_plan.csv</span>: the calendar, all '+NDAYS+' days (people, ACs, e-bikes, sound, gens, deliveries). '+num(pc,'cell')+' differ from the official plan.</li>'
-    +'<li><span class="fn">devices.csv</span> + <span class="fn">schedule.csv</span>: the <b>baseline</b> device list and hourly duty, copied from the selected day: <b>'+dayName+'</b>. Every day starts from this baseline. '+num(dc,'device row')+' differ from the official plan on that day.</li>'
-    +'<li><span class="fn">device_days.csv</span>: what every other day changes against that baseline (quantity, watts, gen tag, hourly duty): '+num(ovr.length,'cell')+' across '+num(ovrDays,'day')+'. Baseline + this file = all '+NDAYS+' days as on screen; nothing is lost whichever day is selected.</li>'
-    +'<li><span class="fn">personal_items.csv</span>: the per-camper items table. '+tag(kc)+'.</li>'
-    +'<li><span class="fn">log.csv</span>: the version history plus one new line at the bottom describing this change. After upload the header reads <b>'+nxt+'</b> (now '+cur+').</li>'
-    +(hasNotes?'<li><span class="fn">notes.txt</span> (outside the data folder): a copy of your Notes box, for your own records. Not a repo file. Do not upload it.</li>':'')
-    +'</ul>'
-    +'<p>Days whose device setup differs from the official plan: '+num(simDays,'day')+' of '+NDAYS+'.</p>'
+    '<p>Downloads one zip: 6 CSV files holding everything on this page (calendar, all '+NDAYS+' days of device setups, personal items) exactly as on screen. Uploading them into the repo\u2019s <b>data</b> folder makes it the official plan for everyone.'+(nm?' (Loaded simulation: '+String(nm).replace(/</g,'&lt;').slice(0,60)+')':'')+'</p>'
+    +'<p>Changes vs the official plan:</p><ul>'
+    +'<li>Calendar: '+num(pc,'cell')+'</li>'
+    +'<li>Devices: <span class="n '+(simDays?'n-ch':'n-ok')+'">'+simDays+' of '+NDAYS+' days</span></li>'
+    +'<li>Personal items: '+tag(kc)+'</li></ul>'
     +((!pc&&!simDays&&!kc)?'<div class="callout">Nothing on screen differs from the official plan. This zip would change nothing except adding a log line.</div>':'')
+    +'<details><summary>What is in the zip</summary><ul>'
+    +'<li><span class="fn">calendar_plan.csv</span>: all '+NDAYS+' days (people, ACs, e-bikes, sound, gens, deliveries).</li>'
+    +'<li><span class="fn">devices.csv</span> + <span class="fn">schedule.csv</span>: the baseline device list and hourly duty (the setup most days share, currently '+dayName+'\u2019s).</li>'
+    +'<li><span class="fn">device_days.csv</span>: what each other day changes against that baseline: '+ovr.length+' cell'+(ovr.length===1?'':'s')+' across '+ovrDays+' day'+(ovrDays===1?'':'s')+'.</li>'
+    +'<li><span class="fn">personal_items.csv</span>: the per-camper items table.</li>'
+    +'<li><span class="fn">log.csv</span>: the version history plus one new line; the header will read <b>'+nxt+'</b> (now '+cur+').</li>'
+    +(hasNotes?'<li><span class="fn">notes.txt</span>: a copy of your Notes box, outside the data folder. Do not upload it.</li>':'')
+    +'</ul></details>'
     +'<p>After the download:</p><ol>'
     +'<li>Unzip it.</li>'
-    +'<li>GitHub: open the repo\u2019s <b>data</b> folder, then Add file, Upload files. Drop in all 6 CSV files (they replace the old ones). Commit.</li>'
-    +'<li>Wait about 1 minute for GitHub to publish, then press Reset (circular arrow, top right) here. The header reads <b>'+nxt+'</b> once it has landed; if it still reads '+cur+', wait and press Reset again.</li>'
+    +'<li>GitHub: open the repo\u2019s <b>data</b> folder, Add file, Upload files, drop in all 6 CSV files, Commit.</li>'
+    +'<li>Wait about 1 minute, then press Reset (circular arrow, top right). The header reads <b>'+nxt+'</b> once it has landed; if it still reads '+cur+', wait and press Reset again.</li>'
     +'</ol>';
   const ok=await uiDialog({html:true,msg,title:'Make this the official plan',ok:'Download zip'});
   if(ok!==true)return;
