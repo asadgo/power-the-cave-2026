@@ -1044,7 +1044,7 @@ function buildDev(){
     if(nm==null)return;
     const nv=(DEVC[i].gen==='2')?'1':'2';
     const from=ev.shiftKey?ASOF():0;
-    DEVD.forEach((rows,d)=>{if(d<from)return;const r=rows[i];if(r&&r.n===nm)r.gen=nv;});
+    DEVD.forEach((rows,d)=>{if(d<from)return;const r=rows[i];if(r&&r.n===nm){r.gen=nv;touch(d,nm,'gen');}});
     store('cavecsv_dev',DEVD);
     el.textContent=nv;el.className='gtag g'+nv;
     devCalc();
@@ -1090,7 +1090,7 @@ function buildDev(){
     if(fld==='n')touchRename(ASOF(),oldName,v);else touch(ASOF(),DEVC[r].n,fld);
     if(fld==='q'&&PLAN){
       const k=/air condition/i.test(DEVC[r].n)?'a':(/e-bike charging/i.test(DEVC[r].n)?'e':null);
-      if(k){PLAN[k][ASOF()]=v;save();
+      if(k){PLAN[k][ASOF()]=v;save();touch(ASOF(),'__cal',k);
         const ci=document.querySelector('input[data-k="'+k+'"][data-i="'+ASOF()+'"]');
         if(ci)ci.value=v;}
     }
@@ -1392,37 +1392,25 @@ function resetToCSV(){
    Calendar cells: People, ACs, E-bikes, Sound, Gens (deliveries are day-specific and never copied). Device cells: qty, watts, gen tag, single hours, added or removed custom items. */
 const CALK={p:'People',a:'ACs',e:'E-bikes',s:'Sound',g:'Gens'};
 const calFmt=(k,v)=>k==='s'?(v?'on':'off'):String(v);
+/* changes = cells the person edited in this browser (TOUCH), taken at their current value; cells that merely received a value from an earlier Apply are not changes, so a later edit between them carries correctly */
 function calChanges(a){
   const out=[],tt=(TOUCH[a]&&TOUCH[a].__cal)||{};
-  ['p','a','e','s','g'].forEach(k=>{if(PLAN[k][a]!==SEEDPLAN[k][a]||tt[k])out.push({k,v:PLAN[k][a]});});
+  ['p','a','e','s','g'].forEach(k=>{if(tt[k])out.push({k,v:PLAN[k][a]});});
   return out;
 }
 const FRAC={0:'off',0.25:'\u00bc',0.5:'\u00bd',0.75:'\u00be',1:'full'};
 function devChanges(a){
-  const exp=expectedDay(a),act=DEVD[a]||[],out=[];
+  const exp=expectedDay(a),act=DEVD[a]||[],out=[],tt=TOUCH[a]||{};
   const acN=n=>/air condition/i.test(n),ebN=n=>/e-bike charging/i.test(n);
-  [...new Set([...exp.map(r=>r.n),...act.map(r=>r.n)])].forEach(n=>{
-    const ex=exp.find(r=>r.n===n),r=act.find(x=>x.n===n);
-    if(r&&!ex){out.push({n,kind:'add',row:structuredClone(r)});return;}
-    if(ex&&!r){out.push({n,kind:'remove'});return;}
-    if(r.q!==ex.q&&!acN(n)&&!ebN(n))out.push({n,kind:'q',v:r.q,o:ex.q});
-    if(r.w!==ex.w)out.push({n,kind:'w',v:r.w,o:ex.w});
-    if((r.gen||'1')!==(ex.gen||'1'))out.push({n,kind:'gen',v:r.gen||'1',o:ex.gen||'1'});
-    for(let j=0;j<24;j++)if(r.du[j]!==ex.du[j])out.push({n,kind:'h',j,v:r.du[j],o:ex.du[j]});
-  });
-  const have=new Set(out.map(c=>c.n+'|'+c.kind+'|'+(c.j==null?'':c.j)));
-  const tt=TOUCH[a]||{};
   Object.keys(tt).forEach(n=>{
     if(n==='__cal')return;
-    const r=act.find(x=>x.n===n),ex=exp.find(x=>x.n===n);
-    Object.keys(tt[n]).forEach(f=>{
-      if(f==='remove'){if(!r&&!have.has(n+'|remove|'))out.push({n,kind:'remove'});return;}
-      if(f==='add'){if(r&&!ex&&!have.has(n+'|add|'))out.push({n,kind:'add',row:structuredClone(r)});return;}
-      if(!r||!ex)return;
-      if(f==='q'){if(!(acN(n)||ebN(n))&&!have.has(n+'|q|'))out.push({n,kind:'q',v:r.q,o:ex.q});}
-      else if(f==='w'){if(!have.has(n+'|w|'))out.push({n,kind:'w',v:r.w,o:ex.w});}
-      else if(/^h\d+$/.test(f)){const j=+f.slice(1);if(!have.has(n+'|h|'+j))out.push({n,kind:'h',j,v:r.du[j],o:ex.du[j]});}
-    });
+    const r=act.find(x=>x.n===n),ex=exp.find(x=>x.n===n),f=tt[n];
+    if(!r){if(f.remove||f.add)out.push({n,kind:'remove'});return;}
+    if(!ex){out.push({n,kind:'add',row:structuredClone(r)});return;}
+    if(f.q&&!(acN(n)||ebN(n)))out.push({n,kind:'q',v:r.q,o:ex.q});
+    if(f.w)out.push({n,kind:'w',v:r.w,o:ex.w});
+    if(f.gen)out.push({n,kind:'gen',v:r.gen||'1',o:ex.gen||'1'});
+    Object.keys(f).forEach(k=>{if(/^h\d+$/.test(k)){const j=+k.slice(1);out.push({n,kind:'h',j,v:r.du[j],o:ex.du[j]});}});
   });
   return out;
 }
@@ -1434,46 +1422,59 @@ function devChangesLines(ch,cap){
   if(lines.length>shown.length)shown.push('+ '+(lines.length-shown.length)+' more device'+(lines.length-shown.length===1?'':'s'));
   return shown;
 }
-function applyDayChanges(a,targets){
-  const cal=calChanges(a),dev=devChanges(a);
-  targets.forEach(t=>{
-    cal.forEach(c=>{PLAN[c.k][t]=c.v;});
-    const rows=DEVD[t];
-    dev.forEach(c=>{
-      const k=rows.findIndex(x=>x.n===c.n),r=k>=0?rows[k]:null;
-      if(c.kind==='add'){if(!r)rows.push(structuredClone(c.row));else{r.q=c.row.q;r.w=c.row.w;r.gen=c.row.gen;r.du=c.row.du.slice();}return;}
-      if(c.kind==='remove'){if(r){if(r.cu)rows.splice(k,1);else r.q=0;}return;}
-      if(!r)return;
-      if(c.kind==='q')r.q=c.v;else if(c.kind==='w')r.w=c.v;else if(c.kind==='gen')r.gen=c.v;else if(c.kind==='h')r.du[c.j]=c.v;
+function applyDevChangeTo(rows,c){
+  const k=rows.findIndex(x=>x.n===c.n),r=k>=0?rows[k]:null;
+  if(c.kind==='add'){if(!r)rows.push(structuredClone(c.row));else{r.q=c.row.q;r.w=c.row.w;r.gen=c.row.gen;r.du=c.row.du.slice();}return;}
+  if(c.kind==='remove'){if(r){if(r.cu)rows.splice(k,1);else r.q=0;}return;}
+  if(!r)return;
+  if(c.kind==='q')r.q=c.v;else if(c.kind==='w')r.w=c.v;else if(c.kind==='gen')r.gen=c.v;else if(c.kind==='h')r.du[c.j]=c.v;
+}
+/* every change on every day, whichever day is selected */
+function allChanges(){
+  const out=[];
+  for(let i=0;i<NDAYS;i++){const cal=calChanges(i),dev=devChanges(i);if(cal.length||dev.length)out.push({i,cal,dev});}
+  return out;
+}
+/* Carry each changed cell to other days: forward to the days after it, up to the day that same cell was changed again; with backfill also to the days before its first change. */
+function applyCarry(all,backfill){
+  const cells={};
+  all.forEach(d=>{
+    d.cal.forEach(c=>{const key='cal|'+c.k;(cells[key]=cells[key]||[]).push({i:d.i,go:t=>{PLAN[c.k][t]=c.v;}});});
+    d.dev.forEach(c=>{const key='dev|'+c.n+'|'+c.kind+'|'+(c.j==null?'':c.j);(cells[key]=cells[key]||[]).push({i:d.i,go:t=>{applyDevChangeTo(DEVD[t],c);}});});
+  });
+  Object.values(cells).forEach(list=>{
+    list.sort((a,b)=>a.i-b.i);
+    list.forEach((ch,idx)=>{
+      const end=idx+1<list.length?list[idx+1].i:NDAYS;
+      for(let t=ch.i+1;t<end;t++)ch.go(t);
+      if(backfill&&idx===0)for(let t=0;t<ch.i;t++)ch.go(t);
     });
   });
   save();DEVC=DEVD[ASOF()];syncACFromPlan();buildDev();devCalc();refresh(true);
 }
-function changesHTML(a){
-  const cal=calChanges(a),dev=devChanges(a);
-  const li=[];
-  cal.forEach(c=>li.push('<li>Calendar '+CALK[c.k]+': '+calFmt(c.k,c.v)+'</li>'));
-  devChangesLines(dev).forEach(l=>li.push('<li>'+l+'</li>'));
-  return {n:cal.length+dev.length,html:'<ul>'+li.join('')+'</ul>'};
+/* the changes as a readable list, one line per day; runs of consecutive days with identical changes collapse into one line */
+function changesListHTML(all){
+  const dayTxt=d=>[...d.cal.map(c=>'Calendar '+CALK[c.k]+': '+calFmt(c.k,c.v)),...devChangesLines(d.dev,6)].join(' \u00b7 ');
+  const runs=[];
+  all.forEach(d=>{const txt=dayTxt(d),last=runs[runs.length-1];if(last&&last.txt===txt&&last.to===d.i-1)last.to=d.i;else runs.push({from:d.i,to:d.i,txt});});
+  return '<ul>'+runs.slice(0,10).map(r=>'<li><b>'+dLab(r.from)+(r.to>r.from?' to '+dLab(r.to):'')+'</b>: '+r.txt+'</li>').join('')+(runs.length>10?'<li>+ '+(runs.length-10)+' more</li>':'')+'</ul>';
 }
-async function noChangesMsg(a){await uiAlert(dayName(a)+' has no changes vs the official plan, so there is nothing to apply. Change something on this day first (a calendar cell, an hour cell, a quantity, watts, a gen tag or a custom item), then press again.','Apply');}
+async function noChangesMsg(){await uiAlert('No edits to carry: nothing has been changed on this page since it was loaded (or since the last Reset or Load simulation). Change a calendar cell, an hour cell, a quantity, watts, a gen tag or a custom item on any day, then press again.','Apply');}
 async function applyAllDays(){
-  const a=ASOF(),ch=changesHTML(a);
-  if(!ch.n)return noChangesMsg(a);
-  const msg='<p>Apply <b>'+dayName(a)+'\u2019s</b> changes to every other day? The changes:</p>'+ch.html
-    +'<p>Only these cells change on the other days; everything else there stays as it is. Only this browser changes; nothing on GitHub changes until you make it official.</p>';
+  const all=allChanges();
+  if(!all.length)return noChangesMsg();
+  const msg='<p>Copy every change to all days? Each changed cell keeps its new value on every other day, before and after it (up to the day that same cell was changed again). The changes:</p>'+changesListHTML(all)
+    +'<p>Only these cells change; everything else stays as it is. Only this browser changes; nothing on GitHub changes until you make it official.</p>';
   if(await uiDialog({html:true,msg,title:'Apply changes to all days',ok:'Apply to all days'})!==true)return;
-  applyDayChanges(a,Array.from({length:NDAYS},(_,i)=>i).filter(i=>i!==a));
+  applyCarry(all,true);
 }
 async function applyForward(){
-  const a=ASOF(),n=NDAYS-1-a;
-  if(n<1){await uiAlert(dayName(a)+' is the last day of the event; there are no later days to apply to. Nothing changed.','Apply changes to rest of event');return;}
-  const ch=changesHTML(a);
-  if(!ch.n)return noChangesMsg(a);
-  const msg='<p>Apply <b>'+dayName(a)+'\u2019s</b> changes to the '+n+' later day'+(n===1?'':'s')+', '+dLab(a+1)+' to '+dLab(NDAYS-1)+'? The changes:</p>'+ch.html
-    +'<p>Only these cells change on those days; everything else there stays as it is, and days before '+dLab(a)+' are untouched. Only this browser changes; nothing on GitHub changes until you make it official.</p>';
+  const all=allChanges();
+  if(!all.length)return noChangesMsg();
+  const msg='<p>Carry every change forward? Each changed cell keeps its new value on the days after it (up to the day that same cell was changed again). Days before a change are untouched. The changes:</p>'+changesListHTML(all)
+    +'<p>Only these cells change; everything else stays as it is. Only this browser changes; nothing on GitHub changes until you make it official.</p>';
   if(await uiDialog({html:true,msg,title:'Apply changes to rest of event',ok:'Apply forward'})!==true)return;
-  applyDayChanges(a,Array.from({length:n},(_,k)=>a+1+k));
+  applyCarry(all,false);
 }
 
 /* ---------- everything this browser holds beyond the official plan, as a readable list ---------- */
@@ -1661,7 +1662,7 @@ function boot(D){
   });
   ['devcopy','calcopy'].forEach(id=>$(id).addEventListener('click',applyAllDays));
   ['devfwd','calfwd'].forEach(id=>$(id).addEventListener('click',applyForward));
-  $('devnote').innerHTML='Tap an hour cell to step that hour&rsquo;s duty: off, &frac14;, &frac12;, &frac34;, full, off. Edits land on the selected day only; the two Apply buttons copy this day&rsquo;s changes onto other days. &#10227; (top right) returns every day to the official plan.';
+  $('devnote').innerHTML='Tap an hour cell to step that hour&rsquo;s duty: off, &frac14;, &frac12;, &frac34;, full, off. Device edits land on the selected day; calendar edits on the day you type in. The two Apply buttons carry every change to the other days (all days, or forward only). &#10227; (top right) returns every day to the official plan.';
   {const savedT=load('cave_theme_choice');applyTheme(savedT==='light'||savedT==='dark'?savedT:osTheme(),savedT==='light'||savedT==='dark');
    try{matchMedia('(prefers-color-scheme: light)').addEventListener('change',()=>{const s=load('cave_theme_choice');if(s!=='light'&&s!=='dark')applyTheme(osTheme(),false);});}catch(e){}}
   BOOTED=true;
