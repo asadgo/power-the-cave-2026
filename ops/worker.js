@@ -1,5 +1,5 @@
-/* reality-writer — Cloudflare Worker
-   Receives a journal entry from reality.html, appends one row to data/reality.csv
+/* reality-writer — Cloudflare Worker  (v22.2: UTF-8-safe read/write; earlier builds mangled non-ASCII text on every commit)
+   Receives a fuel-log entry from reality.html, appends one row to data/reality.csv
    in asadgo/power-the-cave-2026 as a git commit via the GitHub Contents API.
 
    Deploy (browser only, ~15 min):
@@ -26,6 +26,10 @@ function cors(req){
     'Access-Control-Allow-Headers':'Content-Type','Vary':'Origin'};
 }
 const cell=v=>{v=String(v==null?'':v);return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+/* GitHub sends/receives base64 of UTF-8 bytes. atob/btoa alone treat bytes as Latin-1 characters, which
+   double-encodes any smart quote, em dash or accent already in the file on the next commit — so decode/encode via UTF-8. */
+const b64decode=s=>new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\s/g,'')),c=>c.charCodeAt(0)));
+const b64encode=s=>{const u=new TextEncoder().encode(s);let bin='';for(let i=0;i<u.length;i+=0x8000)bin+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(bin);};
 function bad(msg,req){return new Response(msg,{status:400,headers:cors(req)});}
 
 export default {
@@ -62,14 +66,14 @@ export default {
       const g=await fetch(url+'?ref='+BRANCH,{headers:gh});
       if(!g.ok)return new Response('GitHub read failed: '+g.status,{status:502,headers:cors(req)});
       const j=await g.json();
-      const cur=atob(j.content.replace(/\n/g,''));
+      const cur=b64decode(j.content);
       const next=(cur.endsWith('\n')||cur==='')?cur+line+'\n':cur+'\n'+line+'\n';
       const poured=(+r.gal_gen1||0)+(+r.gal_gen2||0);
       const summary=[poured&&('+'+poured+' gal to gens'),r.gal_delivered&&(r.gal_delivered+' gal delivered'),
         (r.drum1_gal!==''&&r.drum2_gal!=='')&&('drums '+((+r.drum1_gal)+(+r.drum2_gal))+' gal')].filter(Boolean).join(', ')||'meter reading';
       const p=await fetch(url,{method:'PUT',headers:gh,body:JSON.stringify({
         message:'reality: '+r.logged_by+' \u2014 '+summary,
-        content:btoa(unescape(encodeURIComponent(next))),sha:j.sha,branch:BRANCH})});
+        content:b64encode(next),sha:j.sha,branch:BRANCH})});
       if(p.ok){try{await mirror;}catch(e){}return new Response('committed',{status:200,headers:cors(req)});}
       if(p.status!==409&&p.status!==422)return new Response('GitHub write failed: '+p.status,{status:502,headers:cors(req)});
       /* sha race with a simultaneous entry — re-read and retry */
