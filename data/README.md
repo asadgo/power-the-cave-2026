@@ -8,7 +8,8 @@ Policy dials, machine specs and model constants. Notables: `event_start`, `event
 `playa_derate` × `load_ceiling` set the red lines; `kwh_per_gallon` converts energy to fuel;
 `gen_bob_watts` / `gen_alice_watts` are the two nameplates (Westinghouse iGen12000DFc, 9000 W);
 `gen_overhead_gal_each` = gal per running generator per day on top of device fuel;
-`fuel_floor_gal` / `fuel_warn_margin_gal` colour the fuel chip.
+`fuel_floor_gal` / `fuel_warn_margin_gal` colour the fuel chip; `gens_paralleled` (0/1) decides whether the day
+status checks each generator against its own limits (0, no parallel kit) or the camp sum against the pooled limit (1).
 
 ## devices.csv — one row per device type (the baseline every day starts from)
 `device,area,category,product,qty,running_w_each,surge_w_each,volts,bus,priority,notes,scaling[,gen]`

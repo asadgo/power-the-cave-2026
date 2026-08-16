@@ -31,3 +31,4 @@ infra_full_people,40,"Headcount at which camp infrastructure runs full [console 
 camper_w_day,15,"W per camper 7a-4p [console model constant, from console v44]"
 camper_w_evening,50,"W per camper 5p-12a [console model constant, from console v44]"
 camper_w_night,25,"W per camper 1a-6a [console model constant, from console v44]"
+gens_paralleled,0,"1 = the two generators run paralleled as one 12.7 kW pool (day status checks the camp sum against it); 0 = each generator carries its own circuits (day status checks each against 6.3 kW safe / 7.9 kW absolute). Parallel kit not purchased as of 2026-08-16."
