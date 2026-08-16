@@ -1248,17 +1248,37 @@ function scnSerialize(title,seq,author){
 }
 function scnBanner(){
   const n=load('cavecsv_scn');
-  $('scnname').textContent=n?('viewing: '+n+' \u00b7 \u27f3 exits'):'';
+  $('scnname').textContent=n?('viewing simulation: '+n+' \u00b7 \u27f3 returns to the official plan'):'';
+}
+const hesc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const dayName=i=>['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date(START.getTime()+i*DAY).getDay()]+' '+dLab(i);
+/* what this browser holds that the official plan (committed CSVs) does not */
+function localDiff(){
+  let pc=0;['p','a','e','s','g'].forEach(k=>{for(let i=0;i<NDAYS;i++)if(PLAN[k][i]!==SEEDPLAN[k][i])pc++;});
+  for(let i=0;i<NDAYS;i++)if((FUEL.del[i]||0)!==(SEEDFUEL.del[i]||0))pc++;
+  const simDays=DEVD.filter((dd,i)=>JSON.stringify(dd)!==JSON.stringify(expectedDay(i))).length;
+  const kc=JSON.stringify(KITC)!==JSON.stringify(KITSEED);
+  const notes=!!NOTES.trim(),floorCh=FLOOR!==S.fuel_floor_gal;
+  return {pc,simDays,kc,notes,floorCh,any:!!(pc||simDays||kc||notes||floorCh)};
+}
+function diffText(d){
+  const p=[];if(d.pc)p.push(d.pc+' changed calendar cell'+(d.pc===1?'':'s'));if(d.simDays)p.push(d.simDays+' changed device day'+(d.simDays===1?'':'s'));
+  if(d.kc)p.push('personal items');if(d.notes)p.push('notes');if(d.floorCh)p.push('fuel floor');return p.join(', ');
 }
 async function scnLoadObj(o){
-  if(!o||o.kind!=='cave-scenario'||!o.state)throw new Error('not a camp simulation file');
+  if(!o||o.kind!=='cave-scenario'||!o.state)throw new Error('This is not a simulation file from this console. Simulation files come from the Save simulation button and are named like name_cavepowersim_2026-08-16_….json. Nothing on the page changed.');
   const st=o.state;
-  if(!okPlan(st.plan))throw new Error('calendar in the file does not match this console');
+  if(!okPlan(st.plan))throw new Error('This simulation was saved for a plan with a different number of days, so it cannot be loaded here. Nothing on the page changed.');
   const okD=Array.isArray(st.devd)&&st.devd.length===NDAYS&&st.devd.every(dd=>Array.isArray(dd)&&dd.every(r=>r&&typeof r.n==='string'&&Array.isArray(r.du)&&r.du.length===24));
-  if(!okD)throw new Error('device state in the file does not match this console');
-  if(o.base_dev!==scnHash(DEVFP)||o.base_plan!==scnHash(JSON.stringify(SEEDPLAN))){
-    if(!await uiConfirm('This simulation was saved against a different committed baseline. Load anyway?','Load simulation'))return false;
-  }
+  if(!okD)throw new Error('This simulation file is incomplete (its device tables are not what this console expects), probably saved by an older console version. Save a fresh simulation from a current console instead. Nothing on the page changed.');
+  const stale=(o.base_dev!==scnHash(DEVFP)||o.base_plan!==scnHash(JSON.stringify(SEEDPLAN)));
+  const d=localDiff();
+  const when=o.created&&!isNaN(new Date(o.created))?new Date(o.created).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
+  let msg='<p>Load <b>'+hesc(o.title||'this simulation')+'</b>'+(o.author?' by '+hesc(o.author):'')+(when?' (saved '+when+')':'')+'?</p>'
+    +'<p>Everything on this page is replaced by the file: calendar, fuel, all '+NDAYS+' days of devices, personal items, notes. Only this browser changes; nothing on GitHub changes.</p>'
+    +(d.any?'<p>Your current edits (<b>'+diffText(d)+'</b>) are lost unless you Cancel and press Save simulation first.</p>':'')
+    +(stale?'<div class="callout">Saved against an older official plan: the calendar or device tables have changed since. The file loads exactly as it was saved; changes made to the official plan since then are not in it.</div>':'');
+  if(await uiDialog({html:true,msg,title:'Load simulation',ok:'Load'})!==true)return false;
   PLAN=normPlan(st.plan);
   if(st.fuel&&Array.isArray(st.fuel.del))FUEL=st.fuel;
   if(typeof st.floor==='number'){FLOOR=st.floor;$('floor').value=FLOOR;store('cavecsv_floor',FLOOR);}
@@ -1307,12 +1327,8 @@ async function scnApply(){
   const wd=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date(START.getTime()+day*DAY).getDay()];
   const dayName=wd+' '+dLab(day);
   const nm=load('cavecsv_scn');
-  /* what differs from the committed CSVs */
-  let pc=0;['p','a','e','s','g'].forEach(k=>{for(let i=0;i<NDAYS;i++)if(PLAN[k][i]!==SEEDPLAN[k][i])pc++;});
-  for(let i=0;i<NDAYS;i++)if((FUEL.del[i]||0)!==(SEEDFUEL.del[i]||0))pc++;
-  const simDays=DEVD.filter((dd,i)=>JSON.stringify(dd)!==JSON.stringify(expectedDay(i))).length;
+  const {pc,simDays,kc}=localDiff();
   const ovr=overrideRowsFor(day),ovrDays=new Set(ovr.map(o=>o.date)).size;
-  const kc=JSON.stringify(KITC)!==JSON.stringify(KITSEED);
   /* read the log now so the dialog can name the exact next version */
   let logTxt='';try{const r=await fetch('data/log.csv',{cache:'no-store'});if(r.ok)logTxt=await r.text();}catch(e){}
   const lines=logTxt.split('\n').filter(x=>x.trim());
@@ -1459,7 +1475,7 @@ function boot(D){
   });
   $('scnsave').addEventListener('click',async()=>{
     const prev=load('cavecsv_author')||'';
-    const t=await uiDialog({msg:'Enter your name. It leads the filename so everyone knows whose simulation this is.',
+    const t=await uiDialog({html:true,msg:'<p>Save simulation downloads one file holding everything on this page: calendar, fuel, all '+NDAYS+' days of devices, personal items, notes. Anyone can open it here with Load simulation. Nothing on GitHub changes.</p><p>Type your name. It goes first in the filename so everyone knows whose simulation it is.</p>',
       title:'Save simulation',input:prev,placeholder:'your name',required:true,ok:'Save'});
     if(t==null)return;
     const nm=t;store('cavecsv_author',nm);
@@ -1477,7 +1493,9 @@ function boot(D){
   $('scnfile').addEventListener('change',e=>{
     const fl=e.target.files&&e.target.files[0];
     if(!fl)return;
-    fl.text().then(async tx=>{try{await scnLoadObj(JSON.parse(tx));}catch(err){uiAlert('Could not load simulation: '+err.message,'Load simulation');}});
+    fl.text().then(async tx=>{
+      let o;try{o=JSON.parse(tx);}catch(err){await uiAlert('This file could not be read as a simulation (it is not a valid simulation file). Nothing on the page changed.','Load simulation');return;}
+      try{await scnLoadObj(o);}catch(err){await uiAlert(err.message,'Load simulation');}});
     e.target.value='';
   });
   $('scnapply').addEventListener('click',scnApply);
@@ -1503,28 +1521,43 @@ function boot(D){
     store('cavecsv_devview',DEVVIEW);
     buildDev();devPaint();
   });
+  const offNames=()=>Array.from({length:NDAYS},(_,i)=>i).filter(isOff).map(dLab).join(', ');
+  const copyDays=(from,targets)=>{targets.forEach(i=>{if(!isOff(i))DEVD[i]=structuredClone(DEVD[from]);});DEVC=DEVD[ASOF()];syncACFromPlan();devCalc();};
+  const offGuard=async a=>{if(!isOff(a))return false;await uiAlert(dayName(a)+' is an Off day: its device setup is all zeros, so copying it would blank every target day. Select a Build, Burn or Strike day first. Nothing changed.','Devices');return true;};
   $('devcopy').addEventListener('click',async()=>{
-    if(!await uiConfirm('Apply '+dLab(ASOF())+"'s device setup to all "+NDAYS+' days? This overwrites device edits on every other day.','Devices'))return;
-    const src=DEVC;
-    for(let i=0;i<NDAYS;i++)if(DEVD[i]!==src)DEVD[i]=structuredClone(src);
-    DEVC=DEVD[ASOF()];
-    devCalc();
+    const a=ASOF();if(await offGuard(a))return;
+    const offs=offNames();
+    const msg='<p>Copy <b>'+dayName(a)+'\u2019s</b> device setup (quantities, watts, gen tags, hour strips, custom items) onto every other day?</p>'
+      +'<p>Their current device setups are replaced, so edits made on those days are lost.'+(offs?' Off days ('+offs+') stay at zero.':'')+' Each day\u2019s AC and e-bike counts stay as the calendar says.</p>'
+      +'<p>Only this browser changes; nothing on GitHub changes until you make it official.</p>';
+    if(await uiDialog({html:true,msg,title:'Apply to all days',ok:'Copy to all days'})!==true)return;
+    copyDays(a,Array.from({length:NDAYS},(_,i)=>i).filter(i=>i!==a));
   });
   $('devfwd').addEventListener('click',async()=>{
     const a=ASOF(),n=NDAYS-1-a;
-    if(n<1){await uiDialog({msg:dLab(a)+' is the last day of the event - there are no later days to apply to.',title:'Devices'});return;}
-    if(!await uiConfirm('Apply '+dLab(a)+"'s device setup to this and all "+n+' later day'+(n===1?'':'s')+'? This overwrites device edits from '+dLab(a+1)+' onward. Earlier days are untouched.','Devices'))return;
-    const src=DEVD[a];
-    for(let i=a+1;i<NDAYS;i++)DEVD[i]=structuredClone(src);
-    devCalc();
+    if(n<1){await uiAlert(dayName(a)+' is the last day of the event; there are no later days to copy to. Nothing changed.','Apply to rest of event');return;}
+    if(await offGuard(a))return;
+    const targets=Array.from({length:n},(_,k)=>a+1+k),offs=targets.filter(isOff).map(dLab).join(', ');
+    const msg='<p>Copy <b>'+dayName(a)+'\u2019s</b> device setup (quantities, watts, gen tags, hour strips, custom items) onto the '+n+' later day'+(n===1?'':'s')+', '+dLab(a+1)+' to '+dLab(NDAYS-1)+'?</p>'
+      +'<p>Their current device setups are replaced, so edits made on those days are lost. Days before '+dLab(a)+' are untouched.'+(offs?' Off days ('+offs+') stay at zero.':'')+' Each day\u2019s AC and e-bike counts stay as the calendar says.</p>'
+      +'<p>Only this browser changes; nothing on GitHub changes until you make it official.</p>';
+    if(await uiDialog({html:true,msg,title:'Apply to rest of event',ok:'Copy forward'})!==true)return;
+    copyDays(a,targets);
   });
-  $('devnote').innerHTML='Each tap steps an hour&rsquo;s duty by 25% &middot; The reset button in the top right resets all days back to the latest commit';
+  $('devnote').innerHTML='Tap an hour cell to step that hour&rsquo;s duty: off, &frac14;, &frac12;, &frac34;, full, off. Edits apply to the selected day only. &#10227; (top right) returns every day to the official plan.';
   applyTheme(load('cave_theme')||'dark');
   BOOTED=true;
   refresh(true);
 }
 $('resetbtn').addEventListener('click',async()=>{
-  if(!PLAN||!await uiConfirm('Discard the edits made in this browser and reload the official plan?','Reset'))return;
+  if(!PLAN)return;
+  const d=localDiff(),sim=load('cavecsv_scn');
+  const msg=d.any
+    ?'<p>This browser holds edits that are not in the official plan: <b>'+diffText(d)+'</b>.</p>'
+      +'<p>Reset throws them away and reloads the page with the official plan (the CSV files in the repo). Nothing on GitHub changes.'+(sim?' It also closes the loaded simulation '+hesc(sim)+' (the file itself is untouched).':'')+'</p>'
+      +'<p>Want to keep them? Cancel and press Save simulation first.</p>'
+    :'<p>This browser has no edits of its own. Reset just reloads the page with the official plan.'+(sim?' It also closes the loaded simulation '+hesc(sim)+'.':'')+'</p>';
+  if(await uiDialog({html:true,msg,title:'Reset',ok:'Reset'})!==true)return;
   if(location.protocol==='file:'){resetToCSV();return;}
   /* a real page reload also picks up a newer index.html; the in-page path kept an old page running while the header showed the new version */
   ['cavecsv_plan','cavecsv_fuel','cavecsv_kit','cavecsv_floor','cavecsv_dev','cavecsv_scn','cavecsv_notes','cavecsv_pgen'].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});
