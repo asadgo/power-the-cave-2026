@@ -475,7 +475,7 @@ function buildModel(D){
         s:D.calendar_plan.map(r=>+r.sound_on||0),
         g:D.calendar_plan.map(r=>+r.generators||1)};
   FUEL={del:D.calendar_plan.map(r=>+r.delivered_gal||0)};
-  KITSEED=D.personal_items.map(r=>({n:r.item,w:+r.watts||0,
+  KITSEED=D.personal_items.map(r=>({n:r.item,w:+r.watts||0,q:(r.qty==null||String(r.qty).trim()==='')?null:(+r.qty||0),
     hs:HOURS.map((h,j)=>+r['h_'+h]?j:-1).filter(j=>j>=0)}));
   let tk=0;KITSEED.forEach(r=>{tk+=(+r.w||0)*r.hs.length/1000;});PP=+tk.toFixed(3); /* kitCalc, seed rows */
   /* same order as the console: baseline copy -> Off days zeroed -> device_days.csv cells -> calendar ACs / e-bikes */
@@ -502,7 +502,7 @@ function buildModel(D){
    ['Camp lights & misc',i=>DER[i].LMISCK+DER[i].LMP*cf(i)],
    ['ACs',i=>DER[i].AC1*PLAN.a[i]],
    ['E-bikes',i=>DER[i].EBT],
-   ['Personal items',i=>PP*pCount(i)]];
+   ['Personal items',i=>KITSEED.reduce((a,r)=>a+(r.q==null?pCount(i):(+r.q||0))*(+r.w||0)*r.hs.length/1000,0)]];
 }
 function wireDay(rows){
   const dev=rows.map(r=>({...r,tot:r.q*r.w}));

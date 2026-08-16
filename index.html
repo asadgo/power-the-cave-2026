@@ -34,7 +34,10 @@ input:focus,select:focus,button:focus{outline:2px solid var(--bob)}
 button{cursor:pointer}
 button:hover{border-color:var(--bob)}
 
-.sum{border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:14px 0 0;font:600 15px var(--mono)}
+.sum{border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:14px 0 14px;font:600 15px var(--mono)}
+.simbar{margin:22px 0 10px;padding:0 4px}
+.simbar #scnname{display:block;margin:0 0 4px}
+.simbar details.hint{margin-top:10px}
 .sum.s-ok{background:var(--safe-bg);color:var(--safe)}
 .sum.s-warn{background:var(--warn-bg);color:var(--warn)}
 .sum.s-over{background:var(--danger-bg);color:var(--danger)}
@@ -320,17 +323,17 @@ html,body{overflow-x:hidden;max-width:100%;-webkit-text-size-adjust:100%;text-si
 
 <div class="sum" id="sum">&mdash;</div>
 
-<div class="panel qn" id="scnbox"><div class="flag static">Simulations <span id="scnname" class="devday"></span></div>
-<button type="button" id="scnsave">Export Simulation</button>
-<button type="button" id="scnload">Import Simulation</button>
-<input type="file" id="scnfile" accept=".json,application/json" style="display:none">
-<details class="hint"><summary>How simulations work</summary><div id="scnnote"></div></details></div>
-
 <div class="panel qn" id="offbox"><div class="flag static">Official Plan <span id="offstate" class="devday"></span></div>
 <p class="note" id="offnote"></p>
 <button type="button" id="scnapply">Make this the official plan&hellip;</button>
 <details class="hint"><summary>What the official plan is</summary><p>The official plan is the plan saved in the GitHub repo. It is the plan the whole camp sees on this page and on Reality. Your edits stay in this browser only, until you make them official: press the button, upload the downloaded CSV files to GitHub, and the new plan replaces the old one for everyone.</p></details>
 </div>
+
+<div class="simbar qn" id="scnbox"><div id="scnname" class="devday"></div>
+<button type="button" id="scnsave">Export Simulation</button>
+<button type="button" id="scnload">Import Simulation</button>
+<input type="file" id="scnfile" accept=".json,application/json" style="display:none">
+<details class="hint"><summary>How simulations work</summary><div id="scnnote"></div></details></div>
 </div>
 </div>
 
@@ -457,7 +460,7 @@ function buildModel(D){
             s:D.calendar_plan.map(r=>+r.sound_on||0),
             g:D.calendar_plan.map(r=>+r.generators||1)};
   SEEDFUEL={del:D.calendar_plan.map(r=>+r.delivered_gal||0)};
-  KITSEED=D.personal_items.map(r=>({n:r.item,w:+r.watts||0,
+  KITSEED=D.personal_items.map(r=>({n:r.item,w:+r.watts||0,q:(r.qty==null||String(r.qty).trim()==='')?null:(+r.qty||0),
     hs:HOURS.map((h,j)=>+r['h_'+h]?j:-1).filter(j=>j>=0)}));
 }
 
@@ -523,7 +526,7 @@ function wireDevices(){
    ['Camp lights &amp; misc<span class="rl2">(fans, charging, coffee)</span>',i=>DER[i].LMISCK+DER[i].LMP*cf(i)],
    ['ACs',i=>DER[i].AC1*PLAN.a[i]],
    ['E-bikes',i=>DER[i].EBT],
-   ['Personal items<span class="rl2" id="pplab">('+f(PP,2)+' kWh per camper \u00d7 people that day)</span>',i=>PP*pCount(i)]];
+   ['Personal items<span class="rl2" id="pplab">(per-camper items \u00d7 people that day; items with a set qty use it)</span>',i=>kitKwh(i)]];
   window.__CAVE={S,DER,DEVD,SOUND,CRITK:d0.CRITK,SRCK:d0.SRCK,LMISCK:d0.LMISCK,AC1:d0.AC1,EBT:d0.EBT};
 }
 
@@ -555,6 +558,10 @@ const save=()=>{store('cavecsv_plan',PLAN);store('cavecsv_fuel',FUEL);store('cav
 const okPlan=p=>p&&['p','a','e','s','g'].every(k=>Array.isArray(p[k])&&p[k].length===NDAYS);
 const normPlan=pl=>{if(pl&&(!Array.isArray(pl.pi)||pl.pi.length!==NDAYS))pl.pi=Array(NDAYS).fill(null);return pl;};
 const pCount=d=>{const v=(PLAN&&PLAN.pi)?PLAN.pi[d]:null;return v==null?(PLAN?PLAN.p[d]:0):v;};
+/* personal items: each item counts the day's People (blank qty) or its own fixed number */
+const kitQty=(r,d)=>(r.q==null?pCount(d):(+r.q||0));
+const kitKwh=d=>(KITC||[]).reduce((a,r)=>a+kitQty(r,d)*(+r.w||0)*r.hs.length/1000,0);
+const kitKwAt=(d,j)=>(KITC||[]).reduce((a,r)=>a+(r.hs.includes(j)?kitQty(r,d)*(+r.w||0):0),0)/1000;
 
 const kwhDay=i=>CATS.reduce((a,c)=>a+c[1](i),0);
 const burn=i=>kwhDay(i)/KPG+IDLE2*(PLAN.g[i]||1);
@@ -597,7 +604,7 @@ function curvesFor(i){
   const D8=DER[i],p=PLAN.p[i],s=PLAN.s[i],c=cf(i);
   const scaleA=scaleAFor(i);
   const bobBase=s?D8.BOB:D8.BOB.map((x,j)=>j>=12||j<3?Math.min(x,QCAP):x);
-  const camp=bobBase.map((x,j)=>+((x*c)+D8.ALICE[j]*scaleA+p*PCW[j]/1000).toFixed(2));
+  const camp=bobBase.map((x,j)=>+((x*c)+D8.ALICE[j]*scaleA+kitKwAt(i,j)).toFixed(2));
   const pooled=PLAN.g[i]>=2;
   return[{label:pooled?'Camp load \u00b7 pooled 1+2':'Camp load \u00b7 1 generator',data:camp,color:pooled?poolPattern():'#2A8FEF'}];
 }
@@ -605,7 +612,7 @@ function curvesAB(i){
   const D8=DER[i],p=PLAN.p[i],s=PLAN.s[i],c=cf(i);
   const scaleA=scaleAFor(i);
   const bobBase=s?D8.BOB:D8.BOB.map((x,j)=>j>=12||j<3?Math.min(x,QCAP):x);
-  const camper=j=>pCount(i)*PCW[j]/1000;
+  const camper=j=>kitKwAt(i,j);
   const g1=bobBase.map((x,j)=>+((x*c)+(PGEN==='1'?camper(j):0)).toFixed(2));
   const g2=D8.ALICE.map((x,j)=>+((x*scaleA)+(PGEN==='2'?camper(j):0)).toFixed(2));
   return[{label:'Gen 1',data:g1,color:'#2A8FEF'},
@@ -939,8 +946,6 @@ function kitCalc(){
   PCW=[...Array(24).keys()].map(j=>KITC.reduce((a,r)=>a+(r.hs.includes(j)?(+r.w||0):0),0));
   let tk=0;KITC.forEach(r=>{tk+=(+r.w||0)*r.hs.length/1000;});
   PP=+tk.toFixed(3);
-  const pl=document.getElementById('pplab');
-  if(pl)pl.textContent='('+f(PP,2)+' kWh/camper \u00b7 from Devices table)';
   save();
   if(BOOTED){devPaint();if(PLAN){try{refresh(false);}catch(e){}}}
 }
@@ -1059,7 +1064,7 @@ function buildDev(){
         ks+='</div>';
         h+='<tr class="grow"><td><input class="kitname" data-khr="'+ki+'" data-kf="n" type="text" value="'+String(r.n).replace(/"/g,'&quot;')+'" title="'+String(r.n).replace(/"/g,'&quot;')+'"></td>'
           +'<td></td>'
-          +'<td></td>'
+          +'<td><input data-khr="'+ki+'" data-kf="q" type="number" min="0" value="'+(r.q==null?'':r.q)+'" placeholder="'+pCount(ASOF())+'" title="How many of this item. Blank = one per person, so it follows the day&#39;s People count ('+pCount(ASOF())+' today). Type a number to fix it for every day."></td>'
           +'<td><input data-khr="'+ki+'" data-kf="w" type="number" min="0" value="'+r.w+'"></td>'
           +'<td class="hdc" id="khd'+ki+'">\u2014</td>'
           +'<td>'+ks+'</td>'
@@ -1114,7 +1119,8 @@ function buildDev(){
   T.querySelectorAll('input[data-khr]').forEach(el=>el.addEventListener('input',()=>{
     const r=KITC[+el.dataset.khr],fld=el.dataset.kf;
     if(!r)return;
-    r[fld]=fld==='n'?el.value:(+el.value||0);
+    if(fld==='q')r.q=el.value.trim()===''?null:Math.max(0,+el.value||0);
+    else r[fld]=fld==='n'?el.value:(+el.value||0);
     if(fld==='n')el.title=el.value;
     kitCalc();
   }));
@@ -1131,7 +1137,7 @@ function buildDev(){
     buildDev();devPaint();kitCalc();
   }));
   {const ka=$('kadd');if(ka)ka.addEventListener('click',()=>{
-    KITC.push({n:'New item',w:0,hs:[]});
+    KITC.push({n:'New item',w:0,hs:[],q:null});
     buildDev();devPaint();
     const nn=$('devtable').querySelectorAll('input[data-khr][data-kf="n"]');
     if(nn.length){nn[nn.length-1].focus();nn[nn.length-1].select();}
@@ -1184,18 +1190,20 @@ function devPaint(){
   const rowKw=(d,idx)=>gRow(DEVD[d]&&DEVD[d][idx],d);
   const rowEF=idx=>{let ev=0,fr=0;for(let d=0;d<NDAYS;d++){const k=rowKw(d,idx);ev+=k;if(d>=ASOF())fr+=k;}return[ev,fr];};
   const pEF=per=>{let ev=0,fr=0;for(let d=0;d<NDAYS;d++){const k=per*pCount(d);ev+=k;if(d>=ASOF())fr+=k;}return[ev,fr];};
+  const kitEF=()=>{let ev=0,fr=0;for(let d=0;d<NDAYS;d++){const k=kitKwh(d);ev+=k;if(d>=ASOF())fr+=k;}return[ev,fr];};
+  const itemEF=r=>{let ev=0,fr=0;for(let d=0;d<NDAYS;d++){const k=kitQty(r,d)*(+r.w||0)*r.hs.length/1000;ev+=k;if(d>=ASOF())fr+=k;}return[ev,fr];};
   let tk=0;
   DEVC.forEach((r,i)=>{
     const hrs=r.du.reduce((a,x)=>a+x,0),k=gRow(r,ASOF());tk+=k;
     const eh=$('dh'+i);if(eh)eh.textContent=hrs.toFixed(2);
     const ek=$('dk'+i);if(ek){const[ev,fr]=rowEF(i);const cfd=(r.sc==='people'&&PLAN)?cf(ASOF()):1;const tag=cfd<0.995?'<span class="devsm">\u00d7 '+cfd.toFixed(2)+' \u00b7 scales with headcount ('+pCount(ASOF())+' of '+(S.infra_full_people||40)+')</span>':'';ek.innerHTML=f(k,2)+' kWh/day &middot; '+f(k/KPG,2)+' gal/day'+tag+efSub(ev,fr);}
   });
-  const pNow=pCount(ASOF()),kwP=PP*pNow;
+  const pNow=pCount(ASOF()),kwP=kitKwh(ASOF());
   DEVGRP.forEach((g,gi)=>{
     const gk=(g.syn?kwP:0)+g.idxs.reduce((a,i)=>{const r=DEVC[i];return a+gRow(r,ASOF());},0);
     let gev=0,gfr=0;
     g.idxs.forEach(i=>{const[e2,f2]=rowEF(i);gev+=e2;gfr+=f2;});
-    if(g.syn){const[pe,pf]=pEF(PP);gev+=pe;gfr+=pf;}
+    if(g.syn){const[pe,pf]=kitEF();gev+=pe;gfr+=pf;}
     const eg=$('dg'+gi);if(eg)eg.innerHTML=f(gk,2)+' kWh/day &middot; '+f(gk/KPG,2)+' gal/day'+efSub(gev,gfr);
   });
   if($('psq')){
@@ -1207,20 +1215,21 @@ function devPaint(){
     for(let j=0;j<24;j++){const du=PCW[j]/maxW;
       sh+='<div class="hcol"><div class="hc'+(du>0?' on':'')+'"></div><div class="hlb'+((j===7||j===19)?' maj':'')+'">'+HOURS[j]+'</div></div>';}
     $('pstrip').innerHTML=sh+'</div>';
-    const ep=$('dkP');if(ep){const[ev,fr]=pEF(PP);ep.innerHTML=f(kwP,2)+' kWh/day &middot; '+f(kwP/KPG,2)+' gal/day'+efSub(ev,fr);}
+    const ep=$('dkP');if(ep){const[ev,fr]=kitEF();ep.innerHTML=f(kwP,2)+' kWh/day &middot; '+f(kwP/KPG,2)+' gal/day'+efSub(ev,fr);}
     KITC.forEach((r,ki)=>{
       const eh=$('khd'+ki);if(!eh)return;
       eh.textContent=r.hs.length;
-      const kw=(+r.w||0)*r.hs.length/1000;
-      $('kdr'+ki).innerHTML=f(kw*pNow,2)+' kWh/day &middot; '+f(kw*pNow/KPG,2)+' gal/day'
-        +'<span class="devsm">per camper '+f(kw,2)+' kWh \u00b7 '+f(kw/KPG,2)+' gal</span>'
-        +(x=>efSub(x[0],x[1]))(pEF(kw));
+      const kw=(+r.w||0)*r.hs.length/1000,qn=kitQty(r,ASOF());
+      const qi=document.querySelector('input[data-khr="'+ki+'"][data-kf="q"]');if(qi&&document.activeElement!==qi){qi.placeholder=String(pCount(ASOF()));}
+      $('kdr'+ki).innerHTML=f(kw*qn,2)+' kWh/day &middot; '+f(kw*qn/KPG,2)+' gal/day'
+        +'<span class="devsm">'+(r.q==null?'one per person \u00b7 '+qn+' today':'fixed '+qn+' every day')+' \u00b7 '+f(kw,2)+' kWh each</span>'
+        +(x=>efSub(x[0],x[1]))(itemEF(r));
     });
   }
   tk+=kwP;
   let tev=0,tfr=0;
   DEVC.forEach((r,i)=>{const[e2,f2]=rowEF(i);tev+=e2;tfr+=f2;});
-  {const[e2,f2]=pEF(PP);tev+=e2;tfr+=f2;}
+  {const[e2,f2]=kitEF();tev+=e2;tfr+=f2;}
   const tt=$('dkT');if(tt){const ng=(PLAN&&PLAN.g[ASOF()])||1,goh=IDLE2*ng;
     const dn=new Date(START.getTime()+ASOF()*DAY).toLocaleDateString('en-US',{weekday:'short'});
     tt.innerHTML='<span class="dline dhead">On this day: '+dn+' '+dLab(ASOF())+'</span>'
@@ -1362,8 +1371,8 @@ function scnApplyBuild(day){
     dev+=[esc(r.n),esc(r.area||o.area||'Custom'),esc(r.cat||o.category||'Custom'),esc(o.product),r.q,r.w,esc(o.surge_w_each),esc(o.volts),esc(r.bus||o.bus||'Pool'),esc(r.pr||o.priority||'Cut if needed'),esc(o.notes),(r.sc==='people'?'people':''),(r.gen==='2'?'2':'1')].join(',')+'\n';
     sch+=esc(r.n)+','+r.du.join(',')+'\n';
   });
-  let kit='item,watts,'+HOURS.map(x=>'h_'+x).join(',')+'\n';
-  (KITC||[]).forEach(r=>{kit+=esc(r.n)+','+r.w+','+HOURS.map((_,j)=>r.hs.includes(j)?1:0).join(',')+'\n';});
+  let kit='item,watts,qty,'+HOURS.map(x=>'h_'+x).join(',')+'\n';
+  (KITC||[]).forEach(r=>{kit+=esc(r.n)+','+r.w+','+(r.q==null?'':r.q)+','+HOURS.map((_,j)=>r.hs.includes(j)?1:0).join(',')+'\n';});
   let dd='date,device,field,value\n';
   overrideRowsFor(day).forEach(o=>{dd+=[o.date,esc(o.device),o.field,esc(o.value)].join(',')+'\n';});
   return {'calendar_plan.csv':cal,'devices.csv':dev,'schedule.csv':sch,'device_days.csv':dd,'personal_items.csv':kit};
@@ -1565,7 +1574,7 @@ function diffDetailHTML(){
    [...new Set([...seed.map(r=>r.n),...cur.map(r=>r.n)])].forEach(n=>{
      const s=seed.find(r=>r.n===n),c=cur.find(r=>r.n===n);
      if(c&&!s)parts.push(hesc(n)+' added');else if(s&&!c)parts.push(hesc(n)+' removed');
-     else{const w=c.w!==s.w,h=JSON.stringify([...c.hs].sort())!==JSON.stringify([...s.hs].sort());if(w||h)parts.push(hesc(n)+(w?' '+c.w+' W':'')+(h?' hours':''));}
+     else{const w=c.w!==s.w,h=JSON.stringify([...c.hs].sort())!==JSON.stringify([...s.hs].sort()),q=(c.q==null?null:+c.q)!==(s.q==null?null:+s.q);if(w||h||q)parts.push(hesc(n)+(q?' qty '+(c.q==null?'per person':c.q):'')+(w?' '+c.w+' W':'')+(h?' hours':''));}
    });
    if(parts.length)li.push('<li><b>Personal items</b>: '+capJoin(parts,8)+'</li>');}
   if(NOTES.trim())li.push('<li><b>Notes</b>: has text</li>');
