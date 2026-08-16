@@ -361,12 +361,16 @@ function parseCSV(text){
 
 /* ---------- data loading: fetch data/*.csv, else local file picker ---------- */
 const FILES=['settings','devices','schedule','calendar_plan','personal_items'];
+const OPTIONAL=['device_days']; /* per-day device differences; a missing or header-only file means none */
 async function fetchAll(){
   const out={};
   for(const name of FILES){
     const r=await fetch('data/'+name+'.csv',{cache:'no-store'});
     if(!r.ok)throw new Error('data/'+name+'.csv → HTTP '+r.status);
     out[name]=parseCSV(await r.text());
+  }
+  for(const name of OPTIONAL){
+    try{const r=await fetch('data/'+name+'.csv',{cache:'no-store'});out[name]=r.ok?parseCSV(await r.text()):[];}catch(e){out[name]=[];}
   }
   return out;
 }
@@ -377,13 +381,15 @@ function pickerFallback(err){
    +'(<code>python3 -m http.server</code> in the repo, then open <code>localhost:8000</code>), '
    +'use the GitHub Pages URL, or hand me the repo’s <code>data</code> folder here:</p>'
    +'<p><input type="file" id="dirpick" webkitdirectory multiple></p>'
-   +'<p>Needs: '+FILES.map(x=>x+'.csv').join(' · ')+'</p>';
+   +'<p>Needs: '+FILES.map(x=>x+'.csv').join(' · ')+' · optional: '+OPTIONAL.map(x=>x+'.csv').join(' · ')+'</p>';
   $('dirpick').addEventListener('change',ev=>{
     const by={};[...ev.target.files].forEach(fl=>{by[fl.name.toLowerCase()]=fl;});
     const missing=FILES.filter(n=>!by[n+'.csv']);
     if(missing.length){$('loader').querySelector('.err').textContent='Still missing: '+missing.join(', ');return;}
-    Promise.all(FILES.map(n=>by[n+'.csv'].text())).then(txts=>{
-      const out={};FILES.forEach((n,i)=>out[n]=parseCSV(txts[i]));
+    const opt=OPTIONAL.filter(n=>by[n+'.csv']);
+    Promise.all([...FILES,...opt].map(n=>by[n+'.csv'].text())).then(txts=>{
+      const out={};[...FILES,...opt].forEach((n,i)=>out[n]=parseCSV(txts[i]));
+      OPTIONAL.forEach(n=>{if(!out[n])out[n]=[];});
       boot(out);
     });
   });
@@ -413,17 +419,18 @@ function buildModel(D){
     return {n:r.device,area:r.area,cat:r.category,bus:r.bus,pr:r.priority,q,w,sc:(r.scaling==='people')?'people':'full',
       gen:(r.gen==='1'||r.gen==='2')?r.gen:(r.gen==='A'?'2':(r.gen==='B'?'1':autoGen(r.device))),
       du:HOURS.map(hh=>s?(+s['h_'+hh]||0):0)};});
-  const dfp=JSON.stringify(DEVSEED),nd_=D.calendar_plan.length;
+  DTYPE=D.calendar_plan.map(r=>r.day_type);
+  const HK=new Set(HOURS.map(h=>'h_'+h));
+  OVR=(D.device_days||[]).filter(o=>o&&/^\d{4}-\d{2}-\d{2}$/.test(o.date||'')&&o.device&&(o.field==='qty'||o.field==='watts'||o.field==='gen'||HK.has(o.field)))
+    .map(o=>({date:o.date,device:o.device,field:o.field,value:String(o.value==null?'':o.value).trim()}));
+  const dfp=JSON.stringify(DEVSEED)+'|'+JSON.stringify(OVR),nd_=D.calendar_plan.length;
   DEVFP=dfp;RAWD=D.devices;
   const ldv=(load('cavecsv_dev_fp')===dfp)?load('cavecsv_dev'):null;
   const __fromSaved=(Array.isArray(ldv)&&ldv.length===nd_&&ldv.every(dd=>Array.isArray(dd)&&dd.length>=DEVSEED.length));
-  DEVD=__fromSaved?ldv:Array.from({length:nd_},()=>structuredClone(DEVSEED));
+  DEVD=__fromSaved?ldv:seedDays(nd_);
   DEVC=DEVD[0];
   store('cavecsv_dev_fp',dfp);
   wireDevices();
-
-  DTYPE=D.calendar_plan.map(r=>r.day_type);
-  if(!__fromSaved)zeroOffDays();
   SEEDPLAN={p:D.calendar_plan.map(r=>+r.people||0),
             a:D.calendar_plan.map(r=>+r.acs||0),
             e:D.calendar_plan.map(r=>+r.ebikes||0),
@@ -902,7 +909,60 @@ function groupsFor(view){
   return DGROUPS.map(g=>({name:g,idxs:DEVC.map((r,i)=>groupOf(r)===g?i:-1).filter(i=>i>=0)})).filter(g=>g.idxs.length)
     .concat([{name:'Personal items',idxs:[],syn:1}]);
 }
-function zeroOffDays(){if(!Array.isArray(DTYPE))return;DEVD.forEach((dd,i)=>{if(/^off$/i.test(String(DTYPE[i]||'')))dd.forEach(r=>{r.q=0;});});}
+/* ---------- per-day device differences (data/device_days.csv) ----------
+   Every day starts as a copy of devices.csv + schedule.csv (the baseline). Off days are zeroed.
+   Then device_days.csv rows (date,device,field,value) overwrite single cells: qty, watts, gen, or one hour's duty h_5a..h_4a.
+   A device named there but absent from devices.csv is a custom item that exists on that day only.
+   AC and e-bike quantities are never taken from here: the calendar's ACs / E-bikes columns set them per day. */
+let OVR=[];
+const isOff=i=>/^off$/i.test(String(DTYPE[i]||''));
+const isoDay=i=>{const d=new Date(START.getTime()+i*DAY);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+function applyOverridesTo(rows,i){
+  const iso=isoDay(i);
+  OVR.forEach(o=>{
+    if(o.date!==iso)return;
+    let r=rows.find(x=>x.n===o.device);
+    if(!r){r={n:o.device,area:'Custom',cat:'Custom',bus:'Pool',pr:'Cut if needed',q:1,w:0,du:Array(24).fill(0),cu:1};r.gen=autoGen(r.n);rows.push(r);}
+    if(o.field==='qty')r.q=+o.value||0;
+    else if(o.field==='watts')r.w=+o.value||0;
+    else if(o.field==='gen')r.gen=(o.value==='2'?'2':'1');
+    else{const j=HOURS.indexOf(o.field.slice(2));if(j>=0)r.du[j]=Math.max(0,Math.min(1,+o.value||0));}
+  });
+  return rows;
+}
+function seedDay(i){const t=ensureGen(structuredClone(DEVSEED));if(isOff(i))t.forEach(r=>{r.q=0;});return applyOverridesTo(t,i);}
+function seedDays(n){return Array.from({length:n},(_,i)=>seedDay(i));}
+/* the committed setup of day i as the console would show it (baseline + Off + overrides + calendar ACs / e-bikes) */
+function expectedDay(i){
+  const t=seedDay(i);
+  if(PLAN){const a=t.find(x=>/air condition/i.test(x.n));if(a)a.q=PLAN.a[i];
+    const e=t.find(x=>/e-bike charging/i.test(x.n));if(e)e.q=PLAN.e[i];}
+  return t;
+}
+/* rows for device_days.csv: what every day other than the baseline day changes vs that baseline */
+function overrideRowsFor(day){
+  const base=DEVD[day]||[],out=[],HKEYS=HOURS.map(h=>'h_'+h);
+  const acN=n=>/air condition/i.test(n),ebN=n=>/e-bike charging/i.test(n);
+  for(let d=0;d<NDAYS;d++){
+    if(d===day)continue;
+    const iso=isoDay(d),off=isOff(d);
+    const exp=structuredClone(base).map(r=>({...r,q:off?0:r.q}));
+    exp.forEach(r=>{if(acN(r.n))r.q=PLAN.a[d];else if(ebN(r.n))r.q=PLAN.e[d];});
+    const act=DEVD[d]||[];
+    const names=[...new Set([...exp.map(r=>r.n),...act.map(r=>r.n)])];
+    names.forEach(n=>{
+      const e=exp.find(r=>r.n===n),a=act.find(r=>r.n===n);
+      const push=(f,v)=>out.push({date:iso,device:n,field:f,value:String(v)});
+      if(e&&!a){if(e.q!==0)push('qty',0);return;}
+      if(a&&!e){push('qty',a.q);push('watts',a.w);push('gen',a.gen||'1');a.du.forEach((v,j)=>{if(v)push(HKEYS[j],v);});return;}
+      if(a.q!==e.q&&!acN(n)&&!ebN(n))push('qty',a.q);
+      if(a.w!==e.w)push('watts',a.w);
+      if((a.gen||'1')!==(e.gen||'1'))push('gen',a.gen||'1');
+      for(let j=0;j<24;j++)if(a.du[j]!==e.du[j])push(HKEYS[j],a.du[j]);
+    });
+  }
+  return out;
+}
 function buildDev(){
   DEVC=DEVD[ASOF()]||DEVD[0];
   DEVGRP=groupsFor(DEVVIEW);
@@ -1105,12 +1165,7 @@ function devPaint(){
       +'<span class="dline devsm">gen overhead ('+ng+' gen'+(ng>1?'s':'')+' running) &middot; \u2212'+f(goh,1)+' gal</span>'
       +'<span class="dline dbig">Fuel spent &middot; \u2212'+f(tk/KPG+goh,1)+' gal</span>'
       +'<span class="dline devsm" style="margin-top:7px">devices &middot; all days</span>'+efSub(tev,tfr);}
-  const base=i=>{const t=ensureGen(structuredClone(DEVSEED));
-    if(Array.isArray(DTYPE)&&/^off$/i.test(String(DTYPE[i]||'')))t.forEach(r=>{r.q=0;});
-    if(PLAN){const a=t.find(x=>/air condition/i.test(x.n));if(a)a.q=PLAN.a[i];
-      const e=t.find(x=>/e-bike charging/i.test(x.n));if(e)e.q=PLAN.e[i];}
-    return JSON.stringify(t);};
-  const nsim=DEVD.filter((dd,i)=>JSON.stringify(dd)!==base(i)).length;
+  const nsim=DEVD.filter((dd,i)=>JSON.stringify(dd)!==JSON.stringify(expectedDay(i))).length;
   $('devsim').textContent=nsim?'SIMULATED \u00b7 '+nsim+' day'+(nsim>1?'s':'')+' \u00b7 \u27f3 resets':'';
 }
 function devCalc(){
@@ -1224,28 +1279,31 @@ function scnApplyBuild(day){
   });
   let kit='item,watts,'+HOURS.map(x=>'h_'+x).join(',')+'\n';
   (KITC||[]).forEach(r=>{kit+=esc(r.n)+','+r.w+','+HOURS.map((_,j)=>r.hs.includes(j)?1:0).join(',')+'\n';});
-  return {'calendar_plan.csv':cal,'devices.csv':dev,'schedule.csv':sch,'personal_items.csv':kit};
+  let dd='date,device,field,value\n';
+  overrideRowsFor(day).forEach(o=>{dd+=[o.date,esc(o.device),o.field,esc(o.value)].join(',')+'\n';});
+  return {'calendar_plan.csv':cal,'devices.csv':dev,'schedule.csv':sch,'device_days.csv':dd,'personal_items.csv':kit};
 }
 async function scnApply(){
   const day=ASOF();
   const wd=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date(START.getTime()+day*DAY).getDay()];
   const dayName=wd+' '+dLab(day);
-  if(/^off$/i.test(String(DTYPE[day]||''))){
+  if(isOff(day)){
     await uiDialog({html:true,cancel:false,title:'Make this the official plan',msg:
       '<p><b>Nothing was downloaded.</b></p>'
       +'<p><b>'+dayName+'</b> is selected in the calendar, and '+dLab(day)+' is an <b>Off</b> day. On an Off day the console sets every device quantity to 0 (nobody is running anything yet).</p>'
-      +'<p>This button copies the device list and hourly duty from the selected day into devices.csv + schedule.csv, which become the official device setup for every day. From '+dLab(day)+' that would commit a device list of <b>all zeros</b> and wipe the plan.</p>'
-      +'<p>Do this instead: click another day\u2019s header in the calendar (any Build, Burn or Strike day whose device setup you want as the official baseline), then press Make this the official plan again. The calendar itself (all '+NDAYS+' days) is exported the same way whichever day is selected; only devices.csv and schedule.csv depend on the selected day.</p>'});
+      +'<p>The selected day becomes the <b>baseline</b> device list and hourly duty (devices.csv + schedule.csv); every other day is stored as its differences from that baseline (device_days.csv). From '+dLab(day)+' the baseline would be a device list of <b>all zeros</b>, which makes devices.csv useless to read or hand-edit.</p>'
+      +'<p>Do this instead: click any Build, Burn or Strike day\u2019s header in the calendar, then press Make this the official plan again. All '+NDAYS+' days still ship exactly as they are on screen; only the baseline day changes.</p>'});
     return;}
   const nm=load('cavecsv_scn');
   /* what differs from the committed CSVs */
   let pc=0;['p','a','e','s','g'].forEach(k=>{for(let i=0;i<NDAYS;i++)if(PLAN[k][i]!==SEEDPLAN[k][i])pc++;});
   for(let i=0;i<NDAYS;i++)if((FUEL.del[i]||0)!==(SEEDFUEL.del[i]||0))pc++;
-  const rows=DEVD[day],base=structuredClone(DEVSEED);
-  const bAC=base.find(x=>/air condition/i.test(x.n));if(bAC&&PLAN)bAC.q=PLAN.a[day];
-  const bEB=base.find(x=>/e-bike charging/i.test(x.n));if(bEB&&PLAN)bEB.q=PLAN.e[day];
+  const expB=expectedDay(day),rows=DEVD[day];
   let dc=0;
-  rows.forEach((r,i)=>{if(!base[i]||JSON.stringify(r)!==JSON.stringify(base[i]))dc++;});
+  rows.forEach(r=>{const b=expB.find(x=>x.n===r.n);if(!b||JSON.stringify(r)!==JSON.stringify(b))dc++;});
+  expB.forEach(b=>{if(!rows.find(r=>r.n===b.n))dc++;});
+  const simDays=DEVD.filter((dd,i)=>JSON.stringify(dd)!==JSON.stringify(expectedDay(i))).length;
+  const ovr=overrideRowsFor(day),ovrDays=new Set(ovr.map(o=>o.date)).size;
   const kc=JSON.stringify(KITC)!==JSON.stringify(KITSEED);
   /* read the log now so the dialog can name the exact next version */
   let logTxt='';try{const r=await fetch('data/log.csv',{cache:'no-store'});if(r.ok)logTxt=await r.text();}catch(e){}
@@ -1257,18 +1315,20 @@ async function scnApply(){
   const tag=ch=>'<span class="n '+(ch?'n-ch':'n-ok')+'">'+(ch?'changed':'unchanged')+'</span>';
   const hasNotes=!!NOTES.trim();
   const msg=
-    '<p>Downloads one zip. Inside it, a <b>data</b> folder holds 5 CSV files rewritten from what is on screen right now. Uploading them into the repo\u2019s <b>data</b> folder makes this the official plan for everyone.'+(nm?' (Loaded simulation: '+String(nm).replace(/</g,'&lt;').slice(0,60)+')':'')+'</p>'
+    '<p>Downloads one zip. Inside it, a <b>data</b> folder holds 6 CSV files rewritten from what is on screen right now: the whole calendar and all '+NDAYS+' days of device setups, exactly as they are on screen. Uploading them into the repo\u2019s <b>data</b> folder makes this the official plan for everyone.'+(nm?' (Loaded simulation: '+String(nm).replace(/</g,'&lt;').slice(0,60)+')':'')+'</p>'
     +'<p>What each file will contain:</p><ul>'
-    +'<li><span class="fn">calendar_plan.csv</span>: the whole calendar, all '+NDAYS+' days (people, ACs, e-bikes, sound, gens, deliveries). '+num(pc,'cell')+' differ from the official plan.</li>'
-    +'<li><span class="fn">devices.csv</span> + <span class="fn">schedule.csv</span>: the device list and hourly duty from <b>one day only</b>, the day selected in the calendar: <b>'+dayName+'</b>. '+num(dc,'device row')+' differ from the official plan. Device edits made on any other day are not included.</li>'
+    +'<li><span class="fn">calendar_plan.csv</span>: the calendar, all '+NDAYS+' days (people, ACs, e-bikes, sound, gens, deliveries). '+num(pc,'cell')+' differ from the official plan.</li>'
+    +'<li><span class="fn">devices.csv</span> + <span class="fn">schedule.csv</span>: the <b>baseline</b> device list and hourly duty, copied from the selected day: <b>'+dayName+'</b>. Every day starts from this baseline. '+num(dc,'device row')+' differ from the official plan on that day.</li>'
+    +'<li><span class="fn">device_days.csv</span>: what every other day changes against that baseline (quantity, watts, gen tag, hourly duty): '+num(ovr.length,'cell')+' across '+num(ovrDays,'day')+'. Baseline + this file = all '+NDAYS+' days as on screen; nothing is lost whichever day is selected.</li>'
     +'<li><span class="fn">personal_items.csv</span>: the per-camper items table. '+tag(kc)+'.</li>'
     +'<li><span class="fn">log.csv</span>: the version history plus one new line at the bottom describing this change. After upload the header reads <b>'+nxt+'</b> (now '+cur+').</li>'
     +(hasNotes?'<li><span class="fn">notes.txt</span> (outside the data folder): a copy of your Notes box, for your own records. Not a repo file. Do not upload it.</li>':'')
     +'</ul>'
-    +((!pc&&!dc&&!kc)?'<div class="callout">Nothing on screen differs from the official plan. This zip would change nothing except adding a log line.</div>':'')
+    +'<p>Days whose device setup differs from the official plan: '+num(simDays,'day')+' of '+NDAYS+'.</p>'
+    +((!pc&&!simDays&&!kc)?'<div class="callout">Nothing on screen differs from the official plan. This zip would change nothing except adding a log line.</div>':'')
     +'<p>After the download:</p><ol>'
     +'<li>Unzip it.</li>'
-    +'<li>GitHub: open the repo\u2019s <b>data</b> folder, then Add file, Upload files. Drop in all 5 CSV files (they replace the old ones). Commit.</li>'
+    +'<li>GitHub: open the repo\u2019s <b>data</b> folder, then Add file, Upload files. Drop in all 6 CSV files (they replace the old ones). Commit.</li>'
     +'<li>Wait about 1 minute for GitHub to publish, then press Reset (circular arrow, top right) here. The header reads <b>'+nxt+'</b> once it has landed; if it still reads '+cur+', wait and press Reset again.</li>'
     +'</ol>';
   const ok=await uiDialog({html:true,msg,title:'Make this the official plan',ok:'Download zip'});
@@ -1276,7 +1336,7 @@ async function scnApply(){
   const files=scnApplyBuild(day);
   const iso=new Date().toISOString();
   const id='cavepower_official-plan_'+iso.slice(0,10)+'_'+iso.slice(11,19).replace(/:/g,'')+'Z';
-  const row=nv.toFixed(1)+','+iso.slice(0,10)+',"Official plan updated from the console'+(nm?' (simulation: '+String(nm).replace(/"/g,"'")+')':'')+': calendar for all '+NDAYS+' days; device setup and hourly duty taken from '+dayName+'; personal items."\n';
+  const row=nv.toFixed(1)+','+iso.slice(0,10)+',"Official plan updated from the console'+(nm?' (simulation: '+String(nm).replace(/"/g,"'")+')':'')+': calendar for all '+NDAYS+' days; baseline device setup and hourly duty from '+dayName+'; per-day differences for '+ovrDays+' other day'+(ovrDays===1?'':'s')+' ('+ovr.length+' cells in device_days.csv); personal items."\n';
   files['log.csv']=(logTxt&&!logTxt.endsWith('\n')?logTxt+'\n':logTxt)+row;
   const entries=Object.keys(files).map(n=>({name:id+'/data/'+n,text:files[n]}));
   if(hasNotes)entries.push({name:id+'/notes.txt',text:NOTES});
@@ -1287,7 +1347,7 @@ function resetToCSV(){
   ['cavecsv_plan','cavecsv_fuel','cavecsv_kit','cavecsv_floor','cavecsv_dev','cavecsv_scn','cavecsv_notes'].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});
   PLAN=structuredClone(SEEDPLAN);FUEL=structuredClone(SEEDFUEL);
   KITC=structuredClone(KITSEED);
-  DEVD=Array.from({length:NDAYS},()=>structuredClone(DEVSEED));DEVD.forEach(ensureGen);zeroOffDays();DEVC=DEVD[ASOF()];wireDevices();syncACFromPlan();
+  DEVD=seedDays(NDAYS);DEVC=DEVD[ASOF()];wireDevices();syncACFromPlan();
   FLOOR=S.fuel_floor_gal;$('floor').value=FLOOR;
   BOOTED=false;
   NOTES='';$('notes').value='';if(window.__noteCue)window.__noteCue();
@@ -1410,7 +1470,7 @@ function boot(D){
     e.target.value='';
   });
   $('scnapply').addEventListener('click',scnApply);
-  $('scnnote').innerHTML='A simulation is a snapshot of everything on this page: calendar, fuel, devices and their hourly duty, plus your Notes. Save simulation downloads it as a file you can send to anyone; Load simulation opens one here. Nothing reaches GitHub until Make this the official plan downloads a zip of CSV files for you to upload into the repo\u2019s data folder. Reset (circular arrow, top right) returns this browser to the latest official plan.';
+  $('scnnote').innerHTML='A simulation is a snapshot of everything on this page: calendar, fuel, devices and their hourly duty, plus your Notes. Save simulation downloads it as a file you can send to anyone; Load simulation opens one here. Nothing reaches GitHub until Make this the official plan downloads a zip of CSV files (the calendar and all 14 days of device setups, exactly as on screen) for you to upload into the repo\u2019s data folder. Reset (circular arrow, top right) returns this browser to the latest official plan.';
   scnBanner();
   const pinCheck=()=>{
     const t=$('plantable'),dp=$('daypin');
