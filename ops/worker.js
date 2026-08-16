@@ -14,7 +14,7 @@
       WORKER_URL at the top of reality.html (GitHub pencil, one line) → commit.
 */
 const OWNER='asadgo', REPO='power-the-cave-2026', PATH='data/reality.csv', BRANCH='main';
-const ORIGINS=['https://asadgo.github.io']; /* add 'https://yourdomain.com' when the .com lands */
+const ORIGINS=['https://asadgo.github.io','https://powerthecave.com']; /* every origin allowed to POST; edit here AND in the live Worker, then Deploy */
 const FIELDS=['date','time','logged_by','gen1_hours','gen2_hours','gal_gen1','gal_gen2','gal_delivered','drum1_gal','drum2_gal','notes'];
 const NUMS=['gen1_hours','gen2_hours','gal_gen1','gal_gen2','gal_delivered','drum1_gal','drum2_gal'];
 const hits=new Map(); /* best-effort per-IP limiter (per isolate) */
