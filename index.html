@@ -1068,7 +1068,7 @@ function buildDev(){
         +'</tr>';
     });
     if(g.syn&&op){
-      h+='<tr class="grow psyn"><td class="dname pgrp" style="cursor:pointer" title="click to show or hide personal item lines">'+(PERSOPEN?'\u25be ':'\u25b8 ')+'Personal items</td>'
+      h+='<tr class="grow psyn"><td class="dname pgrp" style="cursor:pointer" title="Personal items are camp-wide: one list, the same on every day. Blank qty = one per person, so it follows each day\u2019s People count; a number = that many every day. Click to show or hide the item lines.">'+(PERSOPEN?'\u25be ':'\u25b8 ')+'Personal items<span class="devsm">same list every day</span></td>'
         +'<td class="gcell"><button type="button" class="gtag pgt '+((PLAN&&PLAN.g[ASOF()]<2)?'g1 gdim':'g'+PGEN)+'" title="'+((PLAN&&PLAN.g[ASOF()]<2)?'single-generator day · all loads run on the one generator':'which generator carries camper loads in split view')+'">'+((PLAN&&PLAN.g[ASOF()]<2)?'1':PGEN)+'</button></td>'
         +'<td id="psq" title="The day&#39;s People count: items with a blank qty count one per person">\u2014</td><td id="psw">\u2014</td><td class="hdc" id="psh">\u2014</td>'
         +'<td id="pstrip"></td><td class="qr" id="dkP">\u2014</td><td></td></tr>';
@@ -1527,7 +1527,10 @@ function changesListHTML(all){
   all.forEach(d=>{const txt=dayTxt(d),last=runs[runs.length-1];if(last&&last.txt===txt&&last.to===d.i-1)last.to=d.i;else runs.push({from:d.i,to:d.i,txt});});
   return '<ul>'+runs.slice(0,10).map(r=>'<li><b>'+dLab(r.from)+(r.to>r.from?' to '+dLab(r.to):'')+'</b>: '+r.txt+'</li>').join('')+(runs.length>10?'<li>+ '+(runs.length-10)+' more</li>':'')+'</ul>';
 }
-async function noChangesMsg(){await uiAlert('Nothing to copy: no cell has been edited on this page since it was loaded (or since the last Reset or Import simulation). Edit a calendar cell, an hour cell, a quantity, watts, a gen tag or a custom item on any day, then press again.','Copy edits');}
+async function noChangesMsg(){
+  const kc=JSON.stringify(KITC)!==JSON.stringify(KITSEED);
+  if(kc){await uiAlert('Nothing to copy. Personal items are camp-wide: one list, the same on every day, so the item you added or changed already counts on all 14 days (blank qty = one per person each day; a number = that many every day). Only calendar cells and device rows are per day, and none of those have been edited.','Copy edits');return;}
+  await uiAlert('Nothing to copy: no cell has been edited on this page since it was loaded (or since the last Reset or Import simulation). Edit a calendar cell, an hour cell, a quantity, watts, a gen tag or a custom item on any day, then press again.','Copy edits');}
 async function applyAllDays(){
   const all=allChanges();
   if(!all.length)return noChangesMsg();
@@ -1731,7 +1734,7 @@ function boot(D){
   });
   $('devcopy').addEventListener('click',applyAllDays);
   $('devfwd').addEventListener('click',applyForward);
-  $('devnote').innerHTML='Tap an hour cell to step that hour&rsquo;s duty: off, &frac14;, &frac12;, &frac34;, full, off. Edits take effect on the selected day at once (in this browser only); nothing else needs pressing. The two buttons only copy your edits onto other days. &#10227; (top right) returns every day to the official plan.';
+  $('devnote').innerHTML='Tap an hour cell to step that hour&rsquo;s duty: off, &frac14;, &frac12;, &frac34;, full, off. Edits take effect on the selected day at once (in this browser only); nothing else needs pressing. The two buttons only copy your edits onto other days. Personal items are camp-wide: one list, the same on every day, so they never need copying. &#10227; (top right) returns every day to the official plan.';
   {const savedT=load('cave_theme_choice');applyTheme(savedT==='light'||savedT==='dark'?savedT:osTheme(),savedT==='light'||savedT==='dark');
    try{matchMedia('(prefers-color-scheme: light)').addEventListener('change',()=>{const s=load('cave_theme_choice');if(s!=='light'&&s!=='dark')applyTheme(osTheme(),false);});}catch(e){}}
   BOOTED=true;
