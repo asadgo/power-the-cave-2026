@@ -101,7 +101,7 @@ summary.flagrow2 #genlab+*,summary.flagrow2 .floorlab{flex:0 0 auto;white-space:
 #devbox,#devbox .twrap{overflow-anchor:none}
 #devbox.panel{padding-right:10px}
 #devtable input:not(.kitname){width:52px;font-size:12px;padding:6px 5px}
-#devtable input[data-f="q"],#devtable #psq{width:40px}
+#devtable input[data-f="q"],#devtable input[data-kf="q"],#devtable #psq{width:40px}
 #devtable input[data-f="w"],#devtable input[data-kf="w"]{width:58px}
 #devtable input::-webkit-outer-spin-button,#devtable input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 #devtable input[type=number]{-moz-appearance:textfield;appearance:textfield}
@@ -801,12 +801,15 @@ const TH=()=>document.body.classList.contains('light')
   ?{tick:'#5A6B75',leg:'#26313A',grid:'rgba(90,107,117,.22)',fuel:'#26313A',fuelFill:'rgba(38,49,58,.08)'}
   :{tick:'#8A99A2',leg:'#F2EEE3',grid:'rgba(138,153,162,.16)',fuel:'#F2EEE3',fuelFill:'rgba(242,238,227,.07)'};
 
+let OFFMETA=null;
 function paintOfficial(){
   const st=$('offstate'),nt=$('offnote');if(!st||!nt||!PLAN)return;
-  const d=localDiff(),v=($('ver').textContent||'').trim();
+  const d=localDiff();
+  const vtag=(()=>{const vv=($('ver').textContent||'').trim();if(!vv)return '';const md=OFFMETA&&OFFMETA.date?new Date(OFFMETA.date+'T12:00:00'):null;const when=md&&!isNaN(md)?md.toLocaleDateString('en-US',{month:'numeric',day:'numeric'}):'';return ' ('+vv+(OFFMETA&&OFFMETA.by?', published '+when+' by '+OFFMETA.by:(when?', updated '+when:''))+')';})();
+  const v=vtag;
   const parts=[];if(d.pc)parts.push(d.pc+' changed calendar cell'+(d.pc===1?'':'s'));if(d.simDays)parts.push(d.simDays+' changed device day'+(d.simDays===1?'':'s'));if(d.kc)parts.push('personal items changed');
-  if(!parts.length){st.textContent='\u00b7 this browser matches it';st.classList.remove('differs');nt.textContent='This browser matches the official plan'+(v?' ('+v+')':'')+'. Nothing to publish.';}
-  else{st.textContent='\u00b7 this browser differs';st.classList.add('differs');nt.textContent='This browser differs from the official plan'+(v?' ('+v+')':'')+': '+parts.join(' \u00b7 ')+'. Press the button to publish everything on this page as the new official plan.';}
+  if(!parts.length){st.textContent='\u00b7 this browser matches it';st.classList.remove('differs');nt.textContent='This browser matches the official plan'+v+'. Nothing to publish.';}
+  else{st.textContent='\u00b7 this browser differs';st.classList.add('differs');nt.textContent='This browser differs from the official plan'+v+': '+parts.join(' \u00b7 ')+'. Press the button to publish everything on this page as the new official plan.';}
 }
 function refresh(rebuild){
   if(rebuild)buildPlan();
@@ -1064,7 +1067,7 @@ function buildDev(){
         ks+='</div>';
         h+='<tr class="grow"><td><input class="kitname" data-khr="'+ki+'" data-kf="n" type="text" value="'+String(r.n).replace(/"/g,'&quot;')+'" title="'+String(r.n).replace(/"/g,'&quot;')+'"></td>'
           +'<td></td>'
-          +'<td><input data-khr="'+ki+'" data-kf="q" type="number" min="0" value="'+(r.q==null?'':r.q)+'" placeholder="'+pCount(ASOF())+'" title="How many of this item. Blank = one per person, so it follows the day&#39;s People count ('+pCount(ASOF())+' today). Type a number to fix it for every day."></td>'
+          +'<td><input data-khr="'+ki+'" data-kf="q" type="number" min="0" value="'+kitQty(r,ASOF())+'" title="How many of this item today. Shown = one per person unless you type a number, which then holds for every day. Clear the box to go back to one per person."></td>'
           +'<td><input data-khr="'+ki+'" data-kf="w" type="number" min="0" value="'+r.w+'"></td>'
           +'<td class="hdc" id="khd'+ki+'">\u2014</td>'
           +'<td>'+ks+'</td>'
@@ -1116,6 +1119,7 @@ function buildDev(){
     PLAN.pi[ASOF()]=v;save();
     devPaint();refresh(false);
   });
+  T.querySelectorAll('input[data-khr][data-kf="q"]').forEach(el=>el.addEventListener('blur',()=>{const r=KITC[+el.dataset.khr];if(r&&r.q==null)el.value=String(kitQty(r,ASOF()));}));
   T.querySelectorAll('input[data-khr]').forEach(el=>el.addEventListener('input',()=>{
     const r=KITC[+el.dataset.khr],fld=el.dataset.kf;
     if(!r)return;
@@ -1220,7 +1224,7 @@ function devPaint(){
       const eh=$('khd'+ki);if(!eh)return;
       eh.textContent=r.hs.length;
       const kw=(+r.w||0)*r.hs.length/1000,qn=kitQty(r,ASOF());
-      const qi=document.querySelector('input[data-khr="'+ki+'"][data-kf="q"]');if(qi&&document.activeElement!==qi){qi.placeholder=String(pCount(ASOF()));}
+      const qi=document.querySelector('input[data-khr="'+ki+'"][data-kf="q"]');if(qi&&document.activeElement!==qi){qi.value=String(qn);}
       $('kdr'+ki).innerHTML=f(kw*qn,2)+' kWh/day &middot; '+f(kw*qn/KPG,2)+' gal/day'
         +'<span class="devsm">'+(r.q==null?'one per person \u00b7 '+qn+' today':'fixed '+qn+' every day')+' \u00b7 '+f(kw,2)+' kWh each</span>'
         +(x=>efSub(x[0],x[1]))(itemEF(r));
@@ -1429,7 +1433,7 @@ async function scnApply(){
   store('cavecsv_author',who);
   const files=scnApplyBuild(day);
   const iso=new Date().toISOString();
-  const id='cavepower_official-plan_'+iso.slice(0,10)+'_'+iso.slice(11,19).replace(/:/g,'')+'Z';
+  const id='cavepower_official-plan_'+String(who).replace(/[^\w\- ]+/g,'').trim().replace(/\s+/g,'_')+'_'+iso.slice(0,10)+'_'+iso.slice(11,19).replace(/:/g,'')+'Z';
   const row=nv.toFixed(1)+','+iso.slice(0,10)+',"Official plan updated by '+String(who).replace(/"/g,"'")+' from the console'+(nm?' (simulation: '+String(nm).replace(/"/g,"'")+')':'')+': calendar for all '+NDAYS+' days; baseline device setup and hourly duty from '+dayName+'; per-day differences for '+ovrDays+' other day'+(ovrDays===1?'':'s')+' ('+ovr.length+' cells in device_days.csv); personal items."\n';
   files['log.csv']=(logTxt&&!logTxt.endsWith('\n')?logTxt+'\n':logTxt)+row;
   const entries=Object.keys(files).map(n=>({name:id+'/data/'+n,text:files[n]}));
@@ -1594,7 +1598,9 @@ function boot(D){
   KITC.forEach(r=>{if(!r.hs)r.hs=[];});
   fetch('data/log.csv',{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{
     const rows=t.trim().split('\n'),v=rows[rows.length-1].split(',')[0];
-    if(v&&!isNaN(+v)){$('ver').textContent='v'+v;paintOfficial();}}).catch(()=>{});
+    if(v&&!isNaN(+v)){$('ver').textContent='v'+v;
+      const last=rows[rows.length-1],cells=last.split(','),date=(cells[1]||'').trim(),m=/^"?Official plan updated by ([^:]+?) from the console/i.exec(last.slice(last.indexOf(',',last.indexOf(',')+1)+1).replace(/^,?/,''));
+      OFFMETA={date,by:m?m[1].trim():''};paintOfficial();}}).catch(()=>{});
   const lF=load('cavecsv_floor');FLOOR=(lF==null)?S.fuel_floor_gal:lF;
 
   $('loader').style.display='none';
