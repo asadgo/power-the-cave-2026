@@ -153,6 +153,7 @@ summary.flagrow2{display:flex;flex-wrap:wrap;row-gap:6px;align-items:center}
 .runbox{height:280px}
 
 .note{margin:0;font:500 13px var(--mono);color:var(--muted);line-height:1.55}
+.calapply{margin:10px 0 2px}
 details.hint{margin:10px 2px 0;border:1px dashed var(--line);border-radius:8px;padding:0 10px}
 .info details.hint summary,details.hint summary{min-height:0;margin:0;padding:8px 0;font:600 11px var(--mono);letter-spacing:.6px;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:6px;list-style:none;cursor:pointer}
 details.hint summary::-webkit-details-marker{display:none}
@@ -290,15 +291,16 @@ html,body{overflow-x:hidden;max-width:100%;-webkit-text-size-adjust:100%;text-si
 <details class="panel info" id="calbox"><summary class="flag">Calendar <span class="devday" id="calday"></span></summary>
 <div class="plan" id="plan">
   <table id="plantable"></table>
-</div></details>
+</div>
+<div class="calapply"><button type="button" id="calcopy">Apply changes to all days</button><button type="button" id="calfwd">Apply changes to rest of event</button></div></details>
 
 <details class="panel info qn" id="devbox"><summary class="flag">Devices <span id="devday" class="devday"></span> <span id="devsim"></span></summary>
 <button type="button" id="devview">View: by Category &#8644;</button>
 <button type="button" id="devcol">Expand all</button>
 <div class="twrap"><table id="devtable"></table></div>
 <button type="button" id="devadd">+ Add custom item</button>
-<button type="button" id="devcopy">Apply to all days</button>
-<button type="button" id="devfwd">Apply to rest of event</button>
+<button type="button" id="devcopy">Apply changes to all days</button>
+<button type="button" id="devfwd">Apply changes to rest of event</button>
 <p class="note" id="devnote"></p></details>
 
 <details class="panel info qn chartwide" id="capbox2"><summary class="flag flagrow2"><span class="flagtxt" id="capflag">—</span><label class="floorlab" id="genlab">Gens <span class="gsel"><button type="button" id="pooltog">POOLED</button><div id="genmenu"><button type="button" data-gm="pooled">POOLED</button><button type="button" data-gm="split">BOTH GEN</button><button type="button" data-gm="g1">GEN 1 ONLY</button><button type="button" data-gm="g2">GEN 2 ONLY</button></div></span></label></summary>
@@ -676,33 +678,20 @@ function buildPlan(){
   $('kwexp').addEventListener('click',()=>{EXP=!EXP;refresh(true);});
   T.querySelectorAll('input[data-k]').forEach(el=>{
     el.addEventListener('focus',()=>{el.dataset.pv=PLAN[el.dataset.k][+el.dataset.i];});
-    el.addEventListener('input',()=>{PLAN[el.dataset.k][+el.dataset.i]=+el.value||0;if(el.dataset.k==='a'||el.dataset.k==='e')syncACFromPlan();if(el.dataset.k==='p')devPaint();save();refresh(false);});
-    el.addEventListener('change',()=>{
-      const k=el.dataset.k,i=+el.dataset.i,nv=+el.value||0,d=nv-(+el.dataset.pv||0);
-      el.dataset.pv=nv;
-      if(d===0)return;
-      const hi=k==='a'?99:(k==='e'?20:60);
-      for(let j=i+1;j<NDAYS;j++){
-        PLAN[k][j]=Math.max(0,Math.min(hi,PLAN[k][j]+d));
-        const inp=T.querySelector('input[data-k="'+k+'"][data-i="'+j+'"]');
-        if(inp)inp.value=PLAN[k][j];
-      }
-      if(k==='a'||k==='e')syncACFromPlan();
-      if(k==='p')devPaint();
-      save();refresh(false);
-    });
+    /* edits stay on their own day (the old build silently carried the delta into every later day); the Apply buttons propagate on request */
+    el.addEventListener('input',()=>{const k=el.dataset.k,i=+el.dataset.i;PLAN[k][i]=+el.value||0;touch(i,'__cal',k);if(k==='a'||k==='e')syncACFromPlan();if(k==='p')devPaint();save();refresh(false);});
   });
   T.querySelectorAll('input[data-del]').forEach(el=>el.addEventListener('input',()=>{
     FUEL.del[+el.dataset.del]=+el.value||0;save();refresh(false);
   }));
   T.querySelectorAll('.snd:not(.gen)').forEach(el=>el.addEventListener('click',ev=>{
     const i=+el.dataset.i;const v=PLAN.s[i]?0:1;
-    if(ev.shiftKey){for(let j=i;j<NDAYS;j++)PLAN.s[j]=v;}else PLAN.s[i]=v;
+    if(ev.shiftKey){for(let j=i;j<NDAYS;j++){PLAN.s[j]=v;touch(j,'__cal','s');}}else{PLAN.s[i]=v;touch(i,'__cal','s');}
     save();refresh(true);
   }));
   T.querySelectorAll('.gen').forEach(el=>el.addEventListener('click',ev=>{
     const i=+el.dataset.g;const v=PLAN.g[i]===2?1:2;
-    if(ev.shiftKey){for(let j=i;j<NDAYS;j++)PLAN.g[j]=v;}else PLAN.g[i]=v;
+    if(ev.shiftKey){for(let j=i;j<NDAYS;j++){PLAN.g[j]=v;touch(j,'__cal','g');}}else{PLAN.g[i]=v;touch(i,'__cal','g');}
     save();buildDev();devPaint();refresh(true);
   }));
   T.querySelectorAll('.dh').forEach(el=>el.addEventListener('click',ev=>{
@@ -1287,7 +1276,7 @@ async function scnLoadObj(o){
   const when=o.created&&!isNaN(new Date(o.created))?new Date(o.created).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
   let msg='<p>Load <b>'+hesc(o.title||'this simulation')+'</b>'+(o.author?' by '+hesc(o.author):'')+(when?' (saved '+when+')':'')+'?</p>'
     +'<p>Everything on this page is replaced by the file: calendar, fuel, all '+NDAYS+' days of devices, personal items, notes. Only this browser changes; nothing on GitHub changes.</p>'
-    +(d.any?'<p>Your current edits (<b>'+diffText(d)+'</b>) are lost unless you Cancel and press Save simulation first.</p>':'')
+    +(d.any?'<p>Your current edits are lost unless you Cancel and press Save simulation first.</p><details><summary>See your current edits</summary>'+diffDetailHTML()+'</details>':'')
     +(stale?'<div class="callout">Saved against an older official plan: the calendar or device tables have changed since. The file loads exactly as it was saved; changes made to the official plan since then are not in it.</div>':'');
   if(await uiDialog({html:true,msg,title:'Load simulation',ok:'Load'})!==true)return false;
   PLAN=normPlan(st.plan);
@@ -1356,6 +1345,7 @@ async function scnApply(){
     +'<li>Calendar: '+num(pc,'cell')+'</li>'
     +'<li>Devices: '+num(simDays,'day')+' of '+NDAYS+'</li>'
     +'<li>Personal items: '+tag(kc)+'</li></ul>'
+    +((pc||simDays||kc)?'<details><summary>See the changes</summary>'+diffDetailHTML()+'</details>':'')
     +((!pc&&!simDays&&!kc)?'<div class="callout">Nothing on screen differs from the official plan. This zip would change nothing except adding a log line.</div>':'')
     +'<details><summary>What is in the zip</summary><ul>'
     +'<li><span class="fn">calendar_plan.csv</span>: the calendar table for all '+NDAYS+' days (people, ACs, e-bikes, sound, gens, deliveries).</li>'
@@ -1395,6 +1385,135 @@ function resetToCSV(){
   kitCalc();buildDev();devCalc();scnBanner();
   BOOTED=true;
   refresh(true);
+}
+
+/* ---------- this day's changes, and applying them to other days ----------
+   A change = a cell on the selected day that differs from the official plan, or one the person edited here (so a value put back to the official one still counts).
+   Calendar cells: People, ACs, E-bikes, Sound, Gens (deliveries are day-specific and never copied). Device cells: qty, watts, gen tag, single hours, added or removed custom items. */
+const CALK={p:'People',a:'ACs',e:'E-bikes',s:'Sound',g:'Gens'};
+const calFmt=(k,v)=>k==='s'?(v?'on':'off'):String(v);
+function calChanges(a){
+  const out=[],tt=(TOUCH[a]&&TOUCH[a].__cal)||{};
+  ['p','a','e','s','g'].forEach(k=>{if(PLAN[k][a]!==SEEDPLAN[k][a]||tt[k])out.push({k,v:PLAN[k][a]});});
+  return out;
+}
+const FRAC={0:'off',0.25:'\u00bc',0.5:'\u00bd',0.75:'\u00be',1:'full'};
+function devChanges(a){
+  const exp=expectedDay(a),act=DEVD[a]||[],out=[];
+  const acN=n=>/air condition/i.test(n),ebN=n=>/e-bike charging/i.test(n);
+  [...new Set([...exp.map(r=>r.n),...act.map(r=>r.n)])].forEach(n=>{
+    const ex=exp.find(r=>r.n===n),r=act.find(x=>x.n===n);
+    if(r&&!ex){out.push({n,kind:'add',row:structuredClone(r)});return;}
+    if(ex&&!r){out.push({n,kind:'remove'});return;}
+    if(r.q!==ex.q&&!acN(n)&&!ebN(n))out.push({n,kind:'q',v:r.q,o:ex.q});
+    if(r.w!==ex.w)out.push({n,kind:'w',v:r.w,o:ex.w});
+    if((r.gen||'1')!==(ex.gen||'1'))out.push({n,kind:'gen',v:r.gen||'1',o:ex.gen||'1'});
+    for(let j=0;j<24;j++)if(r.du[j]!==ex.du[j])out.push({n,kind:'h',j,v:r.du[j],o:ex.du[j]});
+  });
+  const have=new Set(out.map(c=>c.n+'|'+c.kind+'|'+(c.j==null?'':c.j)));
+  const tt=TOUCH[a]||{};
+  Object.keys(tt).forEach(n=>{
+    if(n==='__cal')return;
+    const r=act.find(x=>x.n===n),ex=exp.find(x=>x.n===n);
+    Object.keys(tt[n]).forEach(f=>{
+      if(f==='remove'){if(!r&&!have.has(n+'|remove|'))out.push({n,kind:'remove'});return;}
+      if(f==='add'){if(r&&!ex&&!have.has(n+'|add|'))out.push({n,kind:'add',row:structuredClone(r)});return;}
+      if(!r||!ex)return;
+      if(f==='q'){if(!(acN(n)||ebN(n))&&!have.has(n+'|q|'))out.push({n,kind:'q',v:r.q,o:ex.q});}
+      else if(f==='w'){if(!have.has(n+'|w|'))out.push({n,kind:'w',v:r.w,o:ex.w});}
+      else if(/^h\d+$/.test(f)){const j=+f.slice(1);if(!have.has(n+'|h|'+j))out.push({n,kind:'h',j,v:r.du[j],o:ex.du[j]});}
+    });
+  });
+  return out;
+}
+const devChangeWords=c=>c.kind==='add'?'added':c.kind==='remove'?'removed':c.kind==='q'?'qty '+c.v:c.kind==='w'?c.v+' W':c.kind==='gen'?'gen '+c.v:HOURS[c.j]+' '+(FRAC[c.v]||c.v);
+function devChangesLines(ch,cap){
+  const by={};ch.forEach(c=>{(by[c.n]=by[c.n]||[]).push(c);});
+  const lines=Object.keys(by).map(n=>hesc(n)+': '+by[n].map(devChangeWords).join(', '));
+  const shown=lines.slice(0,cap||8);
+  if(lines.length>shown.length)shown.push('+ '+(lines.length-shown.length)+' more device'+(lines.length-shown.length===1?'':'s'));
+  return shown;
+}
+function applyDayChanges(a,targets){
+  const cal=calChanges(a),dev=devChanges(a);
+  targets.forEach(t=>{
+    cal.forEach(c=>{PLAN[c.k][t]=c.v;});
+    const rows=DEVD[t];
+    dev.forEach(c=>{
+      const k=rows.findIndex(x=>x.n===c.n),r=k>=0?rows[k]:null;
+      if(c.kind==='add'){if(!r)rows.push(structuredClone(c.row));else{r.q=c.row.q;r.w=c.row.w;r.gen=c.row.gen;r.du=c.row.du.slice();}return;}
+      if(c.kind==='remove'){if(r){if(r.cu)rows.splice(k,1);else r.q=0;}return;}
+      if(!r)return;
+      if(c.kind==='q')r.q=c.v;else if(c.kind==='w')r.w=c.v;else if(c.kind==='gen')r.gen=c.v;else if(c.kind==='h')r.du[c.j]=c.v;
+    });
+  });
+  save();DEVC=DEVD[ASOF()];syncACFromPlan();buildDev();devCalc();refresh(true);
+}
+function changesHTML(a){
+  const cal=calChanges(a),dev=devChanges(a);
+  const li=[];
+  cal.forEach(c=>li.push('<li>Calendar '+CALK[c.k]+': '+calFmt(c.k,c.v)+'</li>'));
+  devChangesLines(dev).forEach(l=>li.push('<li>'+l+'</li>'));
+  return {n:cal.length+dev.length,html:'<ul>'+li.join('')+'</ul>'};
+}
+async function noChangesMsg(a){await uiAlert(dayName(a)+' has no changes vs the official plan, so there is nothing to apply. Change something on this day first (a calendar cell, an hour cell, a quantity, watts, a gen tag or a custom item), then press again.','Apply');}
+async function applyAllDays(){
+  const a=ASOF(),ch=changesHTML(a);
+  if(!ch.n)return noChangesMsg(a);
+  const msg='<p>Apply <b>'+dayName(a)+'\u2019s</b> changes to every other day? The changes:</p>'+ch.html
+    +'<p>Only these cells change on the other days; everything else there stays as it is. Only this browser changes; nothing on GitHub changes until you make it official.</p>';
+  if(await uiDialog({html:true,msg,title:'Apply changes to all days',ok:'Apply to all days'})!==true)return;
+  applyDayChanges(a,Array.from({length:NDAYS},(_,i)=>i).filter(i=>i!==a));
+}
+async function applyForward(){
+  const a=ASOF(),n=NDAYS-1-a;
+  if(n<1){await uiAlert(dayName(a)+' is the last day of the event; there are no later days to apply to. Nothing changed.','Apply changes to rest of event');return;}
+  const ch=changesHTML(a);
+  if(!ch.n)return noChangesMsg(a);
+  const msg='<p>Apply <b>'+dayName(a)+'\u2019s</b> changes to the '+n+' later day'+(n===1?'':'s')+', '+dLab(a+1)+' to '+dLab(NDAYS-1)+'? The changes:</p>'+ch.html
+    +'<p>Only these cells change on those days; everything else there stays as it is, and days before '+dLab(a)+' are untouched. Only this browser changes; nothing on GitHub changes until you make it official.</p>';
+  if(await uiDialog({html:true,msg,title:'Apply changes to rest of event',ok:'Apply forward'})!==true)return;
+  applyDayChanges(a,Array.from({length:n},(_,k)=>a+1+k));
+}
+
+/* ---------- everything this browser holds beyond the official plan, as a readable list ---------- */
+function diffDetailHTML(){
+  const li=[];
+  const capJoin=(arr,cap)=>arr.slice(0,cap).join(' \u00b7 ')+(arr.length>cap?' \u00b7 + '+(arr.length-cap)+' more':'');
+  ['p','a','e','s','g'].forEach(k=>{
+    const cells=[];for(let i=0;i<NDAYS;i++)if(PLAN[k][i]!==SEEDPLAN[k][i])cells.push(dLab(i)+' '+calFmt(k,SEEDPLAN[k][i])+'\u2192'+calFmt(k,PLAN[k][i]));
+    if(cells.length)li.push('<li><b>Calendar '+CALK[k]+'</b>: '+capJoin(cells,8)+'</li>');
+  });
+  {const cells=[];for(let i=0;i<NDAYS;i++)if((FUEL.del[i]||0)!==(SEEDFUEL.del[i]||0))cells.push(dLab(i)+' '+(SEEDFUEL.del[i]||0)+'\u2192'+(FUEL.del[i]||0)+' gal');
+   if(cells.length)li.push('<li><b>Calendar Delivered</b>: '+capJoin(cells,8)+'</li>');}
+  /* devices: one line per day; runs of consecutive days with the same changes collapse into one line (9/1 to 9/7) */
+  const dayLines=[];
+  for(let i=0;i<NDAYS;i++){
+    if(JSON.stringify(DEVD[i])===JSON.stringify(expectedDay(i)))continue;
+    const exp=expectedDay(i),act=DEVD[i]||[],ch=[];
+    [...new Set([...exp.map(r=>r.n),...act.map(r=>r.n)])].forEach(n=>{
+      const ex=exp.find(r=>r.n===n),r=act.find(x=>x.n===n);
+      if(r&&!ex){ch.push({n,kind:'add'});return;}if(ex&&!r){ch.push({n,kind:'remove'});return;}
+      if(r.q!==ex.q)ch.push({n,kind:'q',v:r.q});if(r.w!==ex.w)ch.push({n,kind:'w',v:r.w});
+      if((r.gen||'1')!==(ex.gen||'1'))ch.push({n,kind:'gen',v:r.gen||'1'});
+      for(let j=0;j<24;j++)if(r.du[j]!==ex.du[j])ch.push({n,kind:'h',j,v:r.du[j]});
+    });
+    dayLines.push({i,txt:devChangesLines(ch,6).join(' \u00b7 ')});
+  }
+  const runs=[];
+  dayLines.forEach(d=>{const last=runs[runs.length-1];if(last&&last.txt===d.txt&&last.to===d.i-1)last.to=d.i;else runs.push({from:d.i,to:d.i,txt:d.txt});});
+  runs.slice(0,8).forEach(r=>li.push('<li><b>Devices '+dLab(r.from)+(r.to>r.from?' to '+dLab(r.to):'')+'</b>: '+r.txt+'</li>'));
+  if(runs.length>8)li.push('<li><b>Devices</b>: + '+(runs.length-8)+' more</li>');
+  {const cur=KITC||[],seed=KITSEED||[],parts=[];
+   [...new Set([...seed.map(r=>r.n),...cur.map(r=>r.n)])].forEach(n=>{
+     const s=seed.find(r=>r.n===n),c=cur.find(r=>r.n===n);
+     if(c&&!s)parts.push(hesc(n)+' added');else if(s&&!c)parts.push(hesc(n)+' removed');
+     else{const w=c.w!==s.w,h=JSON.stringify([...c.hs].sort())!==JSON.stringify([...s.hs].sort());if(w||h)parts.push(hesc(n)+(w?' '+c.w+' W':'')+(h?' hours':''));}
+   });
+   if(parts.length)li.push('<li><b>Personal items</b>: '+capJoin(parts,8)+'</li>');}
+  if(NOTES.trim())li.push('<li><b>Notes</b>: has text</li>');
+  if(FLOOR!==S.fuel_floor_gal)li.push('<li><b>Fuel floor</b>: '+S.fuel_floor_gal+'\u2192'+FLOOR+' gal</li>');
+  return li.length?'<ul>'+li.join('')+'</ul>':'';
 }
 
 /* ---------- boot ---------- */
@@ -1540,70 +1659,8 @@ function boot(D){
     store('cavecsv_devview',DEVVIEW);
     buildDev();devPaint();
   });
-  /* the selected day's changes vs the official plan, cell by cell (AC / e-bike counts come from the calendar and are skipped) */
-  const FRAC={0:'off',0.25:'\u00bc',0.5:'\u00bd',0.75:'\u00be',1:'full'};
-  const dayChanges=a=>{
-    const exp=expectedDay(a),act=DEVD[a]||[],out=[];
-    const acN=n=>/air condition/i.test(n),ebN=n=>/e-bike charging/i.test(n);
-    [...new Set([...exp.map(r=>r.n),...act.map(r=>r.n)])].forEach(n=>{
-      const ex=exp.find(r=>r.n===n),r=act.find(x=>x.n===n);
-      if(r&&!ex){out.push({n,kind:'add',row:structuredClone(r)});return;}
-      if(ex&&!r){out.push({n,kind:'remove'});return;}
-      if(r.q!==ex.q&&!acN(n)&&!ebN(n))out.push({n,kind:'q',v:r.q});
-      if(r.w!==ex.w)out.push({n,kind:'w',v:r.w});
-      if((r.gen||'1')!==(ex.gen||'1'))out.push({n,kind:'gen',v:r.gen||'1'});
-      for(let j=0;j<24;j++)if(r.du[j]!==ex.du[j])out.push({n,kind:'h',j,v:r.du[j]});
-    });
-    const have=new Set(out.map(c=>c.n+'|'+c.kind+'|'+(c.j==null?'':c.j)));
-    const tt=TOUCH[a]||{};
-    Object.keys(tt).forEach(n=>{
-      const r=act.find(x=>x.n===n),ex=exp.find(x=>x.n===n);
-      Object.keys(tt[n]).forEach(f=>{
-        if(f==='remove'){if(!r&&!have.has(n+'|remove|'))out.push({n,kind:'remove'});return;}
-        if(f==='add'){if(r&&!ex&&!have.has(n+'|add|'))out.push({n,kind:'add',row:structuredClone(r)});return;}
-        if(!r||!ex)return;
-        if(f==='q'){if(!(acN(n)||ebN(n))&&!have.has(n+'|q|'))out.push({n,kind:'q',v:r.q});}
-        else if(f==='w'){if(!have.has(n+'|w|'))out.push({n,kind:'w',v:r.w});}
-        else if(/^h\d+$/.test(f)){const j=+f.slice(1);if(!have.has(n+'|h|'+j))out.push({n,kind:'h',j,v:r.du[j]});}
-      });
-    });
-    return out;
-  };
-  const changesText=ch=>{
-    const by={};ch.forEach(c=>{(by[c.n]=by[c.n]||[]).push(c);});
-    const lines=Object.keys(by).map(n=>hesc(n)+': '+by[n].map(c=>c.kind==='add'?'added':c.kind==='remove'?'removed':c.kind==='q'?'qty '+c.v:c.kind==='w'?c.v+' W':c.kind==='gen'?'gen '+c.v:HOURS[c.j]+' '+(FRAC[c.v]||c.v)).join(', '));
-    return '<ul>'+lines.slice(0,8).map(l=>'<li>'+l+'</li>').join('')+(lines.length>8?'<li>+ '+(lines.length-8)+' more device'+(lines.length-8===1?'':'s')+'</li>':'')+'</ul>';
-  };
-  const applyChanges=(ch,targets)=>{
-    targets.forEach(t=>{const rows=DEVD[t];
-      ch.forEach(c=>{
-        const k=rows.findIndex(x=>x.n===c.n),r=k>=0?rows[k]:null;
-        if(c.kind==='add'){if(!r)rows.push(structuredClone(c.row));else{r.q=c.row.q;r.w=c.row.w;r.gen=c.row.gen;r.du=c.row.du.slice();}return;}
-        if(c.kind==='remove'){if(r){if(r.cu)rows.splice(k,1);else r.q=0;}return;}
-        if(!r)return;
-        if(c.kind==='q')r.q=c.v;else if(c.kind==='w')r.w=c.v;else if(c.kind==='gen')r.gen=c.v;else if(c.kind==='h')r.du[c.j]=c.v;
-      });});
-    DEVC=DEVD[ASOF()];syncACFromPlan();devCalc();
-  };
-  const noChanges=async a=>{await uiAlert(dayName(a)+' has no changes vs the official plan, so there is nothing to apply. Change something on this day first (an hour cell, a quantity, watts, a gen tag or a custom item), then press again.','Apply');};
-  $('devcopy').addEventListener('click',async()=>{
-    const a=ASOF(),ch=dayChanges(a);
-    if(!ch.length)return noChanges(a);
-    const msg='<p>Apply <b>'+dayName(a)+'\u2019s</b> changes to every other day? The changes:</p>'+changesText(ch)
-      +'<p>Only these cells change on the other days; everything else there stays as it is. Only this browser changes; nothing on GitHub changes until you make it official.</p>';
-    if(await uiDialog({html:true,msg,title:'Apply to all days',ok:'Apply to all days'})!==true)return;
-    applyChanges(ch,Array.from({length:NDAYS},(_,i)=>i).filter(i=>i!==a));
-  });
-  $('devfwd').addEventListener('click',async()=>{
-    const a=ASOF(),n=NDAYS-1-a;
-    if(n<1){await uiAlert(dayName(a)+' is the last day of the event; there are no later days to apply to. Nothing changed.','Apply to rest of event');return;}
-    const ch=dayChanges(a);
-    if(!ch.length)return noChanges(a);
-    const msg='<p>Apply <b>'+dayName(a)+'\u2019s</b> changes to the '+n+' later day'+(n===1?'':'s')+', '+dLab(a+1)+' to '+dLab(NDAYS-1)+'? The changes:</p>'+changesText(ch)
-      +'<p>Only these cells change on those days; everything else there stays as it is, and days before '+dLab(a)+' are untouched. Only this browser changes; nothing on GitHub changes until you make it official.</p>';
-    if(await uiDialog({html:true,msg,title:'Apply to rest of event',ok:'Apply forward'})!==true)return;
-    applyChanges(ch,Array.from({length:n},(_,k)=>a+1+k));
-  });
+  ['devcopy','calcopy'].forEach(id=>$(id).addEventListener('click',applyAllDays));
+  ['devfwd','calfwd'].forEach(id=>$(id).addEventListener('click',applyForward));
   $('devnote').innerHTML='Tap an hour cell to step that hour&rsquo;s duty: off, &frac14;, &frac12;, &frac34;, full, off. Edits land on the selected day only; the two Apply buttons copy this day&rsquo;s changes onto other days. &#10227; (top right) returns every day to the official plan.';
   {const savedT=load('cave_theme_choice');applyTheme(savedT==='light'||savedT==='dark'?savedT:osTheme(),savedT==='light'||savedT==='dark');
    try{matchMedia('(prefers-color-scheme: light)').addEventListener('change',()=>{const s=load('cave_theme_choice');if(s!=='light'&&s!=='dark')applyTheme(osTheme(),false);});}catch(e){}}
@@ -1614,7 +1671,7 @@ $('resetbtn').addEventListener('click',async()=>{
   if(!PLAN)return;
   const d=localDiff(),sim=load('cavecsv_scn');
   const msg=d.any
-    ?'<p>This browser holds edits that are not in the official plan: <b>'+diffText(d)+'</b>.</p>'
+    ?'<p>This browser holds edits that are not in the official plan:</p>'+diffDetailHTML()
       +'<p>Reset throws them away and reloads the page with the official plan (the CSV files in the repo). Nothing on GitHub changes.'+(sim?' It also closes the loaded simulation '+hesc(sim)+' (the file itself is untouched).':'')+'</p>'
       +'<p>Want to keep them? Cancel and press Save simulation first.</p>'
     :'<p>This browser has no edits of its own. Reset just reloads the page with the official plan.'+(sim?' It also closes the loaded simulation '+hesc(sim)+'.':'')+'</p>';
