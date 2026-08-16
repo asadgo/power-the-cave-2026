@@ -315,7 +315,7 @@ html,body{overflow-x:hidden;max-width:100%;-webkit-text-size-adjust:100%;text-si
 <button type="button" id="scnload">Load simulation</button>
 <button type="button" id="scnapply">Make this the official plan&hellip;</button>
 <input type="file" id="scnfile" accept=".json,application/json" style="display:none">
-<details class="hint"><summary>How simulations work</summary><p id="scnnote"></p></details></details>
+<details class="hint"><summary>How simulations work</summary><div id="scnnote"></div></details></details>
 
 <div class="sum" id="sum">&mdash;</div>
 <p class="src" id="src"></p>
@@ -923,6 +923,10 @@ function groupsFor(view){
    A device named there but absent from devices.csv is a custom item that exists on that day only.
    AC and e-bike quantities are never taken from here: the calendar's ACs / E-bikes columns set them per day. */
 let OVR=[];
+/* cells the user edited in this browser, per day and device: lets Apply propagate a value even when it equals the official one (a revert) */
+let TOUCH=load('cavecsv_touch')||{};
+const touch=(d,n,f)=>{if(!TOUCH[d])TOUCH[d]={};if(!TOUCH[d][n])TOUCH[d][n]={};TOUCH[d][n][f]=1;store('cavecsv_touch',TOUCH);};
+const touchRename=(d,o,n)=>{if(o===n)return;if(TOUCH[d]&&TOUCH[d][o]){TOUCH[d][n]=Object.assign(TOUCH[d][n]||{},TOUCH[d][o]);delete TOUCH[d][o];store('cavecsv_touch',TOUCH);}};
 const isOff=i=>/^off$/i.test(String(DTYPE[i]||''));
 const isoDay=i=>{const d=new Date(START.getTime()+i*DAY);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
 function applyOverridesTo(rows,i){
@@ -1090,7 +1094,9 @@ function buildDev(){
   T.querySelectorAll('input[data-vr]').forEach(el=>el.addEventListener('input',()=>{
     const r=+el.dataset.vr,fld=el.dataset.f;
     const v=fld==='n'?el.value:(+el.value||0);
+    const oldName=DEVC[r].n;
     DEVC[r][fld]=v;
+    if(fld==='n')touchRename(ASOF(),oldName,v);else touch(ASOF(),DEVC[r].n,fld);
     if(fld==='q'&&PLAN){
       const k=/air condition/i.test(DEVC[r].n)?'a':(/e-bike charging/i.test(DEVC[r].n)?'e':null);
       if(k){PLAN[k][ASOF()]=v;save();
@@ -1102,12 +1108,15 @@ function buildDev(){
   T.querySelectorAll('.hc').forEach(el=>el.addEventListener('click',()=>{
     const r=DEVC[+el.dataset.vr],j=+el.dataset.j;
     r.du[j]=r.du[j]>=1?0:Math.min(1,+(r.du[j]+0.25).toFixed(2));
+    touch(ASOF(),r.n,'h'+j);
     if(r.du[j]>0){el.classList.add('on');el.style.opacity=(0.35+0.65*r.du[j]).toFixed(2);}
     else{el.classList.remove('on');el.style.opacity='';}
     devCalc();
   }));
-  T.querySelectorAll('.kdel').forEach(el=>el.addEventListener('click',()=>{
+  T.querySelectorAll('.kdel[data-dd]').forEach(el=>el.addEventListener('click',()=>{
+    const gone=DEVC[+el.dataset.dd];
     DEVC.splice(+el.dataset.dd,1);
+    if(gone)touch(ASOF(),gone.n,'remove');
     buildDev();devCalc();
   }));
 }
@@ -1283,6 +1292,7 @@ async function scnLoadObj(o){
   if(st.fuel&&Array.isArray(st.fuel.del))FUEL=st.fuel;
   if(typeof st.floor==='number'){FLOOR=st.floor;$('floor').value=FLOOR;store('cavecsv_floor',FLOOR);}
   DEVD=st.devd;DEVD.forEach(ensureGen);DEVC=DEVD[ASOF()];
+  TOUCH={};store('cavecsv_touch',TOUCH);
   NOTES=typeof st.notes==='string'?st.notes:'';
   $('notes').value=NOTES;store('cavecsv_notes',NOTES);if(window.__noteCue)window.__noteCue();
   PGEN=st.pgen==='1'?'1':'2';store('cavecsv_pgen',PGEN);
@@ -1371,7 +1381,8 @@ async function scnApply(){
 }
 
 function resetToCSV(){
-  ['cavecsv_plan','cavecsv_fuel','cavecsv_kit','cavecsv_floor','cavecsv_dev','cavecsv_scn','cavecsv_notes'].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});
+  ['cavecsv_plan','cavecsv_fuel','cavecsv_kit','cavecsv_floor','cavecsv_dev','cavecsv_scn','cavecsv_notes','cavecsv_touch'].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});
+  TOUCH={};
   PLAN=structuredClone(SEEDPLAN);FUEL=structuredClone(SEEDFUEL);
   KITC=structuredClone(KITSEED);
   DEVD=seedDays(NDAYS);DEVC=DEVD[ASOF()];wireDevices();syncACFromPlan();
@@ -1412,6 +1423,7 @@ function boot(D){
   buildDev();devCalc();
   $('devadd').addEventListener('click',()=>{
     DEVC.push({n:'New device',area:'Custom',cat:'Custom',bus:'Pool',pr:'Cut if needed',q:1,w:0,du:Array(24).fill(0),cu:1});
+    touch(ASOF(),'New device','add');
     buildDev();devCalc();
     const nn=$('devtable').querySelectorAll('input.kitname');if(nn.length){nn[nn.length-1].focus();nn[nn.length-1].select();}
   });
@@ -1499,7 +1511,12 @@ function boot(D){
     e.target.value='';
   });
   $('scnapply').addEventListener('click',scnApply);
-  $('scnnote').innerHTML='A simulation is a snapshot of everything on this page: calendar, fuel, devices and their hourly duty for all '+NDAYS+' days, plus your Notes. Save simulation downloads it as a file you can send to anyone; Load simulation opens one here. Nothing reaches GitHub until Make this the official plan downloads a zip of CSV files (everything on this page, exactly as on screen) for you to upload into the repo\u2019s data folder. Reset (circular arrow, top right) returns this browser to the latest official plan.';
+  $('scnnote').innerHTML=
+     '<p>A Simulation is a snapshot of everything on this page: calendar, fuel, devices, their hourly duty on each day, plus any Notes.</p>'
+    +'<p>\u201cSave simulation\u201d downloads the currently open plan onto your device (which can be sent to anyone)</p>'
+    +'<p>\u201cLoad simulation\u201d opens a plan on your device to view and edit</p>'
+    +'<p>\u201cMake this the official plan\u201d downloads a zip of CSV files (everything on this page, exactly as seen on screen) for you to upload into the github repo\u2019s data folder. Upload will become the new plan going forward</p>'
+    +'<p>Reset button (circular arrow top right) always returns this browser to the latest committed official plan from the git</p>';
   scnBanner();
   const pinCheck=()=>{
     const t=$('plantable'),dp=$('daypin');
@@ -1521,30 +1538,71 @@ function boot(D){
     store('cavecsv_devview',DEVVIEW);
     buildDev();devPaint();
   });
-  const offNames=()=>Array.from({length:NDAYS},(_,i)=>i).filter(isOff).map(dLab).join(', ');
-  const copyDays=(from,targets)=>{targets.forEach(i=>{if(!isOff(i))DEVD[i]=structuredClone(DEVD[from]);});DEVC=DEVD[ASOF()];syncACFromPlan();devCalc();};
-  const offGuard=async a=>{if(!isOff(a))return false;await uiAlert(dayName(a)+' is an Off day: its device setup is all zeros, so copying it would blank every target day. Select a Build, Burn or Strike day first. Nothing changed.','Devices');return true;};
+  /* the selected day's changes vs the official plan, cell by cell (AC / e-bike counts come from the calendar and are skipped) */
+  const FRAC={0:'off',0.25:'\u00bc',0.5:'\u00bd',0.75:'\u00be',1:'full'};
+  const dayChanges=a=>{
+    const exp=expectedDay(a),act=DEVD[a]||[],out=[];
+    const acN=n=>/air condition/i.test(n),ebN=n=>/e-bike charging/i.test(n);
+    [...new Set([...exp.map(r=>r.n),...act.map(r=>r.n)])].forEach(n=>{
+      const ex=exp.find(r=>r.n===n),r=act.find(x=>x.n===n);
+      if(r&&!ex){out.push({n,kind:'add',row:structuredClone(r)});return;}
+      if(ex&&!r){out.push({n,kind:'remove'});return;}
+      if(r.q!==ex.q&&!acN(n)&&!ebN(n))out.push({n,kind:'q',v:r.q});
+      if(r.w!==ex.w)out.push({n,kind:'w',v:r.w});
+      if((r.gen||'1')!==(ex.gen||'1'))out.push({n,kind:'gen',v:r.gen||'1'});
+      for(let j=0;j<24;j++)if(r.du[j]!==ex.du[j])out.push({n,kind:'h',j,v:r.du[j]});
+    });
+    const have=new Set(out.map(c=>c.n+'|'+c.kind+'|'+(c.j==null?'':c.j)));
+    const tt=TOUCH[a]||{};
+    Object.keys(tt).forEach(n=>{
+      const r=act.find(x=>x.n===n),ex=exp.find(x=>x.n===n);
+      Object.keys(tt[n]).forEach(f=>{
+        if(f==='remove'){if(!r&&!have.has(n+'|remove|'))out.push({n,kind:'remove'});return;}
+        if(f==='add'){if(r&&!ex&&!have.has(n+'|add|'))out.push({n,kind:'add',row:structuredClone(r)});return;}
+        if(!r||!ex)return;
+        if(f==='q'){if(!(acN(n)||ebN(n))&&!have.has(n+'|q|'))out.push({n,kind:'q',v:r.q});}
+        else if(f==='w'){if(!have.has(n+'|w|'))out.push({n,kind:'w',v:r.w});}
+        else if(/^h\d+$/.test(f)){const j=+f.slice(1);if(!have.has(n+'|h|'+j))out.push({n,kind:'h',j,v:r.du[j]});}
+      });
+    });
+    return out;
+  };
+  const changesText=ch=>{
+    const by={};ch.forEach(c=>{(by[c.n]=by[c.n]||[]).push(c);});
+    const lines=Object.keys(by).map(n=>hesc(n)+': '+by[n].map(c=>c.kind==='add'?'added':c.kind==='remove'?'removed':c.kind==='q'?'qty '+c.v:c.kind==='w'?c.v+' W':c.kind==='gen'?'gen '+c.v:HOURS[c.j]+' '+(FRAC[c.v]||c.v)).join(', '));
+    return '<ul>'+lines.slice(0,8).map(l=>'<li>'+l+'</li>').join('')+(lines.length>8?'<li>+ '+(lines.length-8)+' more device'+(lines.length-8===1?'':'s')+'</li>':'')+'</ul>';
+  };
+  const applyChanges=(ch,targets)=>{
+    targets.forEach(t=>{const rows=DEVD[t];
+      ch.forEach(c=>{
+        const k=rows.findIndex(x=>x.n===c.n),r=k>=0?rows[k]:null;
+        if(c.kind==='add'){if(!r)rows.push(structuredClone(c.row));else{r.q=c.row.q;r.w=c.row.w;r.gen=c.row.gen;r.du=c.row.du.slice();}return;}
+        if(c.kind==='remove'){if(r){if(r.cu)rows.splice(k,1);else r.q=0;}return;}
+        if(!r)return;
+        if(c.kind==='q')r.q=c.v;else if(c.kind==='w')r.w=c.v;else if(c.kind==='gen')r.gen=c.v;else if(c.kind==='h')r.du[c.j]=c.v;
+      });});
+    DEVC=DEVD[ASOF()];syncACFromPlan();devCalc();
+  };
+  const noChanges=async a=>{await uiAlert(dayName(a)+' has no changes vs the official plan, so there is nothing to apply. Change something on this day first (an hour cell, a quantity, watts, a gen tag or a custom item), then press again.','Apply');};
   $('devcopy').addEventListener('click',async()=>{
-    const a=ASOF();if(await offGuard(a))return;
-    const offs=offNames();
-    const msg='<p>Copy <b>'+dayName(a)+'\u2019s</b> device setup (quantities, watts, gen tags, hour strips, custom items) onto every other day?</p>'
-      +'<p>Their current device setups are replaced, so edits made on those days are lost.'+(offs?' Off days ('+offs+') stay at zero.':'')+' Each day\u2019s AC and e-bike counts stay as the calendar says.</p>'
-      +'<p>Only this browser changes; nothing on GitHub changes until you make it official.</p>';
-    if(await uiDialog({html:true,msg,title:'Apply to all days',ok:'Copy to all days'})!==true)return;
-    copyDays(a,Array.from({length:NDAYS},(_,i)=>i).filter(i=>i!==a));
+    const a=ASOF(),ch=dayChanges(a);
+    if(!ch.length)return noChanges(a);
+    const msg='<p>Apply <b>'+dayName(a)+'\u2019s</b> changes to every other day? The changes:</p>'+changesText(ch)
+      +'<p>Only these cells change on the other days; everything else there stays as it is. Only this browser changes; nothing on GitHub changes until you make it official.</p>';
+    if(await uiDialog({html:true,msg,title:'Apply to all days',ok:'Apply to all days'})!==true)return;
+    applyChanges(ch,Array.from({length:NDAYS},(_,i)=>i).filter(i=>i!==a));
   });
   $('devfwd').addEventListener('click',async()=>{
     const a=ASOF(),n=NDAYS-1-a;
-    if(n<1){await uiAlert(dayName(a)+' is the last day of the event; there are no later days to copy to. Nothing changed.','Apply to rest of event');return;}
-    if(await offGuard(a))return;
-    const targets=Array.from({length:n},(_,k)=>a+1+k),offs=targets.filter(isOff).map(dLab).join(', ');
-    const msg='<p>Copy <b>'+dayName(a)+'\u2019s</b> device setup (quantities, watts, gen tags, hour strips, custom items) onto the '+n+' later day'+(n===1?'':'s')+', '+dLab(a+1)+' to '+dLab(NDAYS-1)+'?</p>'
-      +'<p>Their current device setups are replaced, so edits made on those days are lost. Days before '+dLab(a)+' are untouched.'+(offs?' Off days ('+offs+') stay at zero.':'')+' Each day\u2019s AC and e-bike counts stay as the calendar says.</p>'
-      +'<p>Only this browser changes; nothing on GitHub changes until you make it official.</p>';
-    if(await uiDialog({html:true,msg,title:'Apply to rest of event',ok:'Copy forward'})!==true)return;
-    copyDays(a,targets);
+    if(n<1){await uiAlert(dayName(a)+' is the last day of the event; there are no later days to apply to. Nothing changed.','Apply to rest of event');return;}
+    const ch=dayChanges(a);
+    if(!ch.length)return noChanges(a);
+    const msg='<p>Apply <b>'+dayName(a)+'\u2019s</b> changes to the '+n+' later day'+(n===1?'':'s')+', '+dLab(a+1)+' to '+dLab(NDAYS-1)+'? The changes:</p>'+changesText(ch)
+      +'<p>Only these cells change on those days; everything else there stays as it is, and days before '+dLab(a)+' are untouched. Only this browser changes; nothing on GitHub changes until you make it official.</p>';
+    if(await uiDialog({html:true,msg,title:'Apply to rest of event',ok:'Apply forward'})!==true)return;
+    applyChanges(ch,Array.from({length:n},(_,k)=>a+1+k));
   });
-  $('devnote').innerHTML='Tap an hour cell to step that hour&rsquo;s duty: off, &frac14;, &frac12;, &frac34;, full, off. Edits apply to the selected day only. &#10227; (top right) returns every day to the official plan.';
+  $('devnote').innerHTML='Tap an hour cell to step that hour&rsquo;s duty: off, &frac14;, &frac12;, &frac34;, full, off. Edits land on the selected day only; the two Apply buttons copy this day&rsquo;s changes onto other days. &#10227; (top right) returns every day to the official plan.';
   applyTheme(load('cave_theme')||'dark');
   BOOTED=true;
   refresh(true);
@@ -1560,7 +1618,7 @@ $('resetbtn').addEventListener('click',async()=>{
   if(await uiDialog({html:true,msg,title:'Reset',ok:'Reset'})!==true)return;
   if(location.protocol==='file:'){resetToCSV();return;}
   /* a real page reload also picks up a newer index.html; the in-page path kept an old page running while the header showed the new version */
-  ['cavecsv_plan','cavecsv_fuel','cavecsv_kit','cavecsv_floor','cavecsv_dev','cavecsv_scn','cavecsv_notes','cavecsv_pgen'].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});
+  ['cavecsv_plan','cavecsv_fuel','cavecsv_kit','cavecsv_floor','cavecsv_dev','cavecsv_scn','cavecsv_notes','cavecsv_pgen','cavecsv_touch'].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});
   location.reload();
 });
 $('themebtn').addEventListener('click',()=>applyTheme(document.body.classList.contains('light')?'dark':'light'));
