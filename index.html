@@ -9,14 +9,14 @@
 :root{--ink:#12181C;--panel:#1C252B;--panel2:#242F37;--deep:#151D23;--line:#33434D;
 --bone:#F2EEE3;--muted:#8A99A2;--muted2:#6A7B85;--dw:#C9D3DA;--wkd:#E3D3A8;--webg:rgba(242,238,227,.045);
 --bob:#2A8FEF;--safe:#57C97D;--safe-bg:#143122;
---warn:#FFA733;--warn-bg:#382A10;--danger:#F26060;--danger-bg:#391818;
+--warn:#FFA733;--warn-bg:#382A10;--danger:#F26060;--danger-bg:#391818;--edit:#B48CFF;--edit-bg:#2B2344;
 --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
 --cond:"Barlow Condensed","Arial Narrow","Helvetica Neue",Arial,sans-serif}
 html.light{background:#EFECE2}
 body.light{--ink:#EFECE2;--panel:#FBFAF6;--panel2:#E7E3D6;--deep:#E9E5D9;--line:#C6BFAD;
 --bone:#1E272E;--muted:#5A6B75;--muted2:#7A8B95;--dw:#3A4B57;--wkd:#8A6B1A;--webg:rgba(30,39,46,.05);
 --bob:#1B6FD0;--safe:#1F7A44;--safe-bg:#D9EFDF;
---warn:#9A6206;--warn-bg:#F6E7C8;--danger:#B03434;--danger-bg:#F6D9D9}
+--warn:#9A6206;--warn-bg:#F6E7C8;--danger:#B03434;--danger-bg:#F6D9D9;--edit:#6A45C4;--edit-bg:#E9E1F8}
 *{box-sizing:border-box}
 html{scrollbar-gutter:stable}
 html,body{min-height:100vh;margin:0;background:var(--ink);color:var(--bone);font:16px/1.4 var(--mono)}
@@ -38,7 +38,6 @@ button:hover{border-color:var(--bob)}
 .sum.s-ok{background:var(--safe-bg);color:var(--safe)}
 .sum.s-warn{background:var(--warn-bg);color:var(--warn)}
 .sum.s-over{background:var(--danger-bg);color:var(--danger)}
-.src{margin:10px 0 0;font:500 11px var(--mono);color:var(--muted2)}
 
 .plan{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;overflow-x:auto;margin-bottom:14px}
 #calbox{margin-bottom:12px}
@@ -133,15 +132,16 @@ summary.flagrow2{display:flex;flex-wrap:wrap;row-gap:6px;align-items:center}
 #devtable td:nth-child(3),#devtable td:nth-child(4){text-align:center}
 #devtable .hdc{width:56px;min-width:56px;max-width:56px;box-sizing:border-box;text-align:center;font-variant-numeric:tabular-nums}
 #devadd,#devcopy,#devfwd,#devview,#devcol,#scnsave,#scnload,#scnapply{width:auto;font-size:13px;padding:8px 14px;margin-top:8px;margin-right:8px}
-#scnapply{font-weight:700;color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+#scnapply{font-weight:700;color:var(--edit);border-color:var(--edit);background:var(--edit-bg)}
 #offbox .note{margin-top:2px}
 #devtable .dsub td{font:600 11px var(--mono);color:var(--muted2);border-top:1px solid var(--deep);padding:4px 3px 10px}
 #devtable .ghide{display:none}
 #devtable .dgrp td{cursor:pointer;user-select:none}
 #devtable .dname{font:500 11px var(--mono);color:var(--muted);white-space:normal;max-width:150px}
-#devsim,#calsim{font:700 9px var(--mono);color:#c9822f;margin-left:8px;letter-spacing:.06em}
-#plantable input.edited{border-color:var(--warn);box-shadow:inset 0 0 0 1px var(--warn)}
-#plantable button.snd.edited{box-shadow:inset 0 0 0 2px var(--warn)}
+#devsim,#calsim{font:700 9px var(--mono);color:var(--edit);margin-left:8px;letter-spacing:.06em}
+#offstate.differs{color:var(--edit)}
+#plantable input.edited{border-color:var(--edit);box-shadow:inset 0 0 0 1px var(--edit)}
+#plantable button.snd.edited{box-shadow:inset 0 0 0 2px var(--edit)}
 
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
 .flag{font:600 16px var(--mono);margin:0 0 8px}
@@ -222,7 +222,7 @@ details.hint p{font:500 11.5px var(--mono);color:var(--muted);line-height:1.5;ma
 .uimsg li{margin:0 0 6px}
 .uimsg .fn{color:var(--bone);font-weight:700}
 .uimsg .n{font-weight:700;padding:0 4px;border-radius:4px;white-space:nowrap}
-.uimsg .n-ch{color:var(--warn);background:var(--warn-bg)}
+.uimsg .n-ch{color:var(--edit);background:var(--edit-bg)}
 .uimsg .n-ok{color:var(--muted2);background:var(--panel2)}
 .uimsg .callout{border:1px solid var(--warn);border-radius:8px;padding:8px 10px;color:var(--warn);margin:0 0 9px}
 .uimsg details{margin:0 0 9px}
@@ -315,20 +315,19 @@ html,body{overflow-x:hidden;max-width:100%;-webkit-text-size-adjust:100%;text-si
 <textarea id="notes" rows="6" placeholder="notes, questions, ideas are saved along with your simulation"></textarea>
 <p class="note">Saved into every simulation file so others can read and address them; cleared by Reset button (top right)</p></details>
 
+<div class="sum" id="sum">&mdash;</div>
+
 <div class="panel qn" id="scnbox"><div class="flag static">Simulations <span id="scnname" class="devday"></span></div>
 <button type="button" id="scnsave">Export Simulation</button>
 <button type="button" id="scnload">Import Simulation</button>
 <input type="file" id="scnfile" accept=".json,application/json" style="display:none">
 <details class="hint"><summary>How simulations work</summary><div id="scnnote"></div></details></div>
 
-<div class="panel qn" id="offbox"><div class="flag static">Official plan <span id="offstate" class="devday"></span></div>
+<div class="panel qn" id="offbox"><div class="flag static">Official Plan <span id="offstate" class="devday"></span></div>
 <p class="note" id="offnote"></p>
 <button type="button" id="scnapply">Make this the official plan&hellip;</button>
 <details class="hint"><summary>What the official plan is</summary><p>The official plan is the plan saved in the GitHub repo. It is the plan the whole camp sees on this page and on Reality. Your edits stay in this browser only, until you make them official: press the button, upload the downloaded CSV files to GitHub, and the new plan replaces the old one for everyone.</p></details>
 </div>
-
-<div class="sum" id="sum">&mdash;</div>
-<p class="src" id="src"></p>
 </div>
 </div>
 
@@ -775,8 +774,8 @@ function paintOfficial(){
   const st=$('offstate'),nt=$('offnote');if(!st||!nt||!PLAN)return;
   const d=localDiff(),v=($('ver').textContent||'').trim();
   const parts=[];if(d.pc)parts.push(d.pc+' changed calendar cell'+(d.pc===1?'':'s'));if(d.simDays)parts.push(d.simDays+' changed device day'+(d.simDays===1?'':'s'));if(d.kc)parts.push('personal items changed');
-  if(!parts.length){st.textContent='\u00b7 this browser matches it';st.style.color='';nt.textContent='This browser matches the official plan'+(v?' ('+v+')':'')+'. Nothing to publish.';}
-  else{st.textContent='\u00b7 this browser differs';st.style.color='#c9822f';nt.textContent='This browser differs from the official plan'+(v?' ('+v+')':'')+': '+parts.join(' \u00b7 ')+'. Press the button to publish everything on this page as the new official plan.';}
+  if(!parts.length){st.textContent='\u00b7 this browser matches it';st.classList.remove('differs');nt.textContent='This browser matches the official plan'+(v?' ('+v+')':'')+'. Nothing to publish.';}
+  else{st.textContent='\u00b7 this browser differs';st.classList.add('differs');nt.textContent='This browser differs from the official plan'+(v?' ('+v+')':'')+': '+parts.join(' \u00b7 ')+'. Press the button to publish everything on this page as the new official plan.';}
 }
 function refresh(rebuild){
   if(rebuild)buildPlan();
@@ -1573,7 +1572,6 @@ function boot(D){
   $('asof').addEventListener('input',()=>refresh(true));
   $('floor').value=FLOOR;
   $('floor').addEventListener('input',()=>{FLOOR=+$('floor').value||0;store('cavecsv_floor',FLOOR);refresh(false);});
-  $('src').textContent='source: data/*.csv · '+NDEV+' devices · sound rig '+f(Math.max(0,...DER.map(d=>d.SOUND)),1)+' kWh/day · safe '+f(redFor(2),1)+' kW pooled · edits stay in this browser · the official plan lives on GitHub';
   kitCalc();
   buildDev();devCalc();
   $('devadd').addEventListener('click',()=>{
