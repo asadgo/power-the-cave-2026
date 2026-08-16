@@ -1230,7 +1230,13 @@ async function scnApply(){
   const day=ASOF();
   const wd=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date(START.getTime()+day*DAY).getDay()];
   const dayName=wd+' '+dLab(day);
-  if(/^off$/i.test(String(DTYPE[day]||''))){await uiAlert(dayName+' is an Off day. Every device quantity is zero there, so it cannot become the official device setup. Select a Build, Burn or Strike day in the calendar, then try again.','Make this the official plan');return;}
+  if(/^off$/i.test(String(DTYPE[day]||''))){
+    await uiDialog({html:true,cancel:false,title:'Make this the official plan',msg:
+      '<p><b>Nothing was downloaded.</b></p>'
+      +'<p><b>'+dayName+'</b> is selected in the calendar, and '+dLab(day)+' is an <b>Off</b> day. On an Off day the console sets every device quantity to 0 (nobody is running anything yet).</p>'
+      +'<p>This button copies the device list and hourly duty from the selected day into devices.csv + schedule.csv, which become the official device setup for every day. From '+dLab(day)+' that would commit a device list of <b>all zeros</b> and wipe the plan.</p>'
+      +'<p>Do this instead: click another day\u2019s header in the calendar (any Build, Burn or Strike day whose device setup you want as the official baseline), then press Make this the official plan again. The calendar itself (all '+NDAYS+' days) is exported the same way whichever day is selected; only devices.csv and schedule.csv depend on the selected day.</p>'});
+    return;}
   const nm=load('cavecsv_scn');
   /* what differs from the committed CSVs */
   let pc=0;['p','a','e','s','g'].forEach(k=>{for(let i=0;i<NDAYS;i++)if(PLAN[k][i]!==SEEDPLAN[k][i])pc++;});
