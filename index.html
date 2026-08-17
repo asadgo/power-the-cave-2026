@@ -468,6 +468,7 @@ function groupOf(d){
   if(/e-bike charging/i.test(d.n))return 'E-bikes';
   if(d.cat==='Sound')return 'Sound';
   if(d.cat==='Personal')return 'Personal items';
+  if(d.cat==='Custom')return 'Custom';
   return 'Camp lights & misc';
 }
 const autoGen=n=>/air condition|fan|e-bike charging/i.test(n)?'2':'1';
@@ -487,12 +488,13 @@ function wireDay(rows){
   const AC1=acD?+(dayK(acD)/(acD.q||1)).toFixed(3):0;
   const EBT=ebD?+dayK(ebD).toFixed(3):0;
   const POOLK=+dev.filter(d=>d.bus==='Pool').reduce((a,d)=>a+dayK(d),0).toFixed(3);
-  const isPer=d=>d.cat==='Personal';
+  const isPer=d=>d.cat==='Personal',isCus=d=>d.cat==='Custom';
   const PERK=+dev.filter(d=>d.bus!=='Battery'&&isPer(d)).reduce((a,d)=>a+dayK(d),0).toFixed(3);
-  const LMP=+dev.filter(d=>d.bus==='Pool'&&d.sc==='people'&&d.cat!=='Sound'&&!isPer(d)&&!SRCSET.has(d.n)&&d!==acD&&d!==ebD).reduce((a,d)=>a+dayK(d),0).toFixed(3);
+  const CUSTK=+dev.filter(d=>d.bus!=='Battery'&&isCus(d)).reduce((a,d)=>a+dayK(d),0).toFixed(3);
+  const LMP=+dev.filter(d=>d.bus==='Pool'&&d.sc==='people'&&d.cat!=='Sound'&&!isPer(d)&&!isCus(d)&&!SRCSET.has(d.n)&&d!==acD&&d!==ebD).reduce((a,d)=>a+dayK(d),0).toFixed(3);
   return {BOB:B,ALICE:A,aliceRef:Math.max(...A)||1,fansKw:(fanD&&fanD.gen==='2')?fanD.tot/1000:0,acInB:!!(acD&&acD.gen==='2'),
-    ACW:acD&&acD.w?acD.w/1000:S.ac_unit_kwh_per_hour,SOUND:SN,CRITK,SRCK,AC1,EBT,LMP,PERK,
-    LMISCK:+(POOLK-SN-SRCK-(acD?dayK(acD):0)-(ebD?dayK(ebD):0)-LMP-PERK).toFixed(3)};
+    ACW:acD&&acD.w?acD.w/1000:S.ac_unit_kwh_per_hour,SOUND:SN,CRITK,SRCK,AC1,EBT,LMP,PERK,CUSTK,
+    LMISCK:+(POOLK-SN-SRCK-(acD?dayK(acD):0)-(ebD?dayK(ebD):0)-LMP-PERK-CUSTK).toFixed(3)};
 }
 function syncACFromPlan(){
   if(!PLAN||!DEVD.length)return;
@@ -527,7 +529,8 @@ function wireDevices(){
    ['Camp lights &amp; misc<span class="rl2">(fans, charging, coffee)</span>',i=>DER[i].LMISCK+DER[i].LMP*cf(i)],
    ['ACs',i=>DER[i].AC1*PLAN.a[i]],
    ['E-bikes',i=>DER[i].EBT],
-   ['Personal items<span class="rl2" id="pplab">(camper gear: one per person unless a fixed count is set)</span>',i=>DER[i].PERK]];
+   ['Personal items<span class="rl2" id="pplab">(camper gear: one per person unless a fixed count is set)</span>',i=>DER[i].PERK]]
+   .concat(DEVD.some(rows=>rows.some(r=>r.cat==='Custom'))?[['Custom<span class="rl2">(items added in the Devices table)</span>',i=>DER[i].CUSTK]]:[]);
   window.__CAVE={S,DER,DEVD,SOUND,CRITK:d0.CRITK,SRCK:d0.SRCK,LMISCK:d0.LMISCK,AC1:d0.AC1,EBT:d0.EBT};
 }
 
@@ -953,7 +956,7 @@ function applyTheme(mode,persist){
 /* ---------- personal items calculator ---------- */
 
 /* ---------- devices panel: whiteboard over devices.csv + schedule.csv ---------- */
-const DGROUPS=['Critical','Sound','The Source','Camp lights & misc','ACs','E-bikes','Personal items'];
+const DGROUPS=['Critical','Sound','The Source','Camp lights & misc','ACs','E-bikes','Personal items','Custom'];
 const ASOF=()=>Math.min(NDAYS-1,Math.max(0,+$('asof').value||0));
 let DEVVIEW=load('cavecsv_devview')||'category';
 let DEVGRP=[];
@@ -1015,7 +1018,7 @@ function overrideRowsFor(day){
     names.forEach(n=>{
       const e=exp.find(r=>r.n===n),a=act.find(r=>r.n===n);
       const push=(f,v)=>out.push({date:iso,device:n,field:f,value:String(v)});
-      if(e&&!a){if(e.q!==0)push('qty',0);return;}
+      if(e&&!a){if(e.sc==='perperson')push('scaling','');if(e.q!==0||e.sc==='perperson')push('qty',0);return;}
       if(a&&!e){push('qty',a.q);push('watts',a.w);push('gen',a.gen||'1');if(a.sc&&a.sc!=='full')push('scaling',a.sc);a.du.forEach((v,j)=>{if(v)push(HKEYS[j],v);});return;}
       if((a.sc||'full')!==(e.sc||'full'))push('scaling',a.sc==='full'?'':a.sc);
       if(a.q!==e.q&&!acN(n)&&!ebN(n)&&!(a.sc==='perperson'&&e.sc==='perperson'))push('qty',a.q);
@@ -1042,15 +1045,15 @@ function buildDev(){
       for(let j=0;j<24;j++){const du=r.du[j];
         strip+='<div class="hcol"><div class="hc'+(du>0?' on':'')+'" style="'+(du>0?'opacity:'+(0.35+0.65*du).toFixed(2):'')+'" data-vr="'+i+'" data-j="'+j+'"></div><div class="hlb'+((j===7||j===19)?' maj':'')+'">'+HOURS[j]+'</div></div>';}
       strip+='</div>';
-      h+='<tr class="grow'+(op?'':' ghide')+'">'+(r.cu
+      h+='<tr class="grow'+(op?'':' ghide')+'">'+((r.cu||r.cat==='Personal')
           ?'<td><input class="kitname" data-vr="'+i+'" data-f="n" type="text" value="'+String(r.n).replace(/"/g,'&quot;')+'"></td><td class="gcell"><button type="button" class="gtag '+((PLAN&&PLAN.g[ASOF()]<2)?'g1 gdim':'g'+(r.gen||'1'))+'" data-gt="'+i+'" title="'+((PLAN&&PLAN.g[ASOF()]<2)?'single-generator day · all loads run on the one generator · tag still sets wiring for 2-gen days':'generator assignment · click: every day · shift-click: from this day on')+'">'+((PLAN&&PLAN.g[ASOF()]<2)?'1':(r.gen||'1'))+'</button></td>'
-          :'<td class="dname" title="'+(r.pr||'')+'">'+r.n+(/e-bike charging/i.test(r.n)?'<span class="devsm">watts per bike \u00b7 Qty = the calendar\u2019s E-bikes</span>':(r.sc==='perperson'?'<span class="devsm">one per person \u00b7 Qty = the day\u2019s People</span>':''))+'</td><td class="gcell"><button type="button" class="gtag '+((PLAN&&PLAN.g[ASOF()]<2)?'g1 gdim':'g'+(r.gen||'1'))+'" data-gt="'+i+'" title="'+((PLAN&&PLAN.g[ASOF()]<2)?'single-generator day · all loads run on the one generator · tag still sets wiring for 2-gen days':'generator assignment · click: every day · shift-click: from this day on')+'">'+((PLAN&&PLAN.g[ASOF()]<2)?'1':(r.gen||'1'))+'</button></td>')
+          :'<td class="dname" title="'+(r.pr||'')+'">'+r.n+(/e-bike charging/i.test(r.n)?'<span class="devsm">watts per bike \u00b7 Qty = the calendar\u2019s E-bikes</span>':'')+'</td><td class="gcell"><button type="button" class="gtag '+((PLAN&&PLAN.g[ASOF()]<2)?'g1 gdim':'g'+(r.gen||'1'))+'" data-gt="'+i+'" title="'+((PLAN&&PLAN.g[ASOF()]<2)?'single-generator day · all loads run on the one generator · tag still sets wiring for 2-gen days':'generator assignment · click: every day · shift-click: from this day on')+'">'+((PLAN&&PLAN.g[ASOF()]<2)?'1':(r.gen||'1'))+'</button></td>')
         +'<td><input data-vr="'+i+'" data-f="q" type="number" min="0" value="'+r.q+'"'+(r.sc==='perperson'?' title="One per person: follows the day&#39;s People count. Type a number to fix this item&#39;s count on this day; clear the box to go back to one per person."':(r.cat==='Personal'?' title="Fixed count on this day. Clear the box to make it one per person (follows the People count)."':''))+'></td>'
         +'<td><input data-vr="'+i+'" data-f="w" type="number" min="0" value="'+r.w+'"></td>'
         +'<td class="hdc" id="dh'+i+'">&mdash;</td>'
         +'<td>'+strip+'</td>'
         +'<td class="qr" id="dk'+i+'">&mdash;</td>'
-        +(r.cu?'<td><button type="button" class="kdel" data-dd="'+i+'" title="Delete item">&times;</button></td>':'<td></td>')
+        +((r.cu||r.cat==='Personal')?'<td><button type="button" class="kdel" data-dd="'+i+'" title="Delete this item on this day">&times;</button></td>':'<td></td>')
         +'</tr>';
     });
     h+='<tr class="dsub"><td class="ktlab">'+(({'Camp lights & misc':'Lights & misc'})[g.name]||g.name)+' subtotal</td><td></td><td></td><td></td><td></td><td></td><td class="qr" id="dg'+gi+'">&mdash;</td><td></td></tr>';
@@ -1393,7 +1396,7 @@ function devChangesLines(ch,cap){
 function applyDevChangeTo(rows,c){
   const k=rows.findIndex(x=>x.n===c.n),r=k>=0?rows[k]:null;
   if(c.kind==='add'){if(!r)rows.push(structuredClone(c.row));else{r.q=c.row.q;r.w=c.row.w;r.gen=c.row.gen;r.sc=c.row.sc;r.du=c.row.du.slice();}return;}
-  if(c.kind==='remove'){if(r){if(r.cu)rows.splice(k,1);else r.q=0;}return;}
+  if(c.kind==='remove'){if(r)rows.splice(k,1);return;} /* gone for the day; a committed row comes back as qty 0 after Reset (the file can only zero it) */
   if(!r)return;
   if(c.kind==='sc')r.sc=c.v;else if(c.kind==='q')r.q=c.v;else if(c.kind==='w')r.w=c.v;else if(c.kind==='gen')r.gen=c.v;else if(c.kind==='h')r.du[c.j]=c.v;
 }
@@ -1432,16 +1435,16 @@ async function noChangesMsg(){
 async function applyAllDays(){
   const all=allChanges();
   if(!all.length)return noChangesMsg();
-  const msg='<p>Your edits are already in effect on their own days. Also copy each one to every other day, before and after it (up to the day that same cell was edited again)? Your edits:</p>'+changesListHTML(all)
-    +'<p>Only these cells change on the other days; everything else stays as it is. Only this browser changes; nothing on GitHub changes until you make it official.</p>';
+  const msg='<p>Your edits are already in effect on their own days. Copy them onto every other day, before and after?</p><p>Your edits:</p>'+changesListHTML(all)
+    +'<p>Only the cells you changed will be changed on the other days; everything else will stay the same. Only this browser changes; nothing on GitHub changes until you make it official.</p>';
   if(await uiDialog({html:true,msg,title:'Copy edits to all days',ok:'Copy to all days'})!==true)return;
   applyCarry(all,true);
 }
 async function applyForward(){
   const all=allChanges();
   if(!all.length)return noChangesMsg();
-  const msg='<p>Your edits are already in effect on their own days. Also copy each one to the days after it (up to the day that same cell was edited again)? Days before an edit are untouched. Your edits:</p>'+changesListHTML(all)
-    +'<p>Only these cells change on the later days; everything else stays as it is. Only this browser changes; nothing on GitHub changes until you make it official.</p>';
+  const msg='<p>Your edits are already in effect on their own days. Copy them forward onto every later day? Days before an edit are untouched.</p><p>Your edits:</p>'+changesListHTML(all)
+    +'<p>Only the cells you changed will be changed on future days; everything else will stay the same. Only this browser changes; nothing on GitHub changes until you make it official.</p>';
   if(await uiDialog({html:true,msg,title:'Copy edits to rest of event',ok:'Copy forward'})!==true)return;
   applyCarry(all,false);
 }
@@ -1502,15 +1505,19 @@ function boot(D){
   $('floor').value=FLOOR;
   $('floor').addEventListener('input',()=>{FLOOR=+$('floor').value||0;store('cavecsv_floor',FLOOR);refresh(false);});
   buildDev();devCalc();
+  /* a freshly added row must be visible: open the group it lands in (in the current view) before rebuilding */
+  const openGroupOf=r=>{const nm=DEVVIEW==='area'?(r.area||'Custom'):groupOf(r);const st=load('cavecsv_devopen')||{};const arr=new Set(st[DEVVIEW]||[]);arr.add(nm);st[DEVVIEW]=[...arr];store('cavecsv_devopen',st);};
   /* + Add personal item: camper gear, one per person by default (qty follows the day's People), on gen 2 like the rest of the camper circuits */
   $('devaddp').addEventListener('click',()=>{
-    DEVC.push({n:'New personal item',area:'Shade City',cat:'Personal',bus:'Pool',pr:'Cut first',q:PLAN?PLAN.p[ASOF()]:0,w:0,sc:'perperson',gen:'2',du:Array(24).fill(0),cu:1});
+    const row={n:'New personal item',area:'Shade City',cat:'Personal',bus:'Pool',pr:'Cut first',q:PLAN?PLAN.p[ASOF()]:0,w:0,sc:'perperson',gen:'2',du:Array(24).fill(0),cu:1};
+    DEVC.push(row);openGroupOf(row);
     touch(ASOF(),'New personal item','add');
     buildDev();devCalc();
     const nn=$('devtable').querySelectorAll('input.kitname');if(nn.length){nn[nn.length-1].focus();nn[nn.length-1].select();}
   });
   $('devadd').addEventListener('click',()=>{
-    DEVC.push({n:'New device',area:'Custom',cat:'Custom',bus:'Pool',pr:'Cut if needed',q:1,w:0,du:Array(24).fill(0),cu:1});
+    const row={n:'New device',area:'Custom',cat:'Custom',bus:'Pool',pr:'Cut if needed',q:1,w:0,du:Array(24).fill(0),cu:1};
+    DEVC.push(row);openGroupOf(row);
     touch(ASOF(),'New device','add');
     buildDev();devCalc();
     const nn=$('devtable').querySelectorAll('input.kitname');if(nn.length){nn[nn.length-1].focus();nn[nn.length-1].select();}
