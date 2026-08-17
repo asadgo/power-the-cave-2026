@@ -21,5 +21,5 @@ Mackie Mixer,Events,Sound,Mackie DL32S,1,60,60,120,Pool,Cut first,Event nights o
 Air Conditioning Units,Shade City,Appliance,"Midea 8,000 BTU inverter",10,600,600,120,Pool,Cut first,"Inverter type: soft ramp, no start kick. Verify wattage on sticker.",,2
 Fans,Shade City,Appliance,Shark FlexBreeze (est.),8,40,80,120,Pool,Cut first,Start kick estimated.,people,2
 E-bike charging station,Ebikes,Appliance,One dedicated 15 A circuit,10,144,1440,120,Pool,Cut first,Covers all ~10 bikes (~250 W chargers). The breaker allows ~5 at once; extra bikes wait their turn automatically.,,2
-Phone (personal),Shade City,Personal,Camper phone charger,1,20,20,120,Pool,Cut first,Camper gear. One per person: qty follows each day's People count. Was personal_items.csv until v24.8,perperson,2
-Fan (personal),Shade City,Personal,Camper fan,1,40,40,120,Pool,Cut first,Camper gear. One per person: qty follows each day's People count. Was personal_items.csv until v24.8,perperson,2
+Phone,Shade City,Personal,Camper phone charger,1,20,20,120,Pool,Cut first,Camper gear. One per person: qty follows each day's People count. Was personal_items.csv until v24.8,perperson,2
+Camper fan,Shade City,Personal,Camper fan,1,40,40,120,Pool,Cut first,Camper gear. One per person: qty follows each day's People count. Was personal_items.csv until v24.8,perperson,2

@@ -16,7 +16,9 @@ status checks each generator against its own limits (0, no parallel kit) or the 
 - `bus`: `Battery` (never-cut core → “Critical” group) or `Pool` (generator pool).
 - `priority`: `Never cut` / `Cut if needed` / `Cut first`.
 - `scaling`: `people` = the row scales with the headcount fraction (Coffee maker, Fans); `perperson` = one per
-  person, qty follows each day's People count (camper gear such as Phone (personal)); blank = full load.
+  person, qty follows each day's People count (camper gear such as Phone, Camper fan); blank = full load.
+- `category`: `Personal` rows form the Personal items group, `Custom` rows the Custom group; anything else falls
+  into the model's categories (Critical by bus, Sound, The Source, ACs, E-bikes, Camp lights & misc).
 - `gen` (optional, `1`|`2`): default generator assignment. Absent → auto (AC / fans / e-bikes → 2,
   everything else → 1). “Make this the official plan” writes both `scaling` and `gen`.
 - Derived columns (total W, start kick) are not stored; the console recomputes them.
