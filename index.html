@@ -959,6 +959,7 @@ function applyTheme(mode,persist){
 const DGROUPS=['Critical','Sound','The Source','Camp lights & misc','ACs','E-bikes','Personal items','Custom'];
 const ASOF=()=>Math.min(NDAYS-1,Math.max(0,+$('asof').value||0));
 let DEVVIEW=load('cavecsv_devview')||'category';
+let PERSOPEN=load('cavecsv_persopen')===true;
 let DEVGRP=[];
 function groupsFor(view){
   if(view==='area'){
@@ -1040,12 +1041,12 @@ function buildDev(){
   DEVGRP.forEach((g,gi)=>{
     const op=open.has(g.name);
     h+='<tr class="dgrp" data-g="'+gi+'"><td colspan="8">'+(op?'\u25be ':'\u25b8 ')+g.name+'</td></tr>';
-    g.idxs.forEach(i=>{const r=DEVC[i];
+    const rowHTML=(i,shown)=>{const r=DEVC[i];
       let strip='<div class="hstrip">';
       for(let j=0;j<24;j++){const du=r.du[j];
         strip+='<div class="hcol"><div class="hc'+(du>0?' on':'')+'" style="'+(du>0?'opacity:'+(0.35+0.65*du).toFixed(2):'')+'" data-vr="'+i+'" data-j="'+j+'"></div><div class="hlb'+((j===7||j===19)?' maj':'')+'">'+HOURS[j]+'</div></div>';}
       strip+='</div>';
-      h+='<tr class="grow'+(op?'':' ghide')+'">'+((r.cu||r.cat==='Personal')
+      return '<tr class="grow'+(shown?'':' ghide')+'">'+((r.cu||r.cat==='Personal')
           ?'<td><input class="kitname" data-vr="'+i+'" data-f="n" type="text" value="'+String(r.n).replace(/"/g,'&quot;')+'"></td><td class="gcell"><button type="button" class="gtag '+((PLAN&&PLAN.g[ASOF()]<2)?'g1 gdim':'g'+(r.gen||'1'))+'" data-gt="'+i+'" title="'+((PLAN&&PLAN.g[ASOF()]<2)?'single-generator day · all loads run on the one generator · tag still sets wiring for 2-gen days':'generator assignment · click: every day · shift-click: from this day on')+'">'+((PLAN&&PLAN.g[ASOF()]<2)?'1':(r.gen||'1'))+'</button></td>'
           :'<td class="dname" title="'+(r.pr||'')+'">'+r.n+(/e-bike charging/i.test(r.n)?'<span class="devsm">watts per bike \u00b7 Qty = the calendar\u2019s E-bikes</span>':'')+'</td><td class="gcell"><button type="button" class="gtag '+((PLAN&&PLAN.g[ASOF()]<2)?'g1 gdim':'g'+(r.gen||'1'))+'" data-gt="'+i+'" title="'+((PLAN&&PLAN.g[ASOF()]<2)?'single-generator day · all loads run on the one generator · tag still sets wiring for 2-gen days':'generator assignment · click: every day · shift-click: from this day on')+'">'+((PLAN&&PLAN.g[ASOF()]<2)?'1':(r.gen||'1'))+'</button></td>')
         +'<td><input data-vr="'+i+'" data-f="q" type="number" min="0" value="'+r.q+'"'+(r.sc==='perperson'?' title="One per person: follows the day&#39;s People count. Type a number to fix this item&#39;s count on this day; clear the box to go back to one per person."':(r.cat==='Personal'?' title="Fixed count on this day. Clear the box to make it one per person (follows the People count)."':''))+'></td>'
@@ -1055,10 +1056,20 @@ function buildDev(){
         +'<td class="qr" id="dk'+i+'">&mdash;</td>'
         +((r.cu||r.cat==='Personal')?'<td><button type="button" class="kdel" data-dd="'+i+'" title="Delete this item on this day">&times;</button></td>':'<td></td>')
         +'</tr>';
-    });
+    };
+    if(DEVVIEW==='area'){
+      /* area view: camper gear sits in a collapsible Personal items block at the end of its area (its subtotal shows while collapsed) */
+      const rowsN=g.idxs.filter(i=>DEVC[i].cat!=='Personal'),rowsP=g.idxs.filter(i=>DEVC[i].cat==='Personal');
+      rowsN.forEach(i=>{h+=rowHTML(i,op);});
+      if(rowsP.length){
+        h+='<tr class="grow psyn'+(op?'':' ghide')+'"><td class="dname pgrp" data-pg="'+gi+'" style="cursor:pointer" title="Camper gear in this area. Click to show or hide the item lines.">'+(PERSOPEN?'\u25be ':'\u25b8 ')+'Personal items<span class="devsm">'+rowsP.length+' item'+(rowsP.length===1?'':'s')+'</span></td><td></td><td></td><td></td><td></td><td></td><td class="qr" id="dkP'+gi+'">\u2014</td><td></td></tr>';
+        rowsP.forEach(i=>{h+=rowHTML(i,op&&PERSOPEN);});
+      }
+    } else g.idxs.forEach(i=>{h+=rowHTML(i,op);});
     h+='<tr class="dsub"><td class="ktlab">'+(({'Camp lights & misc':'Lights & misc'})[g.name]||g.name)+' subtotal</td><td></td><td></td><td></td><td></td><td></td><td class="qr" id="dg'+gi+'">&mdash;</td><td></td></tr>';
   });
   T.innerHTML=h;
+  T.querySelectorAll('.pgrp').forEach(el=>el.addEventListener('click',()=>{PERSOPEN=!PERSOPEN;store('cavecsv_persopen',PERSOPEN);buildDev();devPaint();}));
   T.querySelectorAll('.dgrp').forEach(el=>el.addEventListener('click',()=>{
     const nm=DEVGRP[+el.dataset.g].name;
     const st=load('cavecsv_devopen')||{};
@@ -1141,6 +1152,7 @@ function devPaint(){
     const gk=g.idxs.reduce((a,i)=>{const r=DEVC[i];return a+gRow(r,ASOF());},0);
     let gev=0,gfr=0;
     g.idxs.forEach(i=>{const[e2,f2]=rowEF(i);gev+=e2;gfr+=f2;});
+    const ep=$('dkP'+gi);if(ep){const pidx=g.idxs.filter(i=>DEVC[i].cat==='Personal');const pk=pidx.reduce((a,i)=>a+gRow(DEVC[i],ASOF()),0);let pev=0,pfr=0;pidx.forEach(i=>{const[e2,f2]=rowEF(i);pev+=e2;pfr+=f2;});ep.innerHTML=f(pk,2)+' kWh/day &middot; '+f(pk/KPG,2)+' gal/day'+efSub(pev,pfr);}
     const eg=$('dg'+gi);if(eg)eg.innerHTML=f(gk,2)+' kWh/day &middot; '+f(gk/KPG,2)+' gal/day'+efSub(gev,gfr);
   });
   let tev=0,tfr=0;
